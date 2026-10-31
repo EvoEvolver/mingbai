@@ -79,7 +79,7 @@ export default function Chapter(){ return <TextbookPage meta={meta} notation={no
 ### 其他组件
 - `<Sec n title zh gist why gives={["2.12"]}>`、`<Sub n title zh>`：编号与原书一致；gist=本节要点一句话，why=为什么需要这一步，gives=本节产出的关键方程。
 - `<Tx>{R`…`}</Tx>`：空行分段；`$…$`、`$$…$$`、`\eqref{}`、`\figref{}`、`\secref{}`、`\exref{}`、`**粗体**`、`*强调*`。
-- `<Eq n="2.23" say="…" keyEq title="…">{R`…`}</Eq>`：编号行间公式；**每个都写 say**；keyEq 每章 8–15 个（章末自动汇总）。多个编号请拆成多个 `<Eq>`。
+- `<Eq n="2.23" say="…" keyEq title="…">{R`…`}</Eq>`：编号行间公式；**每个都写 say**；keyEq 每章 8–20 个，长章取上限（章末自动汇总；只有 keyEq 显示 title）。多个编号请拆成多个 `<Eq>`。
 - `<Roadmap steps={[{ sec:"2.1", title:"膨胀的空间", gist:R`…`, gives:["2.12","2.28"], next:R`过渡：为什么接下来要…` }]}/>`
 - `<EqMap edges={[{ from:"2.20", to:"2.28", label:"代入 FLRW" }]} labels={{ "2.20":"测地线方程" }}/>`：关键方程推导图（节点自动显示公式，点击放大）。
 - `<EqChip n="2.23"/>`：小号可点击公式。
