@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { book, modules, pageUrl, assetUrl } from "../book.jsx";
-import { buildTable, annotate } from "./sym.js";
+import { buildTable, annotate, symKey } from "./sym.js";
 
 // ---------- KaTeX 渲染 ----------
 // 书级宏在 book.js 的 katexMacros 中定义（如 "\\H": "\\mathcal{H}"）。宏在首次渲染时读取
@@ -139,7 +139,10 @@ export function TextbookProvider({ chapterId, notation = [], children }) {
     push(chapterId, notation);
     for (const c of book.chapters) if (c.id !== chapterId) push(c.id, modules[c.id]?.notation);
     const byId = Object.fromEntries(all.map(e => [e.id, e]));
-    return { table: buildTable(all, expandMacros), byId };
+    // 常见的多义单字母（e 自然常数/电子、d 微分/距离、π）只采用本章词典的条目，避免借用他章含义造成误标
+    const LOCAL_ONLY = new Set(["e|", "d|", "\\pi|"]);
+    const usable = all.filter(e => e.chapter === chapterId || !LOCAL_ONLY.has(symKey(expandMacros(e.sym))));
+    return { table: buildTable(usable, expandMacros), byId };
   }, [chapterId, notation]);
   // 渲染期同步设置当前符号表（子组件随后渲染时即生效）
   if (ACTIVE.table !== sym.table) ACTIVE = { table: sym.table, ver: ++tableVer };
