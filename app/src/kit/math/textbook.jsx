@@ -47,7 +47,7 @@ export function TextbookPage({ meta: m, notation = [], groups, concepts, relatio
             <Notation rows={notation} />
           </section>}
           <ChapterNav id={m.id} />
-          <footer>本页为原书的中文学习版：结构、公式编号与插图依原书，正文为编者重新组织的讲解。插图版权归原书出版方所有，仅供个人学习。</footer>
+          <footer>{book.footer ?? "本页为原书的中文学习版：结构、公式编号与插图依原书，正文为编者重新组织的讲解。插图版权归原书出版方所有，仅供个人学习。"}</footer>
         </main>
       </TextbookProvider>
     </ChapterProvider>);
