@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { createPortal } from "react-dom";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { book, modules, pageUrl } from "../book.jsx";
+import { book, modules, pageUrl, assetUrl } from "../book.jsx";
 import { buildTable, annotate } from "./sym.js";
 
 // ---------- KaTeX 渲染 ----------
@@ -315,7 +315,7 @@ export function EqRef({ n, paren = true }) {
   };
   return <Ref kind="eq" n={n} label={paren ? `(${n})` : n} preview={preview} />;
 }
-export const FigRef = ({ n }) => <Ref kind="fig" n={n} label={`图 ${n}`} preview={() => <img src={`figures/fig-${n}.png`} alt="" style={{ maxWidth: 360, display: "block" }} />} />;
+export const FigRef = ({ n }) => <Ref kind="fig" n={n} label={`图 ${n}`} preview={() => <img src={assetUrl(`figures/fig-${n}.png`)} alt="" style={{ maxWidth: 360, display: "block" }} />} />;
 export const SecRef = ({ n }) => <Ref kind="sec" n={n} label={`§${n}`} />;
 export const ExRef = ({ n }) => <Ref kind="ex" n={n} label={`习题 ${n}`} />;
 export { anchor };

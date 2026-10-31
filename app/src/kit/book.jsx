@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { book, available, data } from "virtual:book";
 
 // 全书层面的数据与链接工具（多页静态站点）。
@@ -18,6 +17,8 @@ export function setPage(id, mod) {
   if (id && mod) modules[id] = { ...(data[id] || {}), ...mod };
 }
 export const currentPage = () => PAGE;
+// 书的静态资源（public/ 下的文件，如 "figures/fig-2.3.png"）的相对路径：章节页在子目录，需要上溯一级
+export const assetUrl = p => (/^(https?:|data:|\/)/.test(p) ? p : (PAGE ? "../" : "./") + p);
 export const hasChapter = id => available.includes(id);
 
 // 章节页位于 <id>/，书架位于根目录
@@ -35,18 +36,11 @@ export function legacyHashUrl(h) {
 }
 export const go = (id, anchor) => { location.href = pageUrl(id, anchor); };
 
-// 是否部署在书库中（书的上一级目录有 library.json）。返回书库首页的相对链接，否则 null。
-let libProbe = null;
+// 是否部署在书库中：build-library.sh 组装书库时给每个页面注入 <meta name="book-library">（不发请求，避免单独部署时出现 404）。
+// 返回书库首页的相对链接，否则 null。
 export function useLibrary() {
-  const base = (PAGE ? "../" : "./") + "../";
-  const [href, setHref] = useState(null);
-  useEffect(() => {
-    libProbe ??= fetch(base + "library.json", { method: "HEAD" })
-      .then(r => r.ok && /json/.test(r.headers.get("content-type") || "json"))
-      .catch(() => false);
-    libProbe.then(ok => ok && setHref(base));
-  }, []);
-  return href;
+  if (typeof document === "undefined" || !document.querySelector('meta[name="book-library"]')) return null;
+  return (PAGE ? "../" : "./") + "../";
 }
 
 export const chapterLabel = c => (c.no === 0 ? c.title_zh : `第 ${c.no} 章 · ${c.title_zh}`);

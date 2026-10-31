@@ -9,10 +9,11 @@ FW=$(cd "$(dirname "$0")/.." && pwd)
 if [ "$(basename "$BOOK")" = oot ]; then OUT=/tmp/check-$ID; else OUT=/tmp/check-$(basename "$BOOK")-$ID; fi
 rm -rf "$OUT"
 cd "$FW/app"
-ONLY=$ID BOOK=$BOOK OUT=$OUT/site npx vite build --logLevel error
+# 构建与截图都经 heavy.sh 串行执行（全局锁 + 内存检查），多个 agent 并行自检也不会同时占用大量内存
+ONLY=$ID BOOK=$BOOK OUT=$OUT/site "$FW/tools/heavy.sh" npx vite build --logLevel error
 PORT=$(python3 -c 'import socket;s=socket.socket();s.bind(("",0));print(s.getsockname()[1])')
 python3 -m http.server "$PORT" -d "$OUT/site" >/dev/null 2>&1 & SRV=$!
 trap 'kill $SRV' EXIT
 sleep 0.5
-node "$FW/tools/pw/shot.mjs" "http://localhost:$PORT/$ID/" "$OUT/shot.png"
+"$FW/tools/heavy.sh" node "$FW/tools/pw/shot.mjs" "http://localhost:$PORT/$ID/" "$OUT/shot.png"
 echo "screenshots: $OUT/shot.png $OUT/shot-modal.png"

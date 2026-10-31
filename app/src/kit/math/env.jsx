@@ -1,3 +1,4 @@
+import { assetUrl } from "../book.jsx";
 import { useState, useEffect, Children } from "react";
 import { renderTex, EqLine, FitTex, Tx, TxI, Rich, plainText, anchor, useTextbook } from "./tex.jsx";
 
@@ -94,7 +95,7 @@ export function Derivation({ title = "推导", steps, collapsed = false, result 
 export function Figure({ n, caption, children, interactive, width = "100%", src }) {
   const [zoom, setZoom] = useState(false);
   const [tab, setTab] = useState(interactive ? 1 : 0);
-  const img = src || `figures/fig-${n}.png`;
+  const img = assetUrl(src || `figures/fig-${n}.png`);
   useEffect(() => {
     if (!zoom) return;
     const k = e => e.key === "Escape" && setZoom(false);

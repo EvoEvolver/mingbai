@@ -82,6 +82,9 @@ export default function Chapter(){ return <TextbookPage meta={meta} notation={no
 - `<EqChip n="2.23"/>`：小号可点击公式。
 - `<Derivation title steps={[{tex, why}]} result collapsed?>`、`<Box kind="definition|result|note|example|physics|warning|aside|key|data" title>`、`<Figure n caption interactive={<Plot/>}>`、`<Plot …>`（数值工具 `num`）、`<Exercise n title level hint solution fromBook>`、`<Table>`、`<Details>`。
 
+## 内存纪律（多个 agent 并行时必须遵守）
+构建、Playwright/Chromium 截图等重命令一律经 `/home/zijian/books/framework/tools/heavy.sh <命令…>` 运行（全局锁串行 + 内存检查；`check.sh` 已内置）。不要自行并行起多个构建或浏览器；临时 http 服务与浏览器用完即关；不要再派生子 agent。
+
 ## 工作流程
 1. 通读本章文字层，列出节结构、公式编号、图、习题；先写**高层理解层**（one_liner、big_question、路线图、推导图、概念）——这会逼你先把本章的逻辑想清楚。
 2. 逐节写正文：看页面图像转写公式，按"动机→推导→解读→过渡"组织讲解；每个 `<Eq>` 写 say；同步扩充 notation。

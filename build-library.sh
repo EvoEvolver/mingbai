@@ -25,6 +25,8 @@ rm -rf "$OUT"; mkdir -p "$OUT"
 for b in "${books[@]}"; do
   [ -f "$ROOT/$b/dist/book.json" ] || { echo "✗ $b：缺少 $b/dist/book.json（请先构建：framework/build-all.sh $b）"; exit 1; }
   cp -r "$ROOT/$b/dist" "$OUT/$b"
+  # 标记"本页位于书库中"（页面据此显示返回书库的按钮）
+  find "$OUT/$b" -name index.html -exec sed -i 's|<head>|<head><meta name="book-library" content="1">|' {} +
 done
 cp "$ROOT/framework/library/index.html" "$OUT/index.html"
 touch "$OUT/.nojekyll"
