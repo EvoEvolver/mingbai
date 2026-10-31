@@ -5,8 +5,8 @@
 //   statements: { "L2.1": { kind, n, ch, en, zh, page, stmt, deps, role, key, pitfall, status, statusNote, eq? }, … }
 // 可选：statementKinds（覆盖类型名称）、statementStatus（覆盖核对状态文字）。
 // 依赖边由各陈述的 deps 自动推出。
-import { useMemo, useState } from "react";
-import { TxI, Tx, EqRef, Rich, EqLine, extendInline } from "./tex.jsx";
+import { useMemo, useRef, useState } from "react";
+import { TxI, Tx, EqRef, Rich, EqLine, HoverPop, extendInline } from "./tex.jsx";
 import { book, pageUrl, currentPage } from "../book.jsx";
 
 const DEFAULT_KIND = { definition: "定义", lemma: "引理", proposition: "命题", theorem: "定理", fact: "论断", cited: "引用", corollary: "推论", claim: "断言", conjecture: "猜想", example: "例" };
@@ -46,16 +46,17 @@ const hrefOf = id => pageUrl(reg().STMTS[id]?.ch, anchorOf(id));
 // 悬停预览陈述全文；点击跳转（跨页亦可）。
 export function SRef({ id, children }) {
   const [show, setShow] = useState(false);
+  const wrap = useRef(null);
   const s = reg().STMTS[id];
   if (!s) return <span className="tex-error" title="未登记的陈述">{id}</span>;
   return (
-    <span className="ref-wrap sref-wrap" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+    <span className="ref-wrap sref-wrap" ref={wrap} onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
       <a className={"sref sref-" + s.kind} href={hrefOf(id)} onClick={e => go(id, e)}>{children ?? <Rich>{stmtLabel(id)}</Rich>}</a>
-      {show && <span className="ref-pop sref-pop">
+      {show && <HoverPop anchor={wrap.current} className="sref-pop">
         <b><Rich>{stmtLabel(id)}</Rich></b>{s.kind !== "fact" && s.kind !== "cited" && <> · <Rich>{s.zh}</Rich></>} <i className="muted">{s.en}</i>
         <span className="sref-stmt"><TxI>{s.stmt}</TxI></span>
         <span className="muted sref-where">原文 p.{s.page} · 点击跳转</span>
-      </span>}
+      </HoverPop>}
     </span>);
 }
 

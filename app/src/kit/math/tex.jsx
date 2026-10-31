@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { book, modules, pageUrl } from "../book.jsx";
@@ -275,18 +276,34 @@ export function Eq({ n, children, keyEq = false, title, say }) {
 }
 
 // 引用：公式（悬停预览）、图、节、习题
+// 悬浮预览：渲染到 document.body（portal）并按触发元素的屏幕位置 fixed 定位——
+// 不会被任何 overflow 容器（可横向滚动的表格、卡片等）裁掉；上方空间不足时改为向下弹出，左右不越出视口。
+export function HoverPop({ anchor, className = "", children }) {
+  const ref = useRef(null);
+  const [pos, setPos] = useState({ left: -9999, top: -9999 });
+  useLayoutEffect(() => {
+    const a = anchor?.getBoundingClientRect(), el = ref.current; if (!a || !el) return;
+    const w = el.offsetWidth, h = el.offsetHeight, gap = 8;
+    const left = Math.min(Math.max(8, a.left + a.width / 2 - w / 2), innerWidth - w - 8);
+    const top = a.top - h - gap >= 8 ? a.top - h - gap : Math.min(a.bottom + gap, innerHeight - h - 8);
+    setPos({ left, top: Math.max(8, top) });
+  }, [anchor]);
+  return createPortal(<span ref={ref} className={"ref-pop floating " + className} style={pos}>{children}</span>, document.body);
+}
+
 function Ref({ kind, n, label, preview }) {
   const tb = useTextbook();
   const [show, setShow] = useState(false);
+  const wrap = useRef(null);
   const href = hrefTo(kind, n, tb?.chapterId);
   return (
-    <span className="ref-wrap" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+    <span className="ref-wrap" ref={wrap} onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
       <a className={"ref ref-" + kind} href={href} onClick={e => {
         const here = chapterOfNum(n) === tb?.chapterId || !chapterOfNum(n);
         const el = document.getElementById(anchor(kind, n));
         if (here && el) { e.preventDefault(); el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
       }}>{label}</a>
-      {show && preview && <span className="ref-pop">{preview()}</span>}
+      {show && preview && <HoverPop anchor={wrap.current}>{preview()}</HoverPop>}
     </span>);
 }
 export function EqRef({ n, paren = true }) {
