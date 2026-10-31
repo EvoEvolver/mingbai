@@ -67,7 +67,7 @@ export function Keyboard({ from = "C4", to = "B5", highlight = [], marks = {}, o
   </svg>;
 }
 
-const SHAPES = { 1: "十二边形（单个大圆）", 2: "直径（两两相对）", 3: "正三角形", 4: "正方形", 6: "正六边形", 12: "十二芒星" };
+const SHAPES = { 2: "直径（两两相对）", 3: "正三角形", 4: "正方形", 6: "正六边形", 12: "十二芒星" };
 const CYCLE_COLORS = ["#9b2c1f", "#2c4a6e", "#3c6b4a", "#b8862b", "#5b3f7a", "#7a5b3f"];
 const STEP_NAMES = { 1: "半音", 2: "全音", 3: "小三度", 4: "大三度", 5: "纯四度", 6: "三全音", 7: "纯五度", 8: "小六度", 9: "大六度", 10: "小七度", 11: "大七度" };
 
@@ -123,7 +123,7 @@ export function PitchCircle({ step: step0 = 1, steps = [1, 2, 3, 4, 5, 6, 7], st
       })}
     </svg>
     <div className="au-info">
-      <b>每步 {step} 个半音（{STEP_NAMES[step]}）</b>：从 {pcName(start)} 出发经过 {n} 个音回到起点，画出{SHAPES[n] || n + " 边形"}；
+      <b>每步 {step} 个半音（{STEP_NAMES[step]}）</b>：从 {pcName(start)} 出发经过 {n} 个音回到起点，画出{n === 12 ? ((step === 1 || step === 11) === (target === 0) ? "一个圆（正十二边形）" : "十二芒星") : SHAPES[n] || n + " 边形"}；
       这样的循环共有 <b>{groups.length}</b> 组{groups.length > 1 ? "（浅色为其余各组）" : "，走遍全部十二个音"}。
       <div className="au-seq">{mine.map((pc, k) => <span key={k} className={cur === k ? "on" : ""}>{pcName(pc)}</span>)}<span className={cur === n ? "on" : ""}>{pcName(mine[0])}</span></div>
     </div>
@@ -183,11 +183,15 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
   }
   const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y), pad = 26;
   const vb = [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad];
-  const hlSet = new Set(highlight.map(s => { const c = parseChord(s); return (c.type.startsWith("m") ? "m" : "M") + mod12(c.root); }));
+  const hlSet = new Set(highlight.map(s => { const c = parseChord(s); return (c.notes[1] - c.root === 3 ? "m" : "M") + mod12(c.root); }));
+  // 每个高亮和弦只标出离网格中心最近的那一处（同一和弦在网格上会周期性重复）
+  const cx0 = (Math.min(...xs) + Math.max(...xs)) / 2, cy0 = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const dist = t => ((t.pts[0].x + t.pts[1].x + t.pts[2].x) / 3 - cx0) ** 2 + ((t.pts[0].y + t.pts[1].y + t.pts[2].y) / 3 - cy0) ** 2;
+  const hlKeys = new Set([...hlSet].map(k => tris.filter(t => (t.minor ? "m" : "M") + t.root === k).sort((a, b) => dist(a) - dist(b))[0]?.key));
   const activePc = new Set([...active].map(mod12)), notesSet = notes ? new Set(notes.map(mod12)) : null;
   const voicing = t => { const r = 60 + t.root; return [r, r + (t.minor ? 3 : 4), r + 7]; };
   const clickTri = t => { play(voicing(t), { arp: 0.04, dur: 1.6 }); setSel(t.key); onChord && onChord(triadName(t.root, t.minor, spell)); };
-  const selT = tris.find(t => t.key === sel) || (select && tris.find(t => (t.minor ? "m" : "M") + t.root === select));
+  const selT = tris.find(t => t.key === sel) || (select && tris.filter(t => (t.minor ? "m" : "M") + t.root === select).sort((a, b) => dist(a) - dist(b))[0]);
   const AX = { fifths: { d: [1, 0], col: "#b8862b", name: "横线：纯五度循环（五度圈）" }, M3: { d: [0, 1], col: "#9b2c1f", name: "右上斜线：大三度循环（3 个音）" }, m3: { d: [-1, 1], col: "#2c4a6e", name: "左上斜线：小三度循环（4 个音）" } };
   const roleOf = (t, pc) => pc === t.root ? "根" : pc === mod12(t.root + 7) ? "五" : "三";
   return <div className="card au-tonnetz">
@@ -198,13 +202,13 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
     </div>}
     <svg viewBox={vb.join(" ")}>
       {tris.map(t => {
-        const isHl = hlSet.has((t.minor ? "m" : "M") + t.root), isSel = selT && selT.key === t.key;
+        const isHl = hlKeys.has(t.key), isSel = selT && selT.key === t.key;
         const sounding = t.pcs.every(p => activePc.has(p));
         return <polygon key={t.key} points={t.pts.map(p => p.x + "," + p.y).join(" ")}
           className={"au-tri " + (t.minor ? "min" : "maj") + (isHl ? " hl" : "") + (isSel ? " sel" : "") + (sounding ? " snd" : "")}
           onClick={() => clickTri(t)}><title>{triadName(t.root, t.minor, spell)}</title></polygon>;
       })}
-      {tris.filter(t => hlSet.has((t.minor ? "m" : "M") + t.root) || (selT && selT.key === t.key)).map(t => {
+      {tris.filter(t => hlKeys.has(t.key) || (selT && selT.key === t.key)).map(t => {
         const cx = (t.pts[0].x + t.pts[1].x + t.pts[2].x) / 3, cy = (t.pts[0].y + t.pts[1].y + t.pts[2].y) / 3;
         return <text key={"l" + t.key} x={cx} y={cy + 5} className="au-tlabel">{triadName(t.root, t.minor, spell)}</text>;
       })}
