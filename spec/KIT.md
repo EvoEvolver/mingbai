@@ -63,6 +63,11 @@ export default function Chapter() { return <ChapterPage meta={meta} groups={grou
 - `useChapter()` 取 `{byId, open(id), color(groupId)}`；`useReveal()`；`useToast()`
 - 也可以直接写 SVG + `useState`（见 `_ch02_similitudes.jsx`，SVG 用 viewBox 自适应，SMIL `<animate>` 做动效）。
 
+## 链接与路由
+站点是多页静态站点：每章一个页面 `<id>/`，页内锚点用普通 hash（如 `ch02/#eq-2.23`）。站内链接**不要手写 `#/…`**，
+用 `pageUrl(id, anchor)`（from "@kit"；`pageUrl(null)` 为书架）。章节导出的 `meta / concepts / groups / relations / notation / links`
+会在构建时被提取为全书索引，**必须是纯数据**（不要放函数或 JSX）。详见 `framework/spec/DEPLOY.md`。
+
 ## 自检（必须做）
 ```bash
 /home/zijian/books/framework/spec/check.sh <id>
@@ -70,7 +75,7 @@ export default function Chapter() { return <ChapterPage meta={meta} groups={grou
 它会单独构建你的章节、截图并输出 JSON 报告（区块列表、控制台错误）。要求：
 1. 构建成功、`errors` 为空；
 2. 用 Read 工具查看截图 `/tmp/check-<id>/shot.png`（长图）与 `shot-modal.png`，确认排版正常、专属图解渲染正确。专属图解可单独截图：
-   先 `python3 -m http.server <port> -d /tmp/check-<id>/site &`，再 `PATH=$HOME/.local/node/bin:$PATH node /home/zijian/books/framework/tools/pw/el.mjs "http://localhost:<port>/#/<id>" "#b-<blockid>" /tmp/check-<id>/el.png`，用完 kill 掉服务器。
+   先 `python3 -m http.server <port> -d /tmp/check-<id>/site &`，再 `PATH=$HOME/.local/node/bin:$PATH node /home/zijian/books/framework/tools/pw/el.mjs "http://localhost:<port>/<id>/" "#b-<blockid>" /tmp/check-<id>/el.png`，用完 kill 掉服务器。
 3. 有问题就改，直到满意。
 
 ## 交付回复（简短）

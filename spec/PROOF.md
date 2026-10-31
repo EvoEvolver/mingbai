@@ -36,7 +36,7 @@ export default { kind: "textbook", statements: STMTS, /* 可选 */ statementKind
 ## 组件
 | 组件 | 用途 | 接口 |
 |---|---|---|
-| `<Stmt id>` | 定理环境：编号标题 + 中文陈述 + 📒学习笔记（作用/依赖/被用于/关键一步/易卡点/核对说明）+ children（证明） | `notes={false}` 隐藏笔记；`toc={false}` 不进侧边目录；锚点 `#/<页>/thm-<id>`（冒号换成 `_`） |
+| `<Stmt id>` | 定理环境：编号标题 + 中文陈述 + 📒学习笔记（作用/依赖/被用于/关键一步/易卡点/核对说明）+ children（证明） | `notes={false}` 隐藏笔记；`toc={false}` 不进侧边目录；锚点 `<页>/#thm-<id>`（冒号换成 `_`） |
 | `<SRef id>` | 陈述引用：悬停预览陈述全文，点击跳转（跨页亦可） | 可带 children 自定义文字 |
 | `\sref{ID}` | 行内陈述引用 | 在**所有**支持公式的文本中可用（Tx/TxI、Sec 的 gist/why、Box、Derivation、Table、Hook、Bridge、Takeaways、Quiz、概念卡……） |
 | `<Proof steps title collapsed source qed>` | 分步证明：每步 `{claim, tex?, why?, uses?:[陈述 id 或公式号], fill?:true}`；`fill` 标"本站补全"；可"逐步展开" | claim/why 支持 `$…$`、`\eqref{}`、`\sref{}` |

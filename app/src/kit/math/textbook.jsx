@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { book } from "../book.jsx";
+import { pageUrl } from "../book.jsx";
 import { Progress, Toc, TopBar, ChapterNav } from "../layout.jsx";
 import { ChapterProvider } from "../core.jsx";
 import { TextbookProvider, Tx, TxI, Rich } from "./tex.jsx";
@@ -31,7 +32,7 @@ export function TextbookPage({ meta: m, notation = [], groups, concepts, relatio
             {m.overview && <div className="tb-overview"><Tx>{m.overview}</Tx></div>}
             <div className="tb-meta-row">
               {m.objectives?.length > 0 && <div className="tb-obj"><b>学完本章你应当能够</b><ul>{m.objectives.map((o, i) => <li key={i}><TxI>{o}</TxI></li>)}</ul></div>}
-              {m.prereq?.length > 0 && <div className="tb-pre"><b>前置知识</b><ul>{m.prereq.map((p, i) => <li key={i}>{p.ch ? <a href={`#/${p.ch}`}><Rich>{p.what}</Rich></a> : <TxI>{p.what}</TxI>}</li>)}</ul></div>}
+              {m.prereq?.length > 0 && <div className="tb-pre"><b>前置知识</b><ul>{m.prereq.map((p, i) => <li key={i}>{p.ch ? <a href={pageUrl(p.ch)}><Rich>{p.what}</Rich></a> : <TxI>{p.what}</TxI>}</li>)}</ul></div>}
             </div>
             <div className="tb-tip">💡 点击任一公式可放大并逐符号解读；点击公式中的符号可直接查看定义。</div>
           </header>

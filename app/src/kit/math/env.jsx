@@ -168,7 +168,7 @@ export function KeyEquations() {
   if (!list.length) return null;
   return (
     <div className="tb-keylist">{list.map(([n, v]) =>
-      <a key={n} className="tb-keyeq" href={`#/${tb.chapterId}/${anchor("eq", n)}`} onClick={e => { e.preventDefault(); document.getElementById(anchor("eq", n))?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>
+      <a key={n} className="tb-keyeq" href={"#" + anchor("eq", n)} onClick={e => { e.preventDefault(); document.getElementById(anchor("eq", n))?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>
         {v.title && <div className="tb-keyeq-t"><Rich>{v.title}</Rich></div>}
         <EqLine tex={v.tex} n={n} />
       </a>)}

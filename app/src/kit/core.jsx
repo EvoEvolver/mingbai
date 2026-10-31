@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Rich, RichParas, plainText } from "./math/tex.jsx";
+import { pageUrl } from "./book.jsx";
 
 // ---------- 小工具 ----------
 // 分段文本；含 $…$ / \eqref 等记号时自动按公式渲染（见 math/tex.jsx 的 RichParas），否则与原来完全相同
@@ -84,7 +85,7 @@ function ConceptModal({ c, onClose }) {
         <button className="close" aria-label="关闭" onClick={onClose}>×</button>
         <div className="mhead"><div className="ic">{c.icon}</div>
           <div><h3><Rich>{c.name_zh}</Rich></h3><div className="muted-it"><Rich>{c.name_en}</Rich></div></div></div>
-        {c.chapter && <a className="xch" href={`#/${c.chapter.id}`}>📖 {c.chapter.label} →</a>}
+        {c.chapter && <a className="xch" href={pageUrl(c.chapter.id)}>📖 {c.chapter.label} →</a>}
         <div className="mplain"><Rich>{c.plain}</Rich></div>
         <div className="tabs">{tabs.map((t, i) => <button key={i} className={i === tab ? "on" : ""} onClick={() => setTab(i)}>{t[0]}</button>)}</div>
         <div className="tabpane">{tabs[tab]?.[1]}</div>

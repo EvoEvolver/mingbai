@@ -30,3 +30,7 @@
    ```
    之后更新内容只需重新 build（`serve.py` 直接提供 `<slug>/dist`）。记下 `public_url`。
 6. 交付报告：网址、章节列表、各章专属图解、存疑之处。
+
+
+## 路由与部署
+站点为多页静态站点（每章 `<id>/index.html`），可直接部署到 GitHub Pages；见 `framework/spec/DEPLOY.md`。

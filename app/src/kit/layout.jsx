@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { book, modules, allConcepts, crossLinks, chapterGroups } from "./book.jsx";
+import { book, modules, allConcepts, crossLinks, chapterGroups, hasChapter, pageUrl, go } from "./book.jsx";
 import { ChapterProvider, ConceptChip } from "./core.jsx";
 import { Rich } from "./math/tex.jsx";
 
@@ -94,14 +94,14 @@ export function TopBar({ id }) {
   }, []);
   return (
     <div className={"topbar" + (hidden ? " hide" : "")}>
-      <a className="tb-home" href="#/" title="返回书架">← <b>{book.title}</b><span> · 全部章节</span></a>
-      <select className="tb-jump" value={id} onChange={e => { location.hash = "#/" + e.target.value; }} aria-label="跳转章节">
+      <a className="tb-home" href={pageUrl(null)} title="返回书架">← <b>{book.title}</b><span> · 全部章节</span></a>
+      <select className="tb-jump" value={id} onChange={e => go(e.target.value)} aria-label="跳转章节">
         {book.chapters.map(c => <option key={c.id} value={c.id}>{chName(c)}</option>)}
-        {modules.connections && <option value="connections">🧭 全书脉络</option>}
+        {hasChapter("connections") && <option value="connections">🧭 全书脉络</option>}
       </select>
       <span className="tb-nav">
-        {prev ? <a href={`#/${prev.id}`} title={chName(prev)}>← 上一章</a> : <span />}
-        {next ? <a href={`#/${next.id}`} title={chName(next)}>下一章 →</a> : <span />}
+        {prev ? <a href={pageUrl(prev.id)} title={chName(prev)}>← 上一章</a> : <span />}
+        {next ? <a href={pageUrl(next.id)} title={chName(next)}>下一章 →</a> : <span />}
       </span>
     </div>);
 }
@@ -112,9 +112,9 @@ export function ChapterNav({ id }) {
   const name = c => c.no === 0 ? c.title_zh : `第 ${c.no} 章 · ${c.title_zh}`;
   return (
     <nav className="chnav">
-      {prev ? <a href={`#/${prev.id}`}>← {name(prev)}</a> : <span />}
-      {modules.connections ? <a href="#/connections">全书脉络</a> : <a href="#/">目录</a>}
-      {next ? <a href={`#/${next.id}`}>{name(next)} →</a> : <span />}
+      {prev ? <a href={pageUrl(prev.id)}>← {name(prev)}</a> : <span />}
+      {hasChapter("connections") ? <a href={pageUrl("connections")}>全书脉络</a> : <a href={pageUrl(null)}>目录</a>}
+      {next ? <a href={pageUrl(next.id)}>{name(next)} →</a> : <span />}
     </nav>);
 }
 
@@ -130,7 +130,7 @@ function CrossLinks({ id }) {
           {l.note && <p>{l.note}</p>}
         </div>;
       })}</div>
-      <p><a href="#/connections">🧭 查看全书脉络 →</a></p>
+      <p><a href={pageUrl("connections")}>🧭 查看全书脉络 →</a></p>
     </Block>);
 }
 

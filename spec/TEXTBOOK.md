@@ -34,6 +34,9 @@ TextbookPage（自动渲染：标题、one_liner、big_question、why_it_matters
 ## 定理–证明类内容
 论文、数学书等以定义/引理/定理/证明为骨架的文本，另用 `Stmt / SRef / \sref{} / Proof / DepGraph / Erratum / RunCard …`（陈述登记表放在 book.js 的 `statements`），见 `framework/spec/PROOF.md`，完整范例为 ETH 书 `/home/zijian/books/eth`。
 
+## 链接
+站内链接用 `pageUrl(id, anchor)`，引用用 `\eqref{}` 等记号；章节导出的 notation/concepts 等必须是纯数据。见 `DEPLOY.md`。
+
 ## 范例
 已完成的试点章：`/home/zijian/books/cosmo/chapters/ch02.jsx` 及 `_ch02_*.jsx`。
 

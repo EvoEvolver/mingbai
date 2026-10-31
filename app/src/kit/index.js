@@ -1,7 +1,7 @@
 // 图书讲透 · 组件库。章节文件统一从 "@kit" 引入。说明见 framework/spec/KIT.md
 export { Paras, shuffle, PALETTE, useReveal, useToast, useChapter, ConceptChip, C } from "./core.jsx";
 export { ChapterPage, BookPage, Block, Hero } from "./layout.jsx";
-export { book, modules, allConcepts, chapterGroups, chapterLabel, crossLinks } from "./book.jsx";
+export { book, modules, allConcepts, chapterGroups, chapterLabel, crossLinks, pageUrl, currentPage, hasChapter, go } from "./book.jsx";
 export { Hook, SectionCards, ArgumentFlow, ConceptGrid, ExampleCompression, CompareTable, QuoteCarousel, Quiz, Takeaways, Bridge, Glossary } from "./blocks.jsx";
 export { ConceptMap } from "./ConceptMap.jsx";
 export { DragSort } from "./DragSort.jsx";

@@ -7,7 +7,7 @@
 // 依赖边由各陈述的 deps 自动推出。
 import { useMemo, useState } from "react";
 import { TxI, Tx, EqRef, Rich, EqLine, extendInline } from "./tex.jsx";
-import { book } from "../book.jsx";
+import { book, pageUrl, currentPage } from "../book.jsx";
 
 const DEFAULT_KIND = { definition: "定义", lemma: "引理", proposition: "命题", theorem: "定理", fact: "论断", cited: "引用", corollary: "推论", claim: "断言", conjecture: "猜想", example: "例" };
 const DEFAULT_STATUS = { checked: "✔ 已逐步核对", filled: "✚ 原文略写，本站已补全", note: "✎ 有注记" };
@@ -32,7 +32,7 @@ export { anchorOf };
 
 function go(id, e) {
   const s = reg().STMTS[id]; if (!s) return;
-  const here = location.hash.replace(/^#\/?/, "").split("/")[0];
+  const here = currentPage();
   const el = document.getElementById(anchorOf(id));
   if (s.ch === here && el) {
     e?.preventDefault();
@@ -40,7 +40,7 @@ function go(id, e) {
     el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
   }
 }
-const hrefOf = id => `#/${reg().STMTS[id]?.ch}/${anchorOf(id)}`;
+const hrefOf = id => pageUrl(reg().STMTS[id]?.ch, anchorOf(id));
 
 // ---------- 陈述引用：<SRef id="L2.1"/> 或 <SRef id="L2.1">文字</SRef> ----------
 // 悬停预览陈述全文；点击跳转（跨页亦可）。

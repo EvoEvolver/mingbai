@@ -14,5 +14,5 @@ PORT=$(python3 -c 'import socket;s=socket.socket();s.bind(("",0));print(s.getsoc
 python3 -m http.server "$PORT" -d "$OUT/site" >/dev/null 2>&1 & SRV=$!
 trap 'kill $SRV' EXIT
 sleep 0.5
-node "$FW/tools/pw/shot.mjs" "http://localhost:$PORT/#/$ID" "$OUT/shot.png"
+node "$FW/tools/pw/shot.mjs" "http://localhost:$PORT/$ID/" "$OUT/shot.png"
 echo "screenshots: $OUT/shot.png $OUT/shot-modal.png"

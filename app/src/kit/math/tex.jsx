@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { book, modules } from "../book.jsx";
+import { book, modules, pageUrl } from "../book.jsx";
 import { buildTable, annotate } from "./sym.js";
 
 // ---------- KaTeX 渲染 ----------
@@ -192,7 +192,7 @@ export function chapterOfNum(n) {
   return book.chapters.find(c => c.id === "app" + head)?.id;
 }
 const anchor = (kind, n) => `${kind}-${String(n).replace(/[^\w.-]/g, "_")}`;
-const hrefTo = (kind, n, here) => { const ch = chapterOfNum(n) || here; return `#/${ch}/${anchor(kind, n)}`; };
+const hrefTo = (kind, n, here) => pageUrl(chapterOfNum(n) || here, anchor(kind, n));
 const chapterName = id => { const c = book.chapters.find(x => x.id === id); return c ? (/^\d+$/.test(String(c.no)) ? `第 ${c.no} 章` : `附录 ${c.no}`) : id; };
 
 // ---------- 符号弹卡 ----------
