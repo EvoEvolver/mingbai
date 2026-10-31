@@ -33,13 +33,41 @@ export const CHORD_TYPES = {
   "7": [0, 4, 7, 10], maj7: [0, 4, 7, 11], "Δ": [0, 4, 7, 11], M7: [0, 4, 7, 11], m7: [0, 3, 7, 10],
   "ø": [0, 3, 6, 10], m7b5: [0, 3, 6, 10], dim7: [0, 3, 6, 9], "°7": [0, 3, 6, 9], mM7: [0, 3, 7, 11],
   sus4: [0, 5, 7], sus2: [0, 2, 7], "6": [0, 4, 7, 9], m6: [0, 3, 7, 9], "5": [0, 7],
+  // 变化七和弦
+  "7b5": [0, 4, 6, 10], "7#5": [0, 4, 8, 10], "+7": [0, 4, 8, 10], aug7: [0, 4, 8, 10], "7sus4": [0, 5, 7, 10],
+  "+Δ": [0, 4, 8, 11], "+maj7": [0, 4, 8, 11], augmaj7: [0, 4, 8, 11], "maj7#5": [0, 4, 8, 11], "Δ#5": [0, 4, 8, 11],
+  // 高叠（延伸）和弦
+  "7b9": [0, 4, 7, 10, 13], "7#9": [0, 4, 7, 10, 15], "7#11": [0, 4, 7, 10, 18], "7b13": [0, 4, 7, 10, 20],
+  "9": [0, 4, 7, 10, 14], m9: [0, 3, 7, 10, 14], maj9: [0, 4, 7, 11, 14], "Δ9": [0, 4, 7, 11, 14], M9: [0, 4, 7, 11, 14],
+  "11": [0, 4, 7, 10, 14, 17], m11: [0, 3, 7, 10, 14, 17], "13": [0, 4, 7, 10, 14, 21], m13: [0, 3, 7, 10, 14, 21],
+  maj13: [0, 4, 7, 11, 14, 21], "Δ13": [0, 4, 7, 11, 14, 21], "7alt": [0, 4, 10, 13, 15, 20], alt: [0, 4, 10, 13, 15, 20],
+  add9: [0, 4, 7, 14], madd9: [0, 3, 7, 14], "69": [0, 4, 7, 9, 14], "6/9": [0, 4, 7, 9, 14],
+  // 增六和弦（以低音为「根音」书写：Ab It+6 = A♭–C–F♯）
+  "It+6": [0, 4, 10], "Fr+6": [0, 4, 6, 10], "Ger+6": [0, 4, 7, 10], "Gr+6": [0, 4, 7, 10],
 };
 // "C" "Em" "G7" "Bø" "F#dim7" → { root(MIDI), notes[], type, name }。根音默认放在 octave 八度
+// 支持：类型中的 ♭/♯ 写法（G7♭9）、"no5"/"omit5" 后缀（省略五音）、斜线和弦 "C/E"（bass 为低音 MIDI，比和弦低一个八度以内）
 export function parseChord(sym, octave = 4) {
-  const m = String(sym).trim().match(/^([A-G][#♯b♭]?)(.*)$/);
-  if (!m || !(m[2] in CHORD_TYPES)) throw new Error("无法解析和弦：" + sym);
+  const [main, slash] = String(sym).trim().split("/").map(x => x && x.trim());
+  if (slash !== undefined && /^\d/.test(slash)) return parseChord(main.replace(/6$/, "") + "69", octave);   // "C6/9" 不是斜线和弦
+  const m = main.match(/^([A-G][#♯b♭]?)(.*)$/);
+  let type = m ? m[2].replace(/♭/g, "b").replace(/♯/g, "#").replace(/[()]/g, "") : null, omit5 = false;
+  if (type && /(no|omit)5$/.test(type)) { omit5 = true; type = type.replace(/(no|omit)5$/, ""); }
+  if (!m || !(type in CHORD_TYPES)) throw new Error("无法解析和弦：" + sym);
   const root = parseNote(m[1], octave);
-  return { root, type: m[2], name: sym, notes: CHORD_TYPES[m[2]].map(i => root + i) };
+  let notes = CHORD_TYPES[type].map(i => root + i);
+  if (omit5) notes = notes.filter(n => n - root !== 7);
+  const out = { root, type, name: sym, notes };
+  if (slash) { const b = parseNote(slash.match(/^[A-G][#♯b♭]?/)[0], octave); out.bass = b - 12 * Math.ceil((b - root + 1) / 12); }
+  return out;
+}
+// 和弦的「三和弦核心」：大三/小三返回 {minor}，否则 null（减、增、挂留等）
+export function triadCore(c) {
+  const iv = c.notes.map(n => n - c.root);
+  if (iv[2] !== 7 && !(iv.length === 2 && iv[1] === 7)) return null;
+  if (iv[1] === 4) return { minor: false };
+  if (iv[1] === 3) return { minor: true };
+  return null;
 }
 
 // 八度内音程名（按半音数，取最常用写法）
@@ -83,16 +111,21 @@ export function triadName(rootPc, minor, spell = "flat") {
 
 // 级数记号：romanOf("G7", "C") → "V7"；romanOf("Bdim", "C") → "vii°"；小调用 "Am" 表示（自然小调音级）
 const ROM = ["I", "II", "III", "IV", "V", "VI", "VII"];
+const LETTERS = "CDEFGAB";
+// 按字母算级数（B♭ 在 C 大调是 ♭VII，F♯m 是 ♯iv）；小调中升高的 6、7 级（旋律/和声小调）不加升号：G♯° 在 a 小调为 vii°
 export function romanOf(sym, key = "C") {
   const k = String(key).match(/^([A-G][#♯b♭]?)(m?)$/); if (!k) return "";
-  const tonic = mod12(parseNote(k[1])), scale = k[2] ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
-  const c = parseChord(sym), d = mod12(c.root - tonic), iv = c.notes.map(n => n - c.root);
-  let deg = scale.indexOf(d), acc = "";
-  if (deg < 0) { const up = scale.indexOf(mod12(d + 1)); if (up >= 0) { deg = up; acc = "♭"; } else { deg = scale.indexOf(mod12(d - 1)); acc = "♯"; } }
-  const minorish = iv[1] === 3, dim = iv[1] === 3 && iv[2] === 6, aug = iv[1] === 4 && iv[2] === 8;
+  const minor = !!k[2], tonic = mod12(parseNote(k[1]));
+  const scale = minor ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
+  const c = parseChord(sym), rootName = String(sym).trim().match(/^[A-G][#♯b♭]?/)[0];
+  const deg = (LETTERS.indexOf(rootName[0]) - LETTERS.indexOf(k[1][0]) + 7) % 7;
+  let diff = mod12(c.root - tonic - scale[deg]); if (diff > 6) diff -= 12;
+  if (minor && (deg === 5 || deg === 6) && diff === 1) diff = 0;
+  const acc = diff > 0 ? "♯".repeat(diff) : "♭".repeat(-diff);
+  const iv = c.notes.map(n => n - c.root), minorish = iv[1] === 3, dim = iv[1] === 3 && iv[2] === 6, aug = iv[1] === 4 && iv[2] === 8;
   let r = ROM[deg]; if (minorish) r = r.toLowerCase();
   const suffix = { "": "", m: "", min: "", dim: "°", "°": "°", aug: "+", "+": "+", "7": "7", maj7: "maj7", "Δ": "maj7", M7: "maj7", m7: "7", "ø": "ø7", m7b5: "ø7", dim7: "°7", "°7": "°7", sus4: "sus4", sus2: "sus2", "6": "6", m6: "6", mM7: "(maj7)" }[c.type];
-  return acc + r + (suffix ?? (dim ? "°" : aug ? "+" : ""));
+  return acc + r + (suffix ?? (dim ? "°" : aug ? "+" : c.type));
 }
 
 // 和弦配置（voicing）。close：原位密集排列，根音落在 [lo, lo+11]；smooth：在所有转位中选离 prev 最近的
@@ -114,4 +147,10 @@ export function voiceChord(sym, { prev, lo = 55, style = "close" } = {}) {
     }
   }
   return best;
+}
+
+// 和弦符号的显示形式：根音与低音的 b/# 改为 ♭/♯，增六和弦与根音之间加空格（"AbIt+6" → "A♭ It+6"，"Bb7/F" → "B♭7/F"）
+export function prettyChord(sym) {
+  return String(sym).replace(/(^|\/)([A-G])([#b]?)/g, (m, pre, l, a) => pre + l + (a === "b" ? "♭" : a === "#" ? "♯" : ""))
+    .replace(/(\d)b(\d)/g, "$1♭$2").replace(/(\d)#(\d)/g, "$1♯$2").replace(/^([A-G][♭♯]?)(It|Fr|Ger|Gr)\+6/, "$1 $2+6");
 }

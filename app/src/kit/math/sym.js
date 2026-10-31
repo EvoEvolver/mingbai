@@ -94,7 +94,14 @@ export function annotate(src, table) {
     // 候选基底
     let base = null, key = null, inner = null, j = i + 1, isLetter = false;
     if (!f.skip && !f.script) {
-      if (x.k === "cw" && ACCENT.has(x.v)) { const [a, b] = arg(t, i + 1); base = raw(t, i, b); inner = norm(raw(t, a, b)); key = `\\${x.v}{${inner}}`; j = b; }
+      if (x.k === "cw" && ACCENT.has(x.v)) {
+        const [a, b] = arg(t, i + 1); base = raw(t, i, b); j = b;
+        let argText = raw(t, a, b).trim();
+        if (t[a]?.k === "open") argText = argText.slice(1, -1).trim();          // 去掉参数外层花括号
+        const m = argText.match(/^\\sym\{([^{}]*)\}\{([\s\S]*)\}$/);         // \hat{\sym{id}{p}}：按指定 id 标注整个修饰符号
+        if (m) { const id = norm(m[1]); out += `{\\htmlData{sym=${id}}{\\${x.v}{${m[2]}}}}`; used.add(id); i = j; continue; }
+        inner = norm(raw(t, a, b)); key = `\\${x.v}{${inner}}`;
+      }
       else if (x.k === "cw" && GREEK.has(x.v)) { base = x.raw; key = "\\" + x.v; isLetter = true; }
       else if (x.k === "let") { base = x.raw; key = x.v; isLetter = true; }
     }

@@ -11,8 +11,10 @@ import { buildTable, annotate, symKey } from "./sym.js";
 let MACROS = null, MACRO_RE = null;
 function macros() {
   if (!MACROS) {
+    // \sym{id}{…}/\nosym{…} 在有符号表的章节页由 annotate 处理；其他场合（书架、跨章预览等）按普通内容渲染
     MACROS = { ...(book?.katexMacros || {}) };
-    const names = Object.keys(MACROS).map(k => k.replace(/^\\/, "")).sort((a, b) => b.length - a.length);
+    // 预展开只针对书级宏（\\sym/\\nosym 必须原样留给 annotate 识别）
+    const names = Object.keys(book?.katexMacros || {}).map(k => k.replace(/^\\/, "")).sort((a, b) => b.length - a.length);
     MACRO_RE = names.length ? new RegExp(`\\\\(${names.join("|")})(?![a-zA-Z])`, "g") : null;
   }
   return MACROS;
@@ -36,6 +38,8 @@ export function renderTex(tex, display = false) {
   macros();
   let src = tex;
   if (ACTIVE.table) { const r = annotate(expandMacros(tex), ACTIVE.table); src = r.tex; usedCache.set(ACTIVE.ver + tex, r.used); }
+  // 未被 annotate 处理的 \sym{id}{…} / \nosym{…}（无符号表的页面，或嵌在不识别的位置）：剥掉标记，只保留内容
+  src = src.replace(/\\sym\{[^{}]*\}/g, "").replace(/\\nosym(?![a-zA-Z])/g, "");
   let html;
   try {
     html = katex.renderToString(src, { displayMode: display, throwOnError: true, macros: { ...MACROS }, strict: "ignore", trust, output: "html" });

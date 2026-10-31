@@ -47,16 +47,16 @@ def report(name, want, have):
     print(f"{name}: 原书 {len(want)}，页面 {len(have)}，缺 {len(miss)}" + (f" → {', '.join(miss)}" if miss else "") + (f"；多出 {', '.join(extra)}" if extra else ""))
     return len(miss)
 if cfg.get("inline_exercise"):   # 正文习题与章末习题合并比对
-    ex_book |= set(re.findall(rf"^\s*{cfg['inline_exercise']}\s+({P}\.\d+)\.", body, re.M))
+    ex_book |= set(re.findall(rf"^[^\w\n]{{0,4}}\s*{cfg['inline_exercise']}\s+({P}\.\d+)\.", body, re.M))
 bad = report("公式", eq_book, eq_jsx) + report("插图", fig_book, fig_jsx) + report("习题", ex_book, ex_jsx)
 if cfg.get("statements"):
     st_book = set()
     for word, pre in cfg["statements"].items():
-        st_book |= {pre + x for x in re.findall(rf"^\s*{word}\s+({P}\.\d+)\.", body, re.M)}
+        st_book |= {pre + x for x in re.findall(rf"^[^\w\n]{{0,4}}\s*{word}\s+({P}\.\d+)\.", body, re.M)}
     st_jsx = set(re.findall(r'<Stmt\b[^>]*\bid="([^"]+)"', jsx))
     bad += report("陈述（定义/定理等）", st_book, st_jsx)
 if cfg.get("examples"):
-    exm_book = set(re.findall(rf"^\s*{cfg['examples']}\s+({P}\.\d+)\.", body, re.M))
+    exm_book = set(re.findall(rf"^[^\w\n]{{0,4}}\s*{cfg['examples']}\s+({P}\.\d+)\.", body, re.M))
     exm_jsx = set(re.findall(r'<Box\b[^>]*\bkind="example"[^>]*\bn="([^"]+)"', jsx)) | set(re.findall(r'<Box\b[^>]*\bn="([^"]+)"[^>]*\bkind="example"', jsx))
     bad += report("例子", exm_book, exm_jsx)
 if bad_refs: print("悬空引用（本章不存在的公式）:", ", ".join(sorted(bad_refs, key=natkey))); bad += len(bad_refs)

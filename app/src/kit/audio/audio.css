@@ -110,3 +110,30 @@
 .au-chord.min.cur{background:var(--blue);border-color:var(--blue)}
 .au-chord.cur small{color:#fff}
 .au-prog .au-lab input{width:90px;vertical-align:middle;accent-color:var(--accent)}
+.au-seventh{fill:none;stroke-width:3;stroke-linejoin:round;pointer-events:none}
+.au-seventh.dom7{stroke:#3c8b4a;fill:#3c8b4a22}.au-seventh.maj7{stroke:#b8382a;fill:#b8382a1a}
+.au-seventh.min7{stroke:#2c4a8e;fill:#2c4a8e1a}.au-seventh.hdim7{stroke:#6b3f9a;fill:#6b3f9a1a}.au-seventh.other{stroke:var(--gold)}
+.au-tlabel.dark{fill:#6b4a10}
+
+/* 卷帘（Piano Roll）视图 */
+.au-abc.hide{display:none !important}
+.au-view{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:5px 12px;font:inherit;font-size:14px;cursor:pointer}
+.au-view:hover{border-color:var(--accent);color:var(--accent)}
+.au-roll{display:flex;border:1px solid var(--line);border-radius:10px;background:#fbf8f2;margin:4px 0 6px;overflow:hidden}
+.au-rkbsvg{flex:none;border-right:1px solid #cdbfa8;background:#fffdf8}
+.au-rscroll{flex:1;overflow-x:auto}
+.au-roll svg{display:block}
+.au-rrow{fill:#fbf8f2}.au-rrow.b{fill:#efe8dc}
+.au-rcline{stroke:#d8cdbb;stroke-width:1}
+.au-rbar{stroke:#cdbfa8;stroke-width:1}
+.au-rbarno{font-size:10px;fill:#9a8f7e}
+.au-rchord{font-size:12px;font-weight:700;fill:var(--ink);font-family:var(--serif)}
+.au-rnote{fill:#d4574a;stroke:#9b2c1f;stroke-width:.8;cursor:pointer;transition:fill .08s}
+.au-rnote.acc{fill:#9db4d6;stroke:#5d82b3}
+.au-rnote.on{fill:var(--gold);stroke:#8a6215}
+.au-rnote:hover{filter:brightness(1.1)}
+.au-rkey{fill:#fffdf8;stroke:#c9bfae;stroke-width:.6;cursor:pointer}
+.au-rkey.b{fill:#2a2622}
+.au-rkey.act{fill:var(--gold)}
+.au-rkname{font-size:8px;text-anchor:end;fill:#6b645a;pointer-events:none}
+.au-rhead{stroke:var(--accent);stroke-width:2}

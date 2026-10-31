@@ -1,7 +1,7 @@
 // 和弦进行播放器：和弦卡片 + 播放头 + 速度/织体/连接方式/循环；可同步在 Tonnetz 上画出路线、在键盘上显示按键。
-import { useMemo, useRef, useState } from "react";
-import { play, stop, later, useAudioState } from "./engine.js";
-import { parseChord, romanOf, voiceChord, mod12 } from "./theory.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { play, stop, later, onStop, useAudioState } from "./engine.js";
+import { parseChord, romanOf, voiceChord, mod12, prettyChord } from "./theory.js";
 import { Tonnetz, Keyboard } from "./components.jsx";
 
 const TEXTURES = { block: "柱式", arp: "琶音", pop: "低音 + 和弦" };
@@ -14,6 +14,8 @@ export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4,
   const [bpm, setBpm] = useState(bpm0), [texture, setTexture] = useState(tex0), [voicing, setVoicing] = useState(voi0), [loop, setLoop] = useState(loop0);
   const [cur, setCur] = useState(-1), playing = useRef(false), [on, setOn] = useState(false);
   useAudioState();
+  // 任何 stop()（SoundBar 的 ■、其他组件开始播放）都把本播放器复位；start() 内部先 stop() 再置 on，不受影响
+  useEffect(() => onStop(() => { playing.current = false; setOn(false); setCur(-1); }), []);
   const items = useMemo(() => {
     let prev;
     return chords.map((full, k) => {
@@ -57,7 +59,7 @@ export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4,
     {title && <div className="au-progtitle">{title}</div>}
     <div className="au-chords">
       {items.map((it, k) => <button key={k} className={"au-chord" + (k === cur ? " cur" : "") + (parseChord(it.sym).notes[1] - parseChord(it.sym).root === 3 ? " min" : "")} onClick={() => one(k)}>
-        <b>{it.full}</b>{it.roman && <small>{it.roman}</small>}
+        <b>{prettyChord(it.full)}</b>{it.roman && <small>{it.roman}</small>}
       </button>)}
     </div>
     <div className="au-ctrl">

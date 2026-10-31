@@ -2,5 +2,5 @@
 export { Play, SoundBar, Keyboard, PitchCircle, IntervalLab, Tonnetz, EarQuiz, Narrate } from "./components.jsx";
 export { Score } from "./score.jsx";
 export { Progression } from "./progression.jsx";
-export { play, sequence, stop, later, getSettings, setSettings, useAudioState } from "./engine.js";
+export { play, sequence, stop, later, onStop, getSettings, setSettings, useAudioState } from "./engine.js";
 export * from "./theory.js";

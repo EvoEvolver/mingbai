@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { freq } from "./theory.js";
 
 const KEY = "book-audio";
-const DEFAULTS = { volume: 0.7, muted: false, timbre: "piano", tuning: "equal" };
+const DEFAULTS = { volume: 0.7, muted: false, timbre: "piano", tuning: "equal", view: "staff" };   // view：谱例显示为五线谱 staff / 卷帘 roll
 const load = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return { ...DEFAULTS }; } };
 
 let ctx = null, master = null, waves = {};
@@ -13,13 +13,15 @@ const voices = new Set();          // 正在发声的节点
 const timers = new Set();          // 已排程的 UI 回调
 const active = new Map();          // midi → 同时发声计数（供高亮）
 const subs = new Set();            // 订阅者：active / settings 变化
+const stopSubs = new Set();        // stop() 时通知各播放组件复位 UI
 const emit = () => subs.forEach(f => f());
 
 // 音色：谐波振幅表 → PeriodicWave
 const TIMBRES = {
-  piano: { harm: [1, 0.55, 0.32, 0.18, 0.1, 0.06, 0.035, 0.02], attack: 0.004, decay: 1.6, sustain: 0, release: 0.25, bright: 5200, brightEnd: 900 },
-  organ: { harm: [1, 0.7, 0.45, 0.2, 0.25, 0, 0.12, 0.1], attack: 0.02, decay: 0.1, sustain: 0.75, release: 0.12, bright: 4500, brightEnd: 4500 },
-  sine: { harm: [1], attack: 0.015, decay: 0.2, sustain: 0.8, release: 0.15, bright: 20000, brightEnd: 20000 },
+  // bright / brightEnd：低通截止频率相对基频的倍数（随音高跟踪，高音不会更刺耳），上限 maxHz
+  piano: { harm: [1, 0.42, 0.2, 0.1, 0.05, 0.025, 0.012], attack: 0.008, decay: 1.6, sustain: 0, release: 0.28, bright: 7, brightEnd: 2.2, maxHz: 4200 },
+  organ: { harm: [1, 0.6, 0.35, 0.15, 0.18, 0, 0.08, 0.06], attack: 0.02, decay: 0.1, sustain: 0.75, release: 0.12, bright: 8, brightEnd: 8, maxHz: 4000 },
+  sine: { harm: [1], attack: 0.015, decay: 0.2, sustain: 0.8, release: 0.15, bright: 60, brightEnd: 60, maxHz: 20000 },
 };
 export const TIMBRE_LABELS = { piano: "钢琴", organ: "风琴", sine: "正弦" };
 
@@ -47,14 +49,15 @@ export function later(fn, ms) { const t = setTimeout(() => { timers.delete(t); f
 const mark = (midi, d) => { const n = (active.get(midi) || 0) + d; n > 0 ? active.set(midi, n) : active.delete(midi); emit(); };
 
 // 播放一个音。at：相对现在的秒数；dur：时值（秒）；ref：纯律参照音
-function voice(midi, at, dur, { velocity = 0.8, ref = 60, tuning = settings.tuning, timbre = settings.timbre } = {}) {
+function voice(midi, at, dur, { velocity = 0.8, ref = 60, tuning = settings.tuning, timbre = settings.timbre, gain } = {}) {
   const T = TIMBRES[timbre] || TIMBRES.piano, t0 = ctx.currentTime + at;
   const osc = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
   osc.setPeriodicWave(waves[timbre] || waves.piano);
-  osc.frequency.value = freq(midi, tuning, ref);
-  lp.type = "lowpass"; lp.frequency.setValueAtTime(T.bright, t0);
-  lp.frequency.exponentialRampToValueAtTime(T.brightEnd, t0 + T.decay + 0.01);
-  const peak = 0.22 * velocity, sus = Math.max(peak * T.sustain, 0.0001), end = t0 + dur;
+  const f = freq(midi, tuning, ref); osc.frequency.value = f;
+  lp.type = "lowpass"; lp.Q.value = 0.5;
+  lp.frequency.setValueAtTime(Math.min(T.maxHz, f * T.bright), t0);
+  lp.frequency.exponentialRampToValueAtTime(Math.min(T.maxHz, Math.max(f * T.brightEnd, 300)), t0 + T.decay + 0.01);
+  const peak = 0.22 * velocity * (gain ?? 1), sus = Math.max(peak * T.sustain, 0.0001), end = t0 + dur;
   g.gain.setValueAtTime(0.0001, t0);
   g.gain.exponentialRampToValueAtTime(peak, t0 + T.attack);
   g.gain.exponentialRampToValueAtTime(sus, t0 + T.attack + T.decay);
@@ -68,9 +71,11 @@ function voice(midi, at, dur, { velocity = 0.8, ref = 60, tuning = settings.tuni
 }
 
 // 播放一组音。arp：琶音间隔（秒，0 为同时）
+// 同时发声的音越多，每个音越轻（÷√n），和弦整体响度接近单音，不会挤爆压缩器
 export function play(notes, { dur = 1.4, arp = 0, at = 0, ...o } = {}) {
   ensure();
-  [].concat(notes).forEach((m, i) => voice(m, at + i * arp, dur - i * arp > 0.3 ? dur - i * arp : 0.3, o));
+  const ns = [].concat(notes), gain = o.gain ?? 1 / Math.sqrt(Math.max(1, ns.length) / 1.5 > 1 ? ns.length / 1.5 : 1);
+  ns.forEach((m, i) => voice(m, at + i * arp, dur - i * arp > 0.3 ? dur - i * arp : 0.3, { ...o, gain }));
 }
 
 // 依次播放若干步：steps = [{ notes:[midi], dur?, arp? }]；onStep(i) 在每步开始时回调（i = -1 表示结束）
@@ -92,7 +97,10 @@ export function stop() {
   timers.forEach(clearTimeout); timers.clear();
   voices.forEach(v => { try { v.stop(); } catch { /* 已停止 */ } }); voices.clear();
   active.clear(); emit();
+  stopSubs.forEach(f => f());
 }
+// 订阅「全部停止」（如 SoundBar 的 ■），返回取消订阅函数；组件用它复位自己的播放状态
+export const onStop = f => (stopSubs.add(f), () => stopSubs.delete(f));
 
 export const getSettings = () => settings;
 export function setSettings(patch) {

@@ -22,14 +22,20 @@ import { Play, SoundBar, Keyboard, PitchCircle, IntervalLab, Tonnetz, EarQuiz, N
 | `<Keyboard/>` | 可弹的钢琴键盘 | `from to` 音域 · `highlight` · `marks={{60:"根"}}` · `onNote(midi)` · `names="white"|"C"|"all"` |
 | `<PitchCircle/>` | 十二音循环圈：选步长画多边形/星形、播放循环、半音阶⇄五度圈排列动画 | `step` `steps` `start` `arrange="chromatic"|"fifths"` `lockArrange` |
 | `<IntervalLab/>` | 音程实验台：点两个键→半音数、音程名、旋律/和声试听、转位 | `from to lo hi` |
-| `<Tonnetz/>` | 网格图（横向纯五度、右上大三度、左上小三度；朝上三角大三=红，朝下小三=蓝）。点交点听音、点三角听和弦，选中后可「只动三音」大小互换 | `cols rows center unit` · `path={["C","F","G"]}` `current` 画和弦路线 · `compact` 隐藏说明栏 · `highlight={["C","Em"]}`（每个和弦只标离中心最近的一处）· `notes={[0,2,4]}` 标出音级集合 · `axes={["fifths","M3","m3"]}` · `showAxesToggle` · `select="M0"` · `spell="flat"|"sharp"|"both"` · `onChord(name)` |
-| `<Score/>` | **五线谱**（abcjs 渲染 ABC 记谱）。▶ 播放时音符同步变红；点任意音符/和弦单独试听 | `abc`（高音谱表正文，或含 `K:` 的完整 ABC）· `bass`（低音谱表正文 → 自动生成大谱表）· `keySig="G"`/`"Am"` · `meter="3/4"` · `unit="1/8"`（默认 1/4）· `tempo` · `caption` · `scale` |
+| `<Tonnetz/>` | 网格图（横向纯五度、右上大三度、左上小三度；朝上三角大三=红，朝下小三=蓝）。点交点听音、点三角听和弦，选中后可「只动三音」大小互换 | `cols rows center unit` · `path={["C","F","G"]}` `current` 画和弦路线 · `compact` 隐藏说明栏 · `highlight={["C","Em","B°"]}`（每个和弦只标离中心最近的一处；大小三和弦画三角，减/增等画成音点多边形；标签用你写的拼法）；路线中的七和弦画成四音形状（属七绿、大七红、小七蓝、半减七紫，同原书）· `notes={[0,2,4]}` 标出音级集合 · `axes={["fifths","M3","m3"]}` · `showAxesToggle` · `select="M0"` · `spell="flat"|"sharp"|"both"` · `onChord(name)` |
+| `<Score/>` | **谱例**：ABC 记谱，可一键在 **五线谱 ⇄ 卷帘（Piano Roll，像 Logic Pro：横轴时间、纵轴音高、左侧键盘、音符为长条）** 之间切换；该偏好全站共享（存 localStorage，所有谱例一起切换）。▶ 播放时五线谱音符变红 / 卷帘有播放头且发声音条变金；点音符或音条单独试听；`accomp` 的伴奏音在卷帘中以浅蓝条显示 | `abc`（高音谱表正文，或含 `K:` 的完整 ABC）· `bass`（低音谱表正文 → 自动生成大谱表）· `keySig="G"`/`"Am"` · `meter="3/4"` · `unit="1/8"`（默认 1/4）· `tempo` · `caption` · `scale` · `accomp`（按谱上的和弦记号自动弹柱式伴奏，适合只有旋律的谱例）|
 | `<Progression/>` | **和弦进行播放器**：和弦卡片（自动标级数）+ 播放头；速度、织体（柱式/琶音/低音+和弦）、平滑连接/原位、循环；可同步在网格上画路线、在键盘上显示按键 | `chords={["C","Am","F","G7","C/E"]}`（`/` 后为低音）· `keyName="C"`/`"Am"`（自动级数）· `roman`（自定义级数）· `bpm` · `beats`（每和弦拍数，可为数组）· `texture` · `voicing="smooth"|"close"` · `loop` · `tonnetz`（`true` 或 `{cols,rows,center}`）· `keyboard` · `title` `caption` |
 | `<EarQuiz items/>` | 听音练习：先听再选，计分 | `items=[{q, play:{chord|notes|seq, arp, melodic, gap}, options, answer, why}]` |
 | `<Narrate/>` | 「朗读本节」：浏览器语音合成读出所在 Block 的文字（跳过按钮与图） | `label` `rate`；浏览器不支持时自动隐藏 |
 
-底层（自定义图解时用）：`play(midis, {dur, arp, at})`、`sequence(steps, {gap, onStep})`、`stop()`、`useAudioState()`；
+底层（自定义图解时用）：`play(midis, {dur, arp, at})`、`sequence(steps, {gap, onStep})`、`stop()`、`onStop(fn)`（任何停止时复位自定义组件的播放状态，返回取消函数）、`later(fn, ms)`（随 stop 一起取消的计时器）、`useAudioState()`；
 乐理工具：`romanOf("G7","C")`→V7、`voiceChord("F",{prev,style:"smooth"})`、`parseNote("C#4")`、`parseChord("G7")`、`intervalName(7)`、`cycle(0, 3)`、`freq(midi, "just")`、`pcName(pc, "flat")`、`tonnetzPc(i, j)`。
+
+## 和弦符号（`chord` / `seq` / `Progression` / `highlight` 通用）
+根音 `C D♭ F# Bb`… + 类型：`m dim ° aug + 7 maj7 Δ m7 ø m7b5 dim7 °7 mM7 sus2 sus4 6 m6 5`；
+变化七和弦 `7b5 7#5 +7 7sus4 +Δ maj7#5`；高叠 `9 m9 maj9 11 m11 13 m13 maj13 7b9 7#9 7#11 7b13 7alt add9 madd9 69`；
+增六（以低音为根书写）`It+6 Fr+6 Ger+6`（如 `AbGer+6`）；后缀 `no5`；斜线和弦 `C/E`（低音单独放在下方）。类型中的 ♭/♯ 也可识别（`G7♭9`）。
+级数 `romanOf` 按字母计算（B♭ 在 C 大调为 ♭VII，F♯m 为 ♯iv）；小调中升高的 6、7 级不加升号（a 小调 G♯° = vii°）。副属等请用 `roman` 覆盖（`V7/V`）。
 
 ## ABC 记谱速查（写 `<Score>` 用）
 - 音高：`C D E F G A B` = C4–B4，`c d e …` = 高八度（C5–），`c'` 再高八度；`C,` 低八度（C3），`C,,` 再低。

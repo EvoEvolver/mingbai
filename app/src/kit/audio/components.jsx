@@ -1,21 +1,31 @@
 // 可听、可互动的音乐组件。说明见 framework/spec/AUDIO.md
 import { useEffect, useMemo, useRef, useState } from "react";
-import { play, sequence, stop, setSettings, useAudioState, TIMBRE_LABELS } from "./engine.js";
-import { parseNote, parseNotes, parseChord, pcName, isBlack, mod12, cycle, cycleCount, intervalName, tonnetzPc, triadName } from "./theory.js";
+import { play, sequence, stop, onStop, setSettings, useAudioState, TIMBRE_LABELS } from "./engine.js";
+import { parseNote, parseNotes, parseChord, triadCore, pcName, isBlack, mod12, cycle, cycleCount, intervalName, tonnetzPc, triadName } from "./theory.js";
 import "./audio.css";
 
 // 统一把 notes / chord / seq 转成播放步骤
-function toSteps({ notes, chord, seq, octave = 4 }) {
-  // seq 的每一项：含八度数字的视为音（"C4 E4"），否则视为和弦符号（"Am"）
-  if (seq) return [].concat(seq).map(s => ({ notes: /\d/.test(s) && !/^[A-G][#♯b♭]?(7|6|5|maj7|m7|M7|m6|dim7|°7|mM7|sus[24])$/.test(s) ? parseNotes(s) : parseChord(s, octave).notes }));
-  if (chord) return [{ notes: parseChord(chord, octave).notes }];
+// 带八度的音名，如 C4、Bb3、F#5。只认第 0–5 八度：G7、C6、G9、G13 等一律按和弦处理（这些写法在和声书里几乎总是和弦）
+const NOTE_RE = /^[A-G][#♯b♭x]*-?[0-5]$/;
+// 和弦默认音区：根音落在 F3–E4（MIDI 53–64），接近钢琴伴奏的常用音区；显式给了 octave 则按 octave
+const chordNotes = (sym, octave) => {
+  const c = parseChord(sym, octave ?? 4), shift = octave != null ? 0 : 53 + mod12(c.root - 53) - c.root;
+  const ns = c.notes.map(n => n + shift); return c.bass != null ? [c.bass + shift, ...ns] : ns;
+};
+function toSteps({ notes, chord, seq, octave }) {
+  // seq 的每一项：全由「带八度音名」组成的视为一组音（"C4 E4"），否则视为和弦符号（"Am"、"Bm7b5"、"C/E"）
+  if (seq) return [].concat(seq).map(s => ({ notes: String(s).trim().split(/\s+/).every(t => NOTE_RE.test(t)) ? parseNotes(s) : chordNotes(s, octave) }));
+  if (chord) return [{ notes: chordNotes(chord, octave) }];
   return [{ notes: parseNotes(notes) }];
 }
+// 复位钩子：任何 stop()（包括 SoundBar 的 ■）都会调用 fn
+function useOnStop(fn) { const r = useRef(fn); r.current = fn; useEffect(() => onStop(() => r.current()), []); }
 
 // ▶ 行内播放钮。<Play chord="C">C 和弦</Play>、<Play notes="C4 G4">纯五度</Play>、<Play seq={["C","Am","F","G"]} gap={0.9}/>
 // arp：琶音间隔秒数（单个和弦时有效）；melodic：把 notes 逐个弹出
 export function Play({ notes, chord, seq, arp = 0, melodic, gap = 0.6, octave, children, title }) {
   const [on, setOn] = useState(false);
+  useOnStop(() => setOn(false));
   const go = e => {
     e.stopPropagation();
     let steps = toSteps({ notes, chord, seq, octave });
@@ -77,6 +87,7 @@ export function PitchCircle({ step: step0 = 1, steps = [1, 2, 3, 4, 5, 6, 7], st
   const [step, setStep] = useState(step0), [start, setStart] = useState(start0);
   const [target, setTarget] = useState(arrange === "fifths" ? 1 : 0), [mix, setMix] = useState(target);
   const [cur, setCur] = useState(-1);
+  useOnStop(() => setCur(-1));
   const { active } = useAudioState();
   const raf = useRef();
   useEffect(() => {   // 排列切换动画
@@ -184,15 +195,33 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
   }
   const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y), pad = 26;
   const vb = [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad];
-  const hlSet = new Set(highlight.map(s => { const c = parseChord(s); return (c.notes[1] - c.root === 3 ? "m" : "M") + mod12(c.root); }));
+  const hlParsed = highlight.map(sym => ({ sym, c: parseChord(sym) }));
+  const hlSet = new Set(hlParsed.filter(h => triadCore(h.c)).map(h => (triadCore(h.c).minor ? "m" : "M") + mod12(h.c.root)));
+  const hlName = Object.fromEntries(hlParsed.filter(h => triadCore(h.c)).map(h => [(triadCore(h.c).minor ? "m" : "M") + mod12(h.c.root), h.sym]));
   // 每个高亮和弦只标出离网格中心最近的那一处（同一和弦在网格上会周期性重复）
   const cx0 = (Math.min(...xs) + Math.max(...xs)) / 2, cy0 = (Math.min(...ys) + Math.max(...ys)) / 2;
   const dist = t => ((t.pts[0].x + t.pts[1].x + t.pts[2].x) / 3 - cx0) ** 2 + ((t.pts[0].y + t.pts[1].y + t.pts[2].y) / 3 - cy0) ** 2;
   const hlKeys = new Set([...hlSet].map(k => tris.filter(t => (t.minor ? "m" : "M") + t.root === k).sort((a, b) => dist(a) - dist(b))[0]?.key));
   const activePc = new Set([...active].map(mod12)), notesSet = notes ? new Set(notes.map(mod12)) : null;
-  const voicing = t => { const r = 60 + t.root; return [r, r + (t.minor ? 3 : 4), r + 7]; };
+  const voicing = t => { const r = 53 + mod12(t.root - 53); return [r, r + (t.minor ? 3 : 4), r + 7]; };   // 根音落在 F3–E4
   const clickTri = t => { play(voicing(t), { arp: 0.04, dur: 1.6 }); setSel(t.key); onChord && onChord(triadName(t.root, t.minor, spell)); };
   const selT = tris.find(t => t.key === sel) || (select && tris.filter(t => (t.minor ? "m" : "M") + t.root === select).sort((a, b) => dist(a) - dist(b))[0]);
+  // 七和弦等：三和弦之外的音，取离三角形中心最近的交点（与三角形一起画成四音形状）
+  const extraNodes = (c, pts, x, y) => c.notes.slice(3).map(m => nodes.filter(n => n.pc === mod12(m) && !pts.includes(n))
+    .sort((a, b) => (a.x - x) ** 2 + (a.y - y) ** 2 - (b.x - x) ** 2 - (b.y - y) ** 2)[0]).filter(Boolean);
+  // 七和弦配色（同原书）：属七绿、大七红、小七蓝、半减七紫；其他非三和弦金色
+  const kindOf = c => { const iv = c.notes.map(n => n - c.root).join(",");
+    return { "0,4,7,10": "dom7", "0,4,7,11": "maj7", "0,3,7,10": "min7", "0,3,6,10": "hdim7" }[iv] || "other"; };
+  // 非大小三和弦的高亮（减、增、挂留等）：取离中心最近的各音交点
+  const hlOther = hlParsed.filter(h => !triadCore(h.c)).map(h => {
+    const ns = h.c.notes.map(m => nodes.filter(n => n.pc === mod12(m)).sort((a, b) => (a.x - cx0) ** 2 + (a.y - cy0) ** 2 - (b.x - cx0) ** 2 - (b.y - cy0) ** 2)[0]).filter(Boolean);
+    return { sym: h.sym, nodes: ns, x: ns.reduce((a, n) => a + n.x, 0) / ns.length, y: ns.reduce((a, n) => a + n.y, 0) / ns.length };
+  });
+  const hull = pts => { const p = [...pts].sort((a, b) => a.x - b.x || a.y - b.y); if (p.length < 3) return p;
+    const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x), lo = [], up = [];
+    for (const q of p) { while (lo.length > 1 && cross(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+    for (const q of p.slice().reverse()) { while (up.length > 1 && cross(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+    return lo.slice(0, -1).concat(up.slice(0, -1)); };
   // 和弦路径：大/小三和弦（含以其为核心的七和弦）取离上一站最近的三角形；其他和弦（减、增等）取离上一站最近的各音交点
   const route = useMemo(() => {
     if (!path) return [];
@@ -200,16 +229,16 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
     let px = cx0, py = cy0, ax = null, ay = null; const out = [];
     const cost = (x, y) => Math.hypot(x - px, y - py) + (ax === null ? 0 : 0.8 * Math.hypot(x - ax, y - ay));
     for (const sym of path) {
-      const c = parseChord(sym), iv = c.notes.map(n => n - c.root), root = mod12(c.root);
-      const tri = (iv[1] === 3 || iv[1] === 4) && iv[2] === 7 ? tris.filter(t => t.root === root && t.minor === (iv[1] === 3)) : [];
+      const c = parseChord(sym), root = mod12(c.root), core = triadCore(c);
+      const tri = core && c.notes.length >= 3 ? tris.filter(t => t.root === root && t.minor === core.minor) : [];
       let item;
       if (tri.length) {
         const ctr = t => [(t.pts[0].x + t.pts[1].x + t.pts[2].x) / 3, (t.pts[0].y + t.pts[1].y + t.pts[2].y) / 3];
         const t = tri.sort((a, b) => cost(...ctr(a)) - cost(...ctr(b)))[0];
-        const [x, y] = ctr(t); item = { sym, tri: t.key, x, y, nodes: t.pts };
+        const [x, y] = ctr(t); item = { sym, tri: t.key, x, y, nodes: t.pts, extra: extraNodes(c, t.pts, x, y), kind: kindOf(c) };
       } else {
         const ns = c.notes.map(m => nodes.filter(n => n.pc === mod12(m)).sort((a, b) => cost(a.x, a.y) - cost(b.x, b.y))[0]).filter(Boolean);
-        item = { sym, nodes: ns, x: ns.reduce((a, n) => a + n.x, 0) / ns.length, y: ns.reduce((a, n) => a + n.y, 0) / ns.length };
+        item = { sym, nodes: ns, x: ns.reduce((a, n) => a + n.x, 0) / ns.length, y: ns.reduce((a, n) => a + n.y, 0) / ns.length, kind: kindOf(c) };
       }
       out.push(item); px = item.x; py = item.y; if (ax === null) { ax = item.x; ay = item.y; }
     }
@@ -234,13 +263,18 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
       })}
       {tris.filter(t => hlKeys.has(t.key) || (selT && selT.key === t.key)).map(t => {
         const cx = (t.pts[0].x + t.pts[1].x + t.pts[2].x) / 3, cy = (t.pts[0].y + t.pts[1].y + t.pts[2].y) / 3;
-        return <text key={"l" + t.key} x={cx} y={cy + 5} className="au-tlabel">{triadName(t.root, t.minor, spell)}</text>;
+        return <text key={"l" + t.key} x={cx} y={cy + 5} className="au-tlabel">{(hlKeys.has(t.key) && hlName[(t.minor ? "m" : "M") + t.root]) || triadName(t.root, t.minor, spell)}</text>;
       })}
       {nodes.flatMap(n => [[1, 0], [0, 1], [-1, 1]].map(([di, dj], k) => {
         const m = at(n.i + di, n.j + dj); if (!m) return null;
         const axis = ["fifths", "M3", "m3"][k], on = ax.includes(axis);
         return <line key={n.i + "," + n.j + k} x1={n.x} y1={n.y} x2={m.x} y2={m.y} className={"au-edge e" + k + (on ? " on" : "")} style={on ? { stroke: AX[axis].col } : null} />;
       }))}
+      {route.map((r, k) => r.extra && r.extra.length > 0 && (k === current || current < 0) &&
+        <polygon key={"x" + k} points={hull([...r.nodes, ...r.extra]).map(n => n.x + "," + n.y).join(" ")} className={"au-seventh " + r.kind} />)}
+      {hlOther.map((h, k) => <g key={"o" + k}>
+        <polygon points={hull(h.nodes).map(n => n.x + "," + n.y).join(" ")} className="au-chordpoly" />
+        <text x={h.x} y={h.y + 4} className="au-tlabel dark">{h.sym}</text></g>)}
       {route.length > 1 && <polyline points={route.map(r => r.x + "," + r.y).join(" ")} className="au-route" />}
       {route.map((r, k) => {   // 同一位置的多站合并为一个标记（如 1·4）；当前站显示和弦名
         const same = route.map((q, m) => (q.x === r.x && q.y === r.y ? m : -1)).filter(m => m >= 0);
@@ -253,7 +287,7 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
       })}
       {nodes.map(n => {
         const on = activePc.has(n.pc), dim = notesSet && !notesSet.has(n.pc), inSel = selT && selT.pts.some(p => p === n);
-        return <g key={n.i + "," + n.j} className="au-node" onClick={() => play([60 + n.pc], { dur: 1 })} opacity={dim ? 0.3 : 1}>
+        return <g key={n.i + "," + n.j} className="au-node" onClick={() => play([60 + n.pc], { dur: 1 })} opacity={dim && !on ? 0.3 : 1}>
           <circle cx={n.x} cy={n.y} r={on ? 15 : notesSet && !dim ? 14 : 12} className={"au-tn" + (on ? " on" : "") + (notesSet && !dim ? " mark" : "")} />
           <text x={n.x} y={n.y + 4} className={"au-nname" + (on ? " on" : "") + (isBlack(n.pc) ? " sm" : "")}>{pcName(n.pc, spell)}</text>
           {inSel && <text x={n.x} y={n.y - 17} className="au-role">{roleOf(selT, n.pc)}</text>}
