@@ -10,7 +10,8 @@
    "problem_prefix": "P",                    章末习题在 JSX 中的编号前缀：<Exercise n="P5.1">
    "inline_exercise": "Exercise",            正文中的 "Exercise 5.1." → <Exercise n="5.1">
    "statements": {"Definition": "D", ...},   正文中的 "Definition 5.1." → <Stmt id="D5.1">
-   "examples": "Example"}                    正文中的 "Example 5.1." → <Box kind="example" n="5.1">
+   "examples": "Example",                    正文中的 "Example 5.1." → <Box kind="example" n="5.1">
+   "eq_regex": "…"}                          文字层中公式编号的正则（一个捕获组），缺省为 (章.号)
 """
 import json, re, sys, os
 book, cid = sys.argv[1], sys.argv[2]
@@ -32,9 +33,10 @@ cfg = json.load(open(cfg_path)) if os.path.exists(cfg_path) else {}
 # 正文与习题分开（习题部分的公式编号形如 (2.xx) 也算本章）
 ex_split = re.split(rf"\n\s*{re.escape(cfg.get('problems_heading', 'Exercises'))}\s*\n", text, maxsplit=1)
 body, exer = (ex_split + [""])[:2]
-eq_book = set(re.findall(rf"\(({P}\.\d+[a-z]?)\)\s*$", text, re.M))
+eq_book = set(re.findall(cfg["eq_regex"] if cfg.get("eq_regex") else rf"\(({P}\.\d+[a-z]?)\)\s*$", text, re.M))   # check.json 的 eq_regex 可覆盖编号格式
 eq_jsx = set(re.findall(r'<Eq\b[^>]*\bn="([^"]+)"', jsx))
-fig_book = {f["num"] for f in json.load(open(os.path.join(book, "public/figures/figures.json"))) if f["num"].split(".")[0] == prefix}
+_fj = os.path.join(book, "public/figures/figures.json")
+fig_book = {f["num"] for f in json.load(open(_fj)) if f["num"].split(".")[0] == prefix} if os.path.exists(_fj) else set()
 fig_jsx = set(re.findall(r'<Figure\b[^>]*\bn="([^"]+)"', jsx))
 PP = cfg.get("problem_prefix", "")
 ex_book = {PP + x for x in re.findall(rf"^\s*({P}\.\d+)\.?\s", exer, re.M)} if exer else set()
