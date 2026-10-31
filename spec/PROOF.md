@@ -19,6 +19,8 @@ export default { kind: "textbook", statements: STMTS, /* 可选 */ statementKind
 多 agent 并行写不同章节时，用**每章一份登记表** `chapters/_<章>_stmts.js`（`export const S = {…}`），在 book.js 里合并：
 `import { S as S05 } from "./chapters/_ch05_stmts.js"; … statements: { ...S01, ...S05, … }`（范例：`/home/zijian/books/nakahara/book.js`）。
 
+⚠ 登记表用 ``R`…` ``（String.raw）书写时，`${` 会被 JS 当成插值——LaTeX 里不要让 `$` 紧跟 `{`（如 `${}^{-1}` 应写成 `$(\cdot)^{-1}$`）。登记表被 book.js 直接导入，一处语法错误会让整本书都无法构建；`check.sh` 会先做语法检查。
+
 每条陈述以 id 为键（如 `L2.1 P3.2 D4.2 T5.1`；未编号但在证明链上起作用的论断可用 `F:…`，外部引用 `X:…`，推论 `C:…`）：
 
 | 字段 | 含义 |
