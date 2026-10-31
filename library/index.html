@@ -34,9 +34,7 @@ h1{font-family:var(--serif);font-size:clamp(40px,6vw,64px);margin:6px 0 4px}
 .en{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px}
 .author{font-size:14px;color:var(--muted)}
 .intro{font-size:14.5px;margin:6px 0 4px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-.prog{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-top:auto;padding-top:8px}
-.bar{flex:1;height:6px;border-radius:99px;background:var(--paper2);overflow:hidden}.bar i{display:block;height:100%;background:var(--k)}
-.chs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chs{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px}
 .chs a{font-size:12.5px;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:1px 8px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .chs a:hover{border-color:var(--k);color:var(--k)}
 .chs a.off{opacity:.45;pointer-events:none}
@@ -71,7 +69,6 @@ let BOOKS = [], kind = "*";
 
 function chapterLabel(c) { return /^\d+$/.test(String(c.no)) ? (c.no === 0 ? c.title_zh : `${c.no} ${c.title_zh}`) : `${c.no} ${c.title_zh}`; }
 function card(b) {
-  const total = b.chapters.length, ready = b.chapters.filter(c => c.ready).length;
   const chs = b.chapters.map(c => `<a class="${c.ready ? "" : "off"}" href="${esc(b.slug)}/${esc(c.id)}/" title="${esc(strip(c.one_liner || c.title_en))}">${esc(chapterLabel(c))}</a>`).join("");
   return `<article class="book k-${esc(b.kind)}">
     <div class="spine"></div>
@@ -82,7 +79,6 @@ function card(b) {
       <div class="author">${esc(b.author || "")}${b.subtitle ? " · " + esc(strip(b.subtitle)) : ""}</div>
       <div class="intro">${esc(strip(b.intro))}</div>
       <div class="chs">${chs}</div>
-      <div class="prog"><span>已完成 ${ready} / ${total} 章</span><span class="bar"><i style="width:${total ? ready / total * 100 : 0}%"></i></span></div>
     </div>
     <div class="b-foot">
       <a class="btn" href="${esc(b.slug)}/">进入书架</a>
@@ -100,7 +96,7 @@ fetch("library.json").then(r => r.json()).then(lib => {
   BOOKS = lib.books;
   const ch = BOOKS.reduce((n, b) => n + b.chapters.filter(c => c.ready).length, 0);
   document.getElementById("stats").innerHTML =
-    `<div class="stat"><b>${BOOKS.length}</b><small>本书</small></div><div class="stat"><b>${ch}</b><small>个已完成的章节页</small></div>` +
+    `<div class="stat"><b>${BOOKS.length}</b><small>本书</small></div><div class="stat"><b>${ch}</b><small>个章节</small></div>` +
     Object.keys(KIND).filter(k => BOOKS.some(b => b.kind === k)).map(k => `<div class="stat"><b>${BOOKS.filter(b => b.kind === k).length}</b><small>${KIND[k]}</small></div>`).join("");
   const kinds = ["*", ...Object.keys(KIND).filter(k => BOOKS.some(b => b.kind === k))];
   const box = document.getElementById("kinds");
