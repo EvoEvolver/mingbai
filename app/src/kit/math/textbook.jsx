@@ -14,7 +14,7 @@ import { KeyEquations, Notation } from "./env.jsx";
 // groups / concepts / relations: 核心物理概念（与人文版同一格式，可用 <ConceptGrid/>、<ConceptMap/>、<C id>）
 export function TextbookPage({ meta: m, notation = [], groups, concepts, relations, children, keyEquations = true }) {
   useEffect(() => { document.title = `${m.no ? m.no + " " : ""}${m.title_zh || m.title_en} · ${book.title}`; }, [m]);
-  const label = /^\d+$/.test(String(m.no)) ? `第 ${m.no} 章` : `附录 ${m.no}`;
+  const label = m.label ?? book.chapters?.find(c => c.id === m.id)?.label ?? (/^\d+$/.test(String(m.no)) ? `第 ${m.no} 章` : `附录 ${m.no}`);   // label 可覆盖（如“第 I 章补充”）
   return (
     <ChapterProvider meta={m} groups={groups} concepts={concepts} relations={relations}>
       <TextbookProvider chapterId={m.id} notation={notation}>
@@ -24,7 +24,7 @@ export function TextbookPage({ meta: m, notation = [], groups, concepts, relatio
         <main className="tb">
           <header className="tb-hero" id="b-top" data-toc="本章概览">
             <div className="kicker">{book.author} · {book.title} · {label}{m.pages ? ` · 原书 pp. ${m.pages}` : ""}</div>
-            <h1><span className="tb-chno">{m.no}</span>{m.title_zh || m.title_en}</h1>
+            <h1>{m.no ? <span className="tb-chno">{m.no}</span> : null}{m.title_zh || m.title_en}</h1>
             {m.title_zh && <div className="en">{m.title_en}</div>}
             {m.one_liner && <div className="one"><TxI>{m.one_liner}</TxI></div>}
             {m.big_question && <div className="bigq"><small>本章真正的问题</small><TxI>{m.big_question}</TxI></div>}

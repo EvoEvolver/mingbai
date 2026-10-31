@@ -201,7 +201,7 @@ export function chapterOfNum(n) {
 }
 const anchor = (kind, n) => `${kind}-${String(n).replace(/[^\w.-]/g, "_")}`;
 const hrefTo = (kind, n, here) => pageUrl(chapterOfNum(n) || here, anchor(kind, n));
-const chapterName = id => { const c = book.chapters.find(x => x.id === id); return c ? (/^\d+$/.test(String(c.no)) ? `第 ${c.no} 章` : `附录 ${c.no}`) : id; };
+const chapterName = id => { const c = book.chapters.find(x => x.id === id); return c ? c.label ?? (/^\d+$/.test(String(c.no)) ? `第 ${c.no} 章` : `附录 ${c.no}`) : id; };
 
 // ---------- 符号弹卡 ----------
 function SymbolPop({ id, x, y, top, onClose }) {
