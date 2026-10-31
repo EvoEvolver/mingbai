@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { book, modules, allConcepts, crossLinks, chapterGroups, hasChapter, pageUrl, go } from "./book.jsx";
+import { book, modules, allConcepts, crossLinks, chapterGroups, hasChapter, pageUrl, go, useLibrary } from "./book.jsx";
 import { ChapterProvider, ConceptChip } from "./core.jsx";
 import { Rich } from "./math/tex.jsx";
 
@@ -83,8 +83,9 @@ const chName = c => (c.no === 0 ? c.title_zh : `第 ${c.no} 章 · ${c.title_zh}
 
 // 固定顶栏：返回书架 + 章节跳转下拉 + 上一章/下一章。向下滚动时收起，向上滚动时出现。
 export function TopBar({ id }) {
-  const i = book.chapters.findIndex(c => c.id === id);
-  const prev = book.chapters[i - 1], next = book.chapters[i + 1];
+  const i = id ? book.chapters.findIndex(c => c.id === id) : -1;
+  const prev = i >= 0 ? book.chapters[i - 1] : null, next = i >= 0 ? book.chapters[i + 1] : null;
+  const lib = useLibrary();
   const [hidden, setHidden] = useState(false);
   useEffect(() => {
     let last = scrollY;
@@ -94,15 +95,20 @@ export function TopBar({ id }) {
   }, []);
   return (
     <div className={"topbar" + (hidden ? " hide" : "")}>
-      <a className="tb-home" href={pageUrl(null)} title="返回书架">← <b>{book.title}</b><span> · 全部章节</span></a>
-      <select className="tb-jump" value={id} onChange={e => go(e.target.value)} aria-label="跳转章节">
-        {book.chapters.map(c => <option key={c.id} value={c.id}>{chName(c)}</option>)}
+      {lib && <a className="tb-lib" href={lib} title="返回书库">📚 书库</a>}
+      {lib && <span className="tb-sep">›</span>}
+      {id
+        ? <a className="tb-home" href={pageUrl(null)} title="返回本书书架">{lib ? "" : "← "}<b>{book.title}</b><span> · 全部章节</span></a>
+        : <span className="tb-home tb-cur"><b>{book.title}</b></span>}
+      <select className="tb-jump" value={id || ""} onChange={e => go(e.target.value)} aria-label="跳转章节">
+        {!id && <option value="" disabled>跳到章节…</option>}
+        {book.chapters.filter(c => hasChapter(c.id)).map(c => <option key={c.id} value={c.id}>{chName(c)}</option>)}
         {hasChapter("connections") && <option value="connections">🧭 全书脉络</option>}
       </select>
-      <span className="tb-nav">
-        {prev ? <a href={pageUrl(prev.id)} title={chName(prev)}>← 上一章</a> : <span />}
-        {next ? <a href={pageUrl(next.id)} title={chName(next)}>下一章 →</a> : <span />}
-      </span>
+      {id && <span className="tb-nav">
+        {prev && hasChapter(prev.id) ? <a href={pageUrl(prev.id)} title={chName(prev)}>← 上一章</a> : <span />}
+        {next && hasChapter(next.id) ? <a href={pageUrl(next.id)} title={chName(next)}>下一章 →</a> : <span />}
+      </span>}
     </div>);
 }
 

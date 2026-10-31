@@ -606,3 +606,8 @@ foreignObject.dim{opacity:.25}
 .hook .ref,.hook .sref,.bridge .ref,.bridge .sref{color:#f3d48a;border-bottom-color:#f3d48a}
 .study th:nth-child(2),.study td:nth-child(2){min-width:24em}
 .study th:nth-child(4),.study td:nth-child(4){min-width:8em}
+/* 顶栏：书库入口与层级 */
+.tb-lib{text-decoration:none;color:#fff;background:var(--accent);border-radius:99px;padding:5px 14px;font-size:14.5px;white-space:nowrap;box-shadow:var(--shadow)}
+.tb-lib:hover{background:#7d2218}
+.tb-sep{color:var(--muted);margin:0 -6px;font-size:18px}
+.tb-home.tb-cur{box-shadow:none;background:none;padding-left:4px}

@@ -3,19 +3,22 @@
 #   <OUT>/index.html          书库首页（framework/library/index.html）
 #   <OUT>/library.json        书目汇总（由各书 dist/book.json 合并）
 #   <OUT>/<书>/…              各书站点（原样复制自 <书>/dist）
-# 用法: framework/build-library.sh [--build] [书目录名…]
-#   --build  先用当前框架重新构建这些书（否则直接使用现有的 <书>/dist）
-#   书目录名  缺省时读取 library/books.txt（每行一个，决定排列顺序），再缺省则为所有含 book.js 的目录
+# 用法: framework/build-library.sh [--build [书目录名…]]
+#   --build          先用当前框架重新构建：给出书目录名则只构建这些书，否则构建书库中的全部书
+#   书库收录哪些书、按什么顺序：library/books.txt（每行一个；# 开头为注释），缺省为所有含 book.js 的目录
 # 输出目录：环境变量 OUT，缺省 <仓库>/library/dist。纯静态，可直接部署（GitHub Pages、serve.py library <端口>）。
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-BUILD=0; books=()
-for a in "$@"; do if [ "$a" = "--build" ]; then BUILD=1; else books+=("$a"); fi; done
-if [ ${#books[@]} -eq 0 ] && [ -f "$ROOT/library/books.txt" ]; then
+BUILD=0; rebuild=()
+for a in "$@"; do if [ "$a" = "--build" ]; then BUILD=1; else rebuild+=("$a"); fi; done
+books=()
+if [ -f "$ROOT/library/books.txt" ]; then
   while read -r b; do [ -n "$b" ] && [ "${b#\#}" = "$b" ] && books+=("$b"); done < "$ROOT/library/books.txt"
 fi
 if [ ${#books[@]} -eq 0 ]; then for d in "$ROOT"/*/book.js; do books+=("$(basename "$(dirname "$d")")"); done; fi
-[ $BUILD -eq 1 ] && "$ROOT/framework/build-all.sh" "${books[@]}"
+if [ $BUILD -eq 1 ]; then
+  if [ ${#rebuild[@]} -gt 0 ]; then "$ROOT/framework/build-all.sh" "${rebuild[@]}"; else "$ROOT/framework/build-all.sh" "${books[@]}"; fi
+fi
 
 OUT=${OUT:-$ROOT/library/dist}
 rm -rf "$OUT"; mkdir -p "$OUT"

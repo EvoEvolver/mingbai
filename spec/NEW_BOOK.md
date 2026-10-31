@@ -24,11 +24,11 @@
    ```
    用 `node /home/zijian/books/framework/tools/pw/shot.mjs <url> <out.png>` 抽查几章（先 `python3 -m http.server <port> -d <slug>/dist &` 起临时服务，用完 kill 掉）。
 4. **（可选，推荐）全书脉络**：再开一个 subagent 写 `chapters/connections.jsx`：`export const links=[{from:"ch02:<概念id>",to:"ch05:<概念id>",label,note}]`（各章节页会自动出现"跨章联系"区块），`export default` 用 `BookPage` 组织页面（`<C id="chNN:id">` 跨章引用，`<ConceptMap edges={links}>` 画跨章关系图）。参考 `framework/app/src/kit/layout.jsx` 里的 `BookPage`。
-5. **发布**：
+5. **发布到书库**：把书目录名加进 `/home/zijian/books/library/books.txt`（决定在书库中的位置），然后运行
    ```bash
-   treer app create --machine alienware_linux --name <slug> --cwd books --port <端口> /usr/bin/python3 -- -I framework/serve.py <slug> <端口>
+   /home/zijian/books/framework/build-library.sh --build <slug>   # 只重建这本书；书库会重新组装（其他书用现有构建产物）
    ```
-   之后更新内容只需重新 build（`serve.py` 直接提供 `<slug>/dist`）。记下 `public_url`。
+   书库由 treer app `book-library` 提供服务，无需为单本书新建 app。书的地址是 `<书库>/<slug>/`。
 6. 交付报告：网址、章节列表、各章专属图解、存疑之处。
 
 

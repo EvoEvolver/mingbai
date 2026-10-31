@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { book, available, data } from "virtual:book";
 
 // 全书层面的数据与链接工具（多页静态站点）。
@@ -33,6 +34,20 @@ export function legacyHashUrl(h) {
   return pageUrl(m[1] || null, m[2] ? decodeURIComponent(m[2]) : "");
 }
 export const go = (id, anchor) => { location.href = pageUrl(id, anchor); };
+
+// 是否部署在书库中（书的上一级目录有 library.json）。返回书库首页的相对链接，否则 null。
+let libProbe = null;
+export function useLibrary() {
+  const base = (PAGE ? "../" : "./") + "../";
+  const [href, setHref] = useState(null);
+  useEffect(() => {
+    libProbe ??= fetch(base + "library.json", { method: "HEAD" })
+      .then(r => r.ok && /json/.test(r.headers.get("content-type") || "json"))
+      .catch(() => false);
+    libProbe.then(ok => ok && setHref(base));
+  }, []);
+  return href;
+}
 
 export const chapterLabel = c => (c.no === 0 ? c.title_zh : `第 ${c.no} 章 · ${c.title_zh}`);
 
