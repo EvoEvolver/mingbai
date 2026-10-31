@@ -614,3 +614,4 @@ foreignObject.dim{opacity:.25}
 /* 悬浮预览（portal + fixed 定位，见 HoverPop） */
 .ref-pop.floating{position:fixed;transform:none;bottom:auto;z-index:300;max-width:min(640px,92vw)}
 .sref-pop.floating{max-width:min(560px,92vw)}
+.tb-box{scroll-margin-top:64px}

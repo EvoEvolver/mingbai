@@ -46,11 +46,12 @@ const KINDS = {
   physics: ["物理图像", "💡"], warning: ["易错点", "⚠️"], aside: ["拓展", "📎"], key: ["要点", "🔑"], data: ["观测", "🔭"],
 };
 // <Box kind="physics" title="为什么光子能量随 1/a 衰减">{String.raw`...含 $公式$ 的正文...`}</Box>（children 也可为 JSX）
-export function Box({ kind = "note", title, children }) {
+// n：可选编号（如原书的 "Example 5.12" → <Box kind="example" n="5.12">），显示为「例 5.12」并生成锚点 example-5.12，可用 \\exref 之外的 pageUrl(…, "example-5.12") 链接
+export function Box({ kind = "note", title, n, children }) {
   const [label, icon] = KINDS[kind] || KINDS.note;
   return (
-    <div className={"tb-box tb-" + kind}>
-      <div className="tb-box-h">{icon} {label}{title && <>：<TxI>{title}</TxI></>}</div>
+    <div className={"tb-box tb-" + kind} id={n ? anchor(kind, n) : undefined}>
+      <div className="tb-box-h">{icon} {label}{n && <> {n}</>}{title && <>：<TxI>{title}</TxI></>}</div>
       <div className="tb-box-b">{typeof children === "string" ? <Tx>{children}</Tx> : children}</div>
     </div>);
 }

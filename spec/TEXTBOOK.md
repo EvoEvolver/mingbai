@@ -83,6 +83,7 @@ export default function Chapter(){ return <TextbookPage meta={meta} notation={no
 - `<Roadmap steps={[{ sec:"2.1", title:"膨胀的空间", gist:R`…`, gives:["2.12","2.28"], next:R`过渡：为什么接下来要…` }]}/>`
 - `<EqMap edges={[{ from:"2.20", to:"2.28", label:"代入 FLRW" }]} labels={{ "2.20":"测地线方程" }}/>`：关键方程推导图（节点自动显示公式，点击放大）。
 - `<EqChip n="2.23"/>`：小号可点击公式。
+- 原书编号的例子：`<Box kind="example" n="5.12" title="…">`（显示「例 5.12」，锚点 `example-5.12`）。定理–证明型教科书（定义/定理/证明）另见 `PROOF.md`；书目录下的 `check.json` 可让 `tb_check` 核对陈述、例子与两类习题。
 - `<Derivation title steps={[{tex, why}]} result collapsed?>`、`<Box kind="definition|result|note|example|physics|warning|aside|key|data" title>`、`<Figure n caption interactive={<Plot/>}>`、`<Plot …>`（数值工具 `num`）、`<Exercise n title level hint solution fromBook>`、`<Table>`、`<Details>`。
 
 ## 内存纪律（多个 agent 并行时必须遵守）

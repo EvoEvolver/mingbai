@@ -16,6 +16,9 @@ import { STMTS } from "./chapters/_stmts.js";
 export default { kind: "textbook", statements: STMTS, /* 可选 */ statementKinds: { … }, statementStatus: { … }, … };
 ```
 
+多 agent 并行写不同章节时，用**每章一份登记表** `chapters/_<章>_stmts.js`（`export const S = {…}`），在 book.js 里合并：
+`import { S as S05 } from "./chapters/_ch05_stmts.js"; … statements: { ...S01, ...S05, … }`（范例：`/home/zijian/books/nakahara/book.js`）。
+
 每条陈述以 id 为键（如 `L2.1 P3.2 D4.2 T5.1`；未编号但在证明链上起作用的论断可用 `F:…`，外部引用 `X:…`，推论 `C:…`）：
 
 | 字段 | 含义 |
