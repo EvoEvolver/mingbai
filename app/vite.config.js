@@ -98,6 +98,23 @@ function bookPlugin(ctx) {
 // GitHub Pages：禁用 Jekyll（否则以下划线开头的文件会被忽略）
 const nojekyll = () => ({ name: "nojekyll", generateBundle() { this.emitFile({ type: "asset", fileName: ".nojekyll", source: "" }); } });
 
+// book.json：书的基本信息与章节清单（供书库首页等外部页面读取）
+const bookJson = (book, data, ids) => ({
+  name: "book-json",
+  generateBundle() {
+    const info = {
+      slug: path.basename(BOOK), kind: book.statements ? "proof" : (book.kind || "explainer"),
+      title: book.title, title_en: book.title_en, author: book.author, subtitle: book.subtitle, intro: book.intro,
+      parts: book.parts || [],
+      chapters: (book.chapters || []).map(c => ({ id: c.id, no: c.no, title_zh: c.title_zh, title_en: c.title_en, part: c.part,
+        ready: ids.includes(c.id), one_liner: data[c.id]?.meta?.one_liner || null })),
+      connections: ids.includes("connections"),
+      built: new Date().toISOString(),
+    };
+    this.emitFile({ type: "asset", fileName: "book.json", source: JSON.stringify(info, null, 1) });
+  },
+});
+
 export default defineConfig(async () => {
   const ids = chapterIds();
   const { book, data } = await extractData(ids);
@@ -118,7 +135,7 @@ export default defineConfig(async () => {
     root: GEN,
     base: "./",
     publicDir: fs.existsSync(path.join(BOOK, "public")) ? path.join(BOOK, "public") : false,   // 书的静态资源（如 figures/）
-    plugins: [react(), bookPlugin({ book, data, ids }), nojekyll()],
+    plugins: [react(), bookPlugin({ book, data, ids }), nojekyll(), bookJson(book, data, ids)],
     resolve: { alias },
     server: { fs: { allow: [BOOK, APP] } },
     build: { outDir: process.env.OUT || path.join(BOOK, "dist"), emptyOutDir: true, rollupOptions: { input } },
