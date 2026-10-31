@@ -80,3 +80,38 @@ export function triadName(rootPc, minor, spell = "flat") {
   const n = pcName(rootPc, spell);
   return minor ? n + "m" : n;
 }
+
+// 级数记号：romanOf("G7", "C") → "V7"；romanOf("Bdim", "C") → "vii°"；小调用 "Am" 表示（自然小调音级）
+const ROM = ["I", "II", "III", "IV", "V", "VI", "VII"];
+export function romanOf(sym, key = "C") {
+  const k = String(key).match(/^([A-G][#♯b♭]?)(m?)$/); if (!k) return "";
+  const tonic = mod12(parseNote(k[1])), scale = k[2] ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
+  const c = parseChord(sym), d = mod12(c.root - tonic), iv = c.notes.map(n => n - c.root);
+  let deg = scale.indexOf(d), acc = "";
+  if (deg < 0) { const up = scale.indexOf(mod12(d + 1)); if (up >= 0) { deg = up; acc = "♭"; } else { deg = scale.indexOf(mod12(d - 1)); acc = "♯"; } }
+  const minorish = iv[1] === 3, dim = iv[1] === 3 && iv[2] === 6, aug = iv[1] === 4 && iv[2] === 8;
+  let r = ROM[deg]; if (minorish) r = r.toLowerCase();
+  const suffix = { "": "", m: "", min: "", dim: "°", "°": "°", aug: "+", "+": "+", "7": "7", maj7: "maj7", "Δ": "maj7", M7: "maj7", m7: "7", "ø": "ø7", m7b5: "ø7", dim7: "°7", "°7": "°7", sus4: "sus4", sus2: "sus2", "6": "6", m6: "6", mM7: "(maj7)" }[c.type];
+  return acc + r + (suffix ?? (dim ? "°" : aug ? "+" : ""));
+}
+
+// 和弦配置（voicing）。close：原位密集排列，根音落在 [lo, lo+11]；smooth：在所有转位中选离 prev 最近的
+export function voiceChord(sym, { prev, lo = 55, style = "close" } = {}) {
+  const c = parseChord(sym); const pcs = c.notes.map(mod12);
+  const root = lo + mod12(pcs[0] - lo);
+  const close = c.notes.map(n => n - c.root + root);
+  if (style !== "smooth" || !prev) return close;
+  let best = close, bestCost = Infinity;
+  for (let inv = 0; inv < pcs.length; inv++) {
+    for (const base of [lo - 12, lo, lo + 12]) {
+      const order = [...pcs.slice(inv), ...pcs.slice(0, inv)];
+      // 从 base 起向上依次叠放：每个音取「高于前一个音的最近同名音」
+      const v = [base + mod12(order[0] - base)];
+      for (const pc of order.slice(1)) { const last = v[v.length - 1]; v.push(last + (mod12(pc - last) || 12)); }
+      if (v[0] < lo - 7 || v[v.length - 1] > lo + 19) continue;
+      const cost = v.reduce((s, x, i) => s + Math.abs(x - (prev[i] ?? prev[prev.length - 1])), 0);
+      if (cost < bestCost) { bestCost = cost; best = v; }
+    }
+  }
+  return best;
+}

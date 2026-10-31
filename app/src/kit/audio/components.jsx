@@ -164,7 +164,8 @@ export function IntervalLab({ from = "C4", to = "B5", lo: lo0 = "C4", hi: hi0 = 
 // Tonnetz 网格图（方向与配色同《图解和声》：横向纯五度，右上大三度，左上小三度；朝上三角 = 大三和弦（红），朝下 = 小三和弦（蓝））
 // highlight：["C","Em"] 预先标出的和弦；notes：要标出的音级集合（如全音阶 [0,2,4,6,8,10]）
 // axes：显示哪些轴上的循环线 ["fifths","M3","m3"]；center：中心音；select：初始选中的和弦
-export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], notes, axes = [], showAxesToggle = false, select, spell = "flat", unit = 62, caption, onChord }) {
+// path：和弦进行（如 ["C","Am","F","G"]），在网格上画出移动路线；current：当前播放到第几个（由 Progression 驱动）；compact：不显示下方说明栏
+export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], notes, axes = [], showAxesToggle = false, select, spell = "flat", unit = 62, caption, onChord, path, current = -1, compact = false }) {
   const { active } = useAudioState();
   const [ax, setAx] = useState(axes), [sel, setSel] = useState(select || null);
   const ci = Math.floor(cols / 2) - Math.floor(rows / 4), cj = Math.floor((rows - 1) / 2);
@@ -192,6 +193,29 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
   const voicing = t => { const r = 60 + t.root; return [r, r + (t.minor ? 3 : 4), r + 7]; };
   const clickTri = t => { play(voicing(t), { arp: 0.04, dur: 1.6 }); setSel(t.key); onChord && onChord(triadName(t.root, t.minor, spell)); };
   const selT = tris.find(t => t.key === sel) || (select && tris.filter(t => (t.minor ? "m" : "M") + t.root === select).sort((a, b) => dist(a) - dist(b))[0]);
+  // 和弦路径：大/小三和弦（含以其为核心的七和弦）取离上一站最近的三角形；其他和弦（减、增等）取离上一站最近的各音交点
+  const route = useMemo(() => {
+    if (!path) return [];
+    // 代价 = 离上一站的距离 + 离起点（通常是主和弦）的距离 × 0.8：路线既连贯，又围绕主和弦展开
+    let px = cx0, py = cy0, ax = null, ay = null; const out = [];
+    const cost = (x, y) => Math.hypot(x - px, y - py) + (ax === null ? 0 : 0.8 * Math.hypot(x - ax, y - ay));
+    for (const sym of path) {
+      const c = parseChord(sym), iv = c.notes.map(n => n - c.root), root = mod12(c.root);
+      const tri = (iv[1] === 3 || iv[1] === 4) && iv[2] === 7 ? tris.filter(t => t.root === root && t.minor === (iv[1] === 3)) : [];
+      let item;
+      if (tri.length) {
+        const ctr = t => [(t.pts[0].x + t.pts[1].x + t.pts[2].x) / 3, (t.pts[0].y + t.pts[1].y + t.pts[2].y) / 3];
+        const t = tri.sort((a, b) => cost(...ctr(a)) - cost(...ctr(b)))[0];
+        const [x, y] = ctr(t); item = { sym, tri: t.key, x, y, nodes: t.pts };
+      } else {
+        const ns = c.notes.map(m => nodes.filter(n => n.pc === mod12(m)).sort((a, b) => cost(a.x, a.y) - cost(b.x, b.y))[0]).filter(Boolean);
+        item = { sym, nodes: ns, x: ns.reduce((a, n) => a + n.x, 0) / ns.length, y: ns.reduce((a, n) => a + n.y, 0) / ns.length };
+      }
+      out.push(item); px = item.x; py = item.y; if (ax === null) { ax = item.x; ay = item.y; }
+    }
+    return out;
+  }, [path && path.join(" "), cols, rows, center, unit]); // eslint-disable-line
+  const curItem = route[current];
   const AX = { fifths: { d: [1, 0], col: "#b8862b", name: "横线：纯五度循环（五度圈）" }, M3: { d: [0, 1], col: "#9b2c1f", name: "右上斜线：大三度循环（3 个音）" }, m3: { d: [-1, 1], col: "#2c4a6e", name: "左上斜线：小三度循环（4 个音）" } };
   const roleOf = (t, pc) => pc === t.root ? "根" : pc === mod12(t.root + 7) ? "五" : "三";
   return <div className="card au-tonnetz">
@@ -205,7 +229,7 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
         const isHl = hlKeys.has(t.key), isSel = selT && selT.key === t.key;
         const sounding = t.pcs.every(p => activePc.has(p));
         return <polygon key={t.key} points={t.pts.map(p => p.x + "," + p.y).join(" ")}
-          className={"au-tri " + (t.minor ? "min" : "maj") + (isHl ? " hl" : "") + (isSel ? " sel" : "") + (sounding ? " snd" : "")}
+          className={"au-tri " + (t.minor ? "min" : "maj") + (isHl ? " hl" : "") + (isSel ? " sel" : "") + (sounding ? " snd" : "") + (route.some(r => r.tri === t.key) ? " onpath" : "") + (curItem && curItem.tri === t.key ? " cur" : "")}
           onClick={() => clickTri(t)}><title>{triadName(t.root, t.minor, spell)}</title></polygon>;
       })}
       {tris.filter(t => hlKeys.has(t.key) || (selT && selT.key === t.key)).map(t => {
@@ -217,6 +241,16 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
         const axis = ["fifths", "M3", "m3"][k], on = ax.includes(axis);
         return <line key={n.i + "," + n.j + k} x1={n.x} y1={n.y} x2={m.x} y2={m.y} className={"au-edge e" + k + (on ? " on" : "")} style={on ? { stroke: AX[axis].col } : null} />;
       }))}
+      {route.length > 1 && <polyline points={route.map(r => r.x + "," + r.y).join(" ")} className="au-route" />}
+      {route.map((r, k) => {   // 同一位置的多站合并为一个标记（如 1·4）；当前站显示和弦名
+        const same = route.map((q, m) => (q.x === r.x && q.y === r.y ? m : -1)).filter(m => m >= 0);
+        if (k !== current && (same[0] !== k || same.includes(current))) return null;
+        const label = k === current ? r.sym : same.map(m => m + 1).join("·");
+        return <g key={"r" + k} className={"au-stop" + (k === current ? " cur" : "")}>
+          {!r.tri && r.nodes.length > 1 && <polygon points={r.nodes.map(n => n.x + "," + n.y).join(" ")} className="au-chordpoly" />}
+          <circle cx={r.x} cy={r.y} r={k === current ? 13 : 7 + 3 * label.length} /><text x={r.x} y={r.y + 4}>{label}</text>
+        </g>;
+      })}
       {nodes.map(n => {
         const on = activePc.has(n.pc), dim = notesSet && !notesSet.has(n.pc), inSel = selT && selT.pts.some(p => p === n);
         return <g key={n.i + "," + n.j} className="au-node" onClick={() => play([60 + n.pc], { dur: 1 })} opacity={dim ? 0.3 : 1}>
@@ -226,7 +260,7 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
         </g>;
       })}
     </svg>
-    {selT ? <div className="au-info">
+    {compact ? null : selT ? <div className="au-info">
       <b style={{ color: selT.minor ? "var(--blue)" : "var(--accent)" }}>{triadName(selT.root, selT.minor, spell)}</b>：{selT.minor ? "小三和弦（小三度 + 大三度），朝下的蓝色三角" : "大三和弦（大三度 + 小三度），朝上的红色三角"}；
       根音 {pcName(selT.root, spell)} · 三音 {pcName(selT.root + (selT.minor ? 3 : 4), spell)} · 五音 {pcName(selT.root + 7, spell)}。
       <button className="au-mini" onClick={() => { const t = tris.find(x => x.root === selT.root && x.minor !== selT.minor); if (t) clickTri(t); }}>

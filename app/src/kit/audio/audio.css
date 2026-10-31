@@ -80,3 +80,33 @@
 
 .au-narr{float:right;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:3px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--muted)}
 .au-narr:hover,.au-narr.on{color:var(--accent);border-color:var(--accent)}
+.au-tri.maj.onpath{fill:#d4574a40}.au-tri.min.onpath{fill:#5d82b340}
+.au-tri.maj.cur{fill:#d4574a}.au-tri.min.cur{fill:#5d82b3}
+.au-route{fill:none;stroke:var(--gold);stroke-width:3;stroke-dasharray:6 5;stroke-linejoin:round;pointer-events:none;opacity:.9}
+.au-stop{pointer-events:none}
+.au-stop circle{fill:#fff8e6;stroke:var(--gold);stroke-width:2;transition:r .15s}
+.au-stop text{font-size:10px;font-weight:700;text-anchor:middle;fill:#8a6215}
+.au-stop.cur circle{fill:var(--gold);stroke:#8a6215}
+.au-stop.cur text{fill:#fff;font-size:11px}
+.au-chordpoly{fill:#e8b54a55;stroke:var(--gold);stroke-width:2}
+
+/* 五线谱（Score） */
+.au-score{margin:16px 0}
+.au-abc{width:100%;overflow-x:auto}
+.au-abc svg{max-width:100%}
+.au-abc .abcjs-note,.au-abc .abcjs-rest,.au-abc .abcjs-chord{cursor:pointer}
+.au-abc .au-hl,.au-abc .au-hl path{fill:var(--accent) !important;stroke:var(--accent)}
+.au-score figcaption{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:14px;color:var(--muted);margin-top:4px}
+.au-score figcaption .au-go:disabled{opacity:.5}
+
+/* 和弦进行播放器（Progression） */
+.au-progtitle{font-family:var(--serif);font-weight:700;font-size:17px;margin-bottom:8px}
+.au-chords{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.au-chord{min-width:64px;border:2px solid #e3c9c4;background:#fcf3f1;border-radius:12px;padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;transition:all .15s}
+.au-chord.min{border-color:#c8d3e3;background:#f2f5fa}
+.au-chord b{font-size:18px;font-family:var(--serif)}
+.au-chord small{font-size:13px;color:var(--muted);font-family:var(--serif)}
+.au-chord.cur{background:var(--accent);border-color:var(--accent);color:#fff;transform:translateY(-3px)}
+.au-chord.min.cur{background:var(--blue);border-color:var(--blue)}
+.au-chord.cur small{color:#fff}
+.au-prog .au-lab input{width:90px;vertical-align:middle;accent-color:var(--accent)}

@@ -42,7 +42,8 @@ function ensure() {
   return ctx;
 }
 
-function later(fn, ms) { const t = setTimeout(() => { timers.delete(t); fn(); }, Math.max(0, ms)); timers.add(t); }
+// 排程一个 UI 回调（随 stop() 一起取消）
+export function later(fn, ms) { const t = setTimeout(() => { timers.delete(t); fn(); }, Math.max(0, ms)); timers.add(t); }
 const mark = (midi, d) => { const n = (active.get(midi) || 0) + d; n > 0 ? active.set(midi, n) : active.delete(midi); emit(); };
 
 // 播放一个音。at：相对现在的秒数；dur：时值（秒）；ref：纯律参照音
