@@ -122,7 +122,7 @@ export default defineConfig(async () => {
   fs.rmSync(GEN, { recursive: true, force: true });
   fs.mkdirSync(GEN, { recursive: true });
   const input = {};
-  fs.writeFileSync(path.join(GEN, "index.html"), html({ title: `${book.title} · 图书讲透`, desc: book.intro, page: "" }));
+  fs.writeFileSync(path.join(GEN, "index.html"), html({ title: `${book.title} · 图书讲明白`, desc: book.intro, page: "" }));
   input.index = path.join(GEN, "index.html");
   for (const id of ids) {
     const c = book.chapters.find(x => x.id === id), m = data[id]?.meta || {};

@@ -1,4 +1,4 @@
-// 图书讲透 · 组件库。章节文件统一从 "@kit" 引入。说明见 framework/spec/KIT.md
+// 图书讲明白 · 组件库。章节文件统一从 "@kit" 引入。说明见 framework/spec/KIT.md
 export { Paras, shuffle, PALETTE, useReveal, useToast, useChapter, ConceptChip, C } from "./core.jsx";
 export { ChapterPage, BookPage, Block, Hero } from "./layout.jsx";
 export { book, modules, allConcepts, chapterGroups, chapterLabel, crossLinks, pageUrl, assetUrl, currentPage, hasChapter, go } from "./book.jsx";

@@ -1,4 +1,4 @@
-# 用"图书讲透"框架做一本新书（给负责整本书的 agent）
+# 用"图书讲明白"框架做一本新书（给负责整本书的 agent）
 
 框架：`/home/zijian/books/framework`（React + Vite，组件库在 `app/src/kit`）。已上线的完整样例：福柯《词与物》`/home/zijian/books/oot/`。
 

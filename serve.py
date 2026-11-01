@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""图书讲透 静态服务：提供 <BOOK_DIR>/dist（npm run build 产物）。用法: serve.py BOOK_DIR PORT"""
+"""图书讲明白 静态服务：提供 <BOOK_DIR>/dist（npm run build 产物）。用法: serve.py BOOK_DIR PORT"""
 import sys, os, http.server, functools
 DIST = os.path.join(os.path.abspath(sys.argv[1]), "dist")
 class H(http.server.SimpleHTTPRequestHandler):

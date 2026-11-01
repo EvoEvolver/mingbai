@@ -4,7 +4,7 @@ import { Rich } from "./kit/math/tex.jsx";
 import { TopBar } from "./kit/layout.jsx";
 
 export default function Shelf() {
-  useEffect(() => { document.title = `${book.title} · 图书讲透`; }, []);
+  useEffect(() => { document.title = `${book.title} · 图书讲明白`; }, []);
   return (
     <main>
       <TopBar id={null} />
@@ -27,6 +27,6 @@ export default function Shelf() {
               </a>);
           })])}
       </div>
-      <footer>图书讲透 · 把晦涩原著拆成核心概念 + 类比 + 互动</footer>
+      <footer>图书讲明白 · 把晦涩原著拆成核心概念 + 类比 + 互动</footer>
     </main>);
 }
