@@ -1,7 +1,7 @@
 // 和弦进行播放器：和弦卡片 + 播放头 + 速度/织体/连接方式/循环；可同步在 Tonnetz 上画出路线、在键盘上显示按键。
 import { useEffect, useMemo, useRef, useState } from "react";
 import { play, stop, later, onStop, useAudioState } from "./engine.js";
-import { parseChord, romanOf, voiceChord, mod12, prettyChord } from "./theory.js";
+import { parseChord, parseNotes, romanOf, voiceChord, mod12, prettyChord } from "./theory.js";
 import { Tonnetz, Keyboard } from "./components.jsx";
 
 const TEXTURES = { block: "柱式", arp: "琶音", pop: "低音 + 和弦" };
@@ -18,7 +18,14 @@ export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4,
   useEffect(() => onStop(() => { playing.current = false; setOn(false); setCur(-1); }), []);
   const items = useMemo(() => {
     let prev;
-    return chords.map((full, k) => {
+    return chords.map((entry, k) => {
+      // 和弦可写成符号 "G7"、"C/E"，或 { name:"Cm♭6", notes:"C3 Eb4 G4 Ab4", roman? }（直接给出音高，按原样弹奏）
+      if (typeof entry === "object") {
+        const notes = parseNotes(entry.notes); prev = notes.slice(1);
+        return { full: entry.name, sym: null, upper: notes.slice(1), bass: notes[0], notes, beats: Array.isArray(beats) ? beats[k] ?? 4 : beats,
+          roman: entry.roman ?? (roman ? roman[k] : ""), minor: !!entry.minor };
+      }
+      const full = entry;
       const [sym, bassName] = full.split("/"), c = parseChord(sym);
       const upper = voiceChord(sym, { prev, style: voicing }); prev = upper;
       const bassPc = bassName ? mod12(parseChord(bassName).root) : mod12(c.root);
@@ -26,7 +33,7 @@ export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4,
       return { full, sym, upper, bass, beats: Array.isArray(beats) ? beats[k] ?? 4 : beats,
         roman: roman ? roman[k] : keyName ? romanOf(sym, keyName) + (bassName ? "/" + bassName : "") : "" };
     });
-  }, [chords.join(" "), voicing, keyName, roman && roman.join(" "), Array.isArray(beats) ? beats.join(" ") : beats]); // eslint-disable-line
+  }, [JSON.stringify(chords), voicing, keyName, roman && roman.join(" "), Array.isArray(beats) ? beats.join(" ") : beats]); // eslint-disable-line
 
   // 按织体安排一个和弦的发声；at 为起点秒数，len 为时长秒数
   const render = (it, at, len) => {
@@ -58,8 +65,8 @@ export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4,
   return <div className="card au-prog">
     {title && <div className="au-progtitle">{title}</div>}
     <div className="au-chords">
-      {items.map((it, k) => <button key={k} className={"au-chord" + (k === cur ? " cur" : "") + (parseChord(it.sym).notes[1] - parseChord(it.sym).root === 3 ? " min" : "")} onClick={() => one(k)}>
-        <b>{prettyChord(it.full)}</b>{it.roman && <small>{it.roman}</small>}
+      {items.map((it, k) => <button key={k} className={"au-chord" + (k === cur ? " cur" : "") + ((it.sym ? parseChord(it.sym).notes[1] - parseChord(it.sym).root === 3 : it.minor) ? " min" : "")} onClick={() => one(k)}>
+        <b>{it.sym ? prettyChord(it.full) : it.full}</b>{it.roman && <small>{it.roman}</small>}
       </button>)}
     </div>
     <div className="au-ctrl">
@@ -69,7 +76,7 @@ export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4,
       <button className={voicing === "smooth" ? "on" : ""} onClick={() => setVoicing(voicing === "smooth" ? "close" : "smooth")} title="平滑连接：每个和弦选离上一个最近的转位">{voicing === "smooth" ? "平滑连接" : "原位排列"}</button>
       <button className={loop ? "on" : ""} onClick={() => setLoop(!loop)}>⟲ 循环</button>
     </div>
-    {tz && <Tonnetz cols={10} rows={5} unit={50} compact {...tz} path={items.map(i => i.sym)} current={cur} />}
+    {tz && <Tonnetz cols={10} rows={5} unit={50} compact {...tz} path={items.map(i => i.sym ?? { name: i.full, notes: i.notes })} current={cur} />}
     {keyboard && <Keyboard from="C2" to="B5" names="C" height={80} />}
     {caption && <div className="au-hint" style={{ marginTop: 6 }}>{caption}</div>}
   </div>;

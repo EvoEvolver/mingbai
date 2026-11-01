@@ -120,7 +120,7 @@
 .au-view{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:5px 12px;font:inherit;font-size:14px;cursor:pointer}
 .au-view:hover{border-color:var(--accent);color:var(--accent)}
 .au-roll{display:flex;border:1px solid var(--line);border-radius:10px;background:#fbf8f2;margin:4px 0 6px;overflow:hidden}
-.au-rkbsvg{flex:none;border-right:1px solid #cdbfa8;background:#fffdf8}
+.au-rkbsvg{flex:none;box-sizing:content-box;border-right:1px solid #cdbfa8;background:#fffdf8}   /* content-box：边框不得挤占 viewBox，否则键盘会被缩放、与音条行错位 */
 .au-rscroll{flex:1;overflow-x:auto}
 .au-roll svg{display:block}
 .au-rrow{fill:#fbf8f2}.au-rrow.b{fill:#efe8dc}
@@ -137,3 +137,5 @@
 .au-rkey.act{fill:var(--gold)}
 .au-rkname{font-size:8px;text-anchor:end;fill:#6b645a;pointer-events:none}
 .au-rhead{stroke:var(--accent);stroke-width:2}
+.au-chordpoly{stroke-width:5;stroke-linejoin:round;stroke-linecap:round;opacity:.85}
+.au-tlabel.halo{paint-order:stroke;stroke:#fff;stroke-width:4px;font-size:14px}

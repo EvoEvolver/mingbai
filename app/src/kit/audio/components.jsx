@@ -206,6 +206,24 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
   const voicing = t => { const r = 53 + mod12(t.root - 53); return [r, r + (t.minor ? 3 : 4), r + 7]; };   // 根音落在 F3–E4
   const clickTri = t => { play(voicing(t), { arp: 0.04, dur: 1.6 }); setSel(t.key); onChord && onChord(triadName(t.root, t.minor, spell)); };
   const selT = tris.find(t => t.key === sel) || (select && tris.filter(t => (t.minor ? "m" : "M") + t.root === select).sort((a, b) => dist(a) - dist(b))[0]);
+  // 一组音级在网格上的「最紧凑」位置：以根音的每个出现处为起点，其余各音依次取离当前重心最近的交点；
+  // 代价 = 组内离散度 + 重心到参照点 (rx, ry) 的距离 × w。减七、增三等对称和弦因此画成一条线或紧凑的形状，而不是散开的大多边形
+  const cluster = (pcs, rx, ry, w = 0.6) => {
+    let best = null, bestCost = Infinity;
+    for (const start of nodes.filter(n => n.pc === pcs[0])) {
+      const pick = [start];
+      for (const pc of pcs.slice(1)) {
+        const cx = pick.reduce((a, n) => a + n.x, 0) / pick.length, cy = pick.reduce((a, n) => a + n.y, 0) / pick.length;
+        const cand = nodes.filter(n => n.pc === pc && !pick.includes(n)).sort((a, b) => (a.x - cx) ** 2 + (a.y - cy) ** 2 - (b.x - cx) ** 2 - (b.y - cy) ** 2)[0];
+        if (cand) pick.push(cand);
+      }
+      const cx = pick.reduce((a, n) => a + n.x, 0) / pick.length, cy = pick.reduce((a, n) => a + n.y, 0) / pick.length;
+      const spread = pick.reduce((a, n) => a + Math.hypot(n.x - cx, n.y - cy), 0);
+      const cost = spread + w * pick.length * Math.hypot(cx - rx, cy - ry);
+      if (cost < bestCost) { bestCost = cost; best = { nodes: pick, x: cx, y: cy }; }
+    }
+    return best || { nodes: [], x: rx, y: ry };
+  };
   // 七和弦等：三和弦之外的音，取离三角形中心最近的交点（与三角形一起画成四音形状）
   const extraNodes = (c, pts, x, y) => c.notes.slice(3).map(m => nodes.filter(n => n.pc === mod12(m) && !pts.includes(n))
     .sort((a, b) => (a.x - x) ** 2 + (a.y - y) ** 2 - (b.x - x) ** 2 - (b.y - y) ** 2)[0]).filter(Boolean);
@@ -213,10 +231,7 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
   const kindOf = c => { const iv = c.notes.map(n => n - c.root).join(",");
     return { "0,4,7,10": "dom7", "0,4,7,11": "maj7", "0,3,7,10": "min7", "0,3,6,10": "hdim7" }[iv] || "other"; };
   // 非大小三和弦的高亮（减、增、挂留等）：取离中心最近的各音交点
-  const hlOther = hlParsed.filter(h => !triadCore(h.c)).map(h => {
-    const ns = h.c.notes.map(m => nodes.filter(n => n.pc === mod12(m)).sort((a, b) => (a.x - cx0) ** 2 + (a.y - cy0) ** 2 - (b.x - cx0) ** 2 - (b.y - cy0) ** 2)[0]).filter(Boolean);
-    return { sym: h.sym, nodes: ns, x: ns.reduce((a, n) => a + n.x, 0) / ns.length, y: ns.reduce((a, n) => a + n.y, 0) / ns.length };
-  });
+  const hlOther = hlParsed.filter(h => !triadCore(h.c)).map(h => ({ sym: h.sym, ...cluster([...new Set(h.c.notes.map(mod12))], cx0, cy0) }));
   const hull = pts => { const p = [...pts].sort((a, b) => a.x - b.x || a.y - b.y); if (p.length < 3) return p;
     const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x), lo = [], up = [];
     for (const q of p) { while (lo.length > 1 && cross(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
@@ -228,8 +243,11 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
     // 代价 = 离上一站的距离 + 离起点（通常是主和弦）的距离 × 0.8：路线既连贯，又围绕主和弦展开
     let px = cx0, py = cy0, ax = null, ay = null; const out = [];
     const cost = (x, y) => Math.hypot(x - px, y - py) + (ax === null ? 0 : 0.8 * Math.hypot(x - ax, y - ay));
-    for (const sym of path) {
-      const c = parseChord(sym), root = mod12(c.root), core = triadCore(c);
+    for (const entry of path) {
+      // 路线中的一站：和弦符号，或 { name, notes:[midi…] }（无法用符号表示的和弦）
+      const sym = typeof entry === "string" ? entry : entry.name;
+      const c = typeof entry === "string" ? parseChord(sym) : { root: entry.notes[0], notes: entry.notes };
+      const root = mod12(c.root), core = typeof entry === "string" ? triadCore(c) : null;
       const tri = core && c.notes.length >= 3 ? tris.filter(t => t.root === root && t.minor === core.minor) : [];
       let item;
       if (tri.length) {
@@ -237,13 +255,13 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
         const t = tri.sort((a, b) => cost(...ctr(a)) - cost(...ctr(b)))[0];
         const [x, y] = ctr(t); item = { sym, tri: t.key, x, y, nodes: t.pts, extra: extraNodes(c, t.pts, x, y), kind: kindOf(c) };
       } else {
-        const ns = c.notes.map(m => nodes.filter(n => n.pc === mod12(m)).sort((a, b) => cost(a.x, a.y) - cost(b.x, b.y))[0]).filter(Boolean);
-        item = { sym, nodes: ns, x: ns.reduce((a, n) => a + n.x, 0) / ns.length, y: ns.reduce((a, n) => a + n.y, 0) / ns.length, kind: kindOf(c) };
+        const g = cluster([...new Set(c.notes.map(mod12))], ax === null ? px : (px + ax) / 2, ax === null ? py : (py + ay) / 2);
+        item = { sym, nodes: g.nodes, x: g.x, y: g.y, kind: kindOf(c) };
       }
       out.push(item); px = item.x; py = item.y; if (ax === null) { ax = item.x; ay = item.y; }
     }
     return out;
-  }, [path && path.join(" "), cols, rows, center, unit]); // eslint-disable-line
+  }, [path && JSON.stringify(path), cols, rows, center, unit]); // eslint-disable-line
   const curItem = route[current];
   const AX = { fifths: { d: [1, 0], col: "#b8862b", name: "横线：纯五度循环（五度圈）" }, M3: { d: [0, 1], col: "#9b2c1f", name: "右上斜线：大三度循环（3 个音）" }, m3: { d: [-1, 1], col: "#2c4a6e", name: "左上斜线：小三度循环（4 个音）" } };
   const roleOf = (t, pc) => pc === t.root ? "根" : pc === mod12(t.root + 7) ? "五" : "三";
@@ -274,7 +292,7 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
         <polygon key={"x" + k} points={hull([...r.nodes, ...r.extra]).map(n => n.x + "," + n.y).join(" ")} className={"au-seventh " + r.kind} />)}
       {hlOther.map((h, k) => <g key={"o" + k}>
         <polygon points={hull(h.nodes).map(n => n.x + "," + n.y).join(" ")} className="au-chordpoly" />
-        <text x={h.x} y={h.y + 4} className="au-tlabel dark">{h.sym}</text></g>)}
+      </g>)}
       {route.length > 1 && <polyline points={route.map(r => r.x + "," + r.y).join(" ")} className="au-route" />}
       {route.map((r, k) => {   // 同一位置的多站合并为一个标记（如 1·4）；当前站显示和弦名
         const same = route.map((q, m) => (q.x === r.x && q.y === r.y ? m : -1)).filter(m => m >= 0);
@@ -293,6 +311,8 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
           {inSel && <text x={n.x} y={n.y - 17} className="au-role">{roleOf(selT, n.pc)}</text>}
         </g>;
       })}
+      {hlOther.map((h, k) => { const top = h.nodes.slice().sort((a, b) => a.y - b.y)[0] || h;   // 标签放在最上端交点的右上方，避免盖住三角形标签
+        return <text key={"ol" + k} x={top.x + 22} y={top.y - 12} className="au-tlabel dark halo" textAnchor="start">{h.sym}</text>; })}
     </svg>
     {compact ? null : selT ? <div className="au-info">
       <b style={{ color: selT.minor ? "var(--blue)" : "var(--accent)" }}>{triadName(selT.root, selT.minor, spell)}</b>：{selT.minor ? "小三和弦（小三度 + 大三度），朝下的蓝色三角" : "大三和弦（大三度 + 小三度），朝上的红色三角"}；
