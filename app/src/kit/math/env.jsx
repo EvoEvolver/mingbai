@@ -92,8 +92,8 @@ export function Derivation({ title = "推导", steps, collapsed = false, result 
 }
 
 // ---------- 图 ----------
-// 原书插图（figures/fig-<n>.png）+ 中文图注；可选 interactive（交互版，JSX），以标签切换。
-export function Figure({ n, caption, children, interactive, width = "100%", src }) {
+// illustration 为自绘图（不请求原书图片）；可选 interactive，以标签切换。
+export function Figure({ n, caption, children, illustration, interactive, width = "100%", src }) {
   const [zoom, setZoom] = useState(false);
   const [tab, setTab] = useState(interactive ? 1 : 0);
   const img = assetUrl(src || `figures/fig-${n}.png`);
@@ -105,11 +105,13 @@ export function Figure({ n, caption, children, interactive, width = "100%", src 
   return (
     <figure className="tb-fig" id={anchor("fig", n)}>
       {interactive && <div className="seg tb-fig-tabs">
-        <button className={tab === 0 ? "on" : ""} onClick={() => setTab(0)}>原书图</button>
+        <button className={tab === 0 ? "on" : ""} onClick={() => setTab(0)}>{illustration ? "自绘图" : "原书图"}</button>
         <button className={tab === 1 ? "on" : ""} onClick={() => setTab(1)}>交互版</button>
       </div>}
       {tab === 0 || !interactive
-        ? <img src={img} alt={`图 ${n}`} style={{ maxWidth: width }} onClick={() => setZoom(true)} title="点击放大" loading="lazy" />
+        ? illustration
+          ? <div className="tb-fig-int" data-illustration={n}>{illustration}</div>
+          : <img src={img} alt={`图 ${n}`} style={{ maxWidth: width }} onClick={() => setZoom(true)} title="点击放大" loading="lazy" />
         : <div className="tb-fig-int">{interactive}</div>}
       <figcaption><b>图 {n}</b> <TxI>{caption}</TxI>{children}</figcaption>
       {zoom && <div className="tb-zoom" onClick={() => setZoom(false)}><img src={img} alt="" /></div>}

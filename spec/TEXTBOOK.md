@@ -89,6 +89,8 @@ export default function Chapter(){ return <TextbookPage meta={meta} notation={no
 - 原书编号的例子：`<Box kind="example" n="5.12" title="…">`（显示「例 5.12」，锚点 `example-5.12`）。定理–证明型教科书（定义/定理/证明）另见 `PROOF.md`；书目录下的 `check.json` 可让 `tb_check` 核对陈述、例子与两类习题。
 - `<Derivation title steps={[{tex, why}]} result collapsed?>`、`<Box kind="definition|result|note|example|physics|warning|aside|key|data" title>`、`<Figure n caption interactive={<Plot/>}>`、`<Plot …>`（数值工具 `num`）、`<Exercise n title level hint solution fromBook>`、`<Table>`、`<Details>`。
 
+自绘插图用 `<Figure n caption illustration={<MyDiagram/>}>`：直接显示组件，不请求原书图片，保留原有图号和引用锚点。平面结构优先 SVG；需要旋转观察的曲面可在 `useEffect` 中按需加载 Three.js，提供无 WebGL 的替代图，并在卸载时释放资源。
+
 ## 内存纪律（多个 agent 并行时必须遵守）
 构建、Playwright/Chromium 截图等重命令一律经 `/home/zijian/books/framework/tools/heavy.sh <命令…>` 运行（全局锁串行 + 内存检查；`check.sh` 已内置）。不要自行并行起多个构建或浏览器；临时 http 服务与浏览器用完即关；不要再派生子 agent。
 
