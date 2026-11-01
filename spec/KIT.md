@@ -80,3 +80,6 @@ export default function Chapter() { return <ChapterPage meta={meta} groups={grou
 
 ## 交付回复（简短）
 文件列表；概念 id 列表；专属图解做了什么；原文理解上拿不准的地方。
+
+## 读者反馈（全站自动启用）
+`kit/Feedback.jsx`：读者选中任意文字后出现"✎ 反馈"悬浮按钮，点开面板填写反馈，"用邮件发送"以 `mailto:` 打开读者的邮件程序（正文含页面地址、页面标题、选中的纯文本、反馈与可选联系方式；选中内容最多带 600 字）；另有"复制内容"兜底。收件地址在 `kit/site.js` 的 `FEEDBACK_EMAIL`（为空则不显示），单本书可在 book.js 用 `feedbackEmail` 覆盖。章节作者无需做任何事。

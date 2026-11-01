@@ -615,3 +615,23 @@ foreignObject.dim{opacity:.25}
 .ref-pop.floating{position:fixed;transform:none;bottom:auto;z-index:300;max-width:min(640px,92vw)}
 .sref-pop.floating{max-width:min(560px,92vw)}
 .tb-box{scroll-margin-top:64px}
+
+/* ---------- 选中文字反馈（kit/Feedback.jsx） ---------- */
+.fb-float{position:fixed;transform:translateX(-50%);z-index:300;border:0;border-radius:99px;padding:5px 14px;font:inherit;font-size:14px;
+  background:var(--ink);color:var(--paper);box-shadow:var(--shadow);cursor:pointer;white-space:nowrap}
+.fb-float:hover{background:var(--accent)}
+.fb-panel{position:fixed;right:20px;bottom:20px;z-index:301;width:min(420px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow:auto;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 6px rgba(60,40,10,.12),0 18px 48px rgba(60,40,10,.2);
+  padding:14px 16px 12px;display:flex;flex-direction:column;gap:6px;font-size:14.5px}
+.fb-head{display:flex;align-items:center;justify-content:space-between}
+.fb-x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--muted)}
+.fb-label{font-size:12.5px;color:var(--muted);margin-top:4px}
+.fb-sel{margin:0;padding:6px 10px;border-left:3px solid var(--gold);background:var(--paper);border-radius:0 8px 8px 0;max-height:140px;overflow:auto;
+  white-space:pre-wrap;font-size:13.5px;color:var(--ink)}
+.fb-panel textarea,.fb-panel input{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;resize:vertical}
+.fb-actions{display:flex;gap:8px;margin-top:4px}
+.fb-actions button{flex:1;border:1px solid var(--ink);background:none;border-radius:10px;padding:7px 0;font:inherit;font-size:14px;cursor:pointer}
+.fb-actions .fb-send{background:var(--ink);color:var(--paper)}
+.fb-actions .fb-send:disabled{opacity:.4;cursor:default}
+.fb-note{font-size:12px;color:var(--muted);line-height:1.6}
+@media print{.fb-float,.fb-panel{display:none}}
