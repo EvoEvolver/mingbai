@@ -21,10 +21,11 @@ section.block{margin:88px 0}
 
 /* TOC */
 #toc{position:fixed;left:18px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:20}
-#toc a{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--muted);font-size:13px}
+#toc a{position:relative;width:26px;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--muted);font-size:13px}
 #toc a i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--muted);display:block;transition:.2s}
-#toc a span{opacity:0;transition:.2s;background:var(--card);padding:1px 8px;border-radius:6px;box-shadow:var(--shadow);white-space:nowrap}
+#toc a span{position:absolute;left:17px;pointer-events:none;opacity:0;transition:.2s;background:var(--card);padding:1px 8px;border-radius:6px;box-shadow:var(--shadow);white-space:nowrap}
 #toc a:hover span,#toc a.on span{opacity:1}
+#toc a:hover span{pointer-events:auto}
 #toc a.on i{background:var(--accent);border-color:var(--accent);transform:scale(1.3)}
 @media(max-width:1180px){#toc{display:none}}
 
