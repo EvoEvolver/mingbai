@@ -15,3 +15,5 @@ export { Plot, num } from "./math/plot.jsx";
 export { TextbookPage } from "./math/textbook.jsx";
 // ---- 定理–证明类文本（论文、数学书）：陈述登记表由 book.js 的 statements 提供；说明见 framework/spec/PROOF.md ----
 export { SRef, Stmt, Proof, Erratum, RunCard, Check, MatrixView, DepGraph, StudyTable, Slider, Seg, pageIds, statements, stmtLabel, anchorOf } from "./math/proof.jsx";
+// ---- 论文导读：缺口 → 动机 → 方案 → 结果；说明见 framework/spec/PAPER.md ----
+export { PaperPage, PaperCite, GMSR, PaperSec, GapMap, Stakes, KeyIdea, Pipeline, Headline, Claim, ClaimBoard, Limits, EditorView, ReadingGuide, ROLES } from "./paper/paper.jsx";
