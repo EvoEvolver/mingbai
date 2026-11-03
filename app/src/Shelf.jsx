@@ -15,14 +15,14 @@ export default function Shelf() {
         {hasChapter("connections") && <p><a className="cta" href={pageUrl("connections")}>🧭 全书脉络：章节之间如何连接 →</a></p>}
       </header>
       <div className="shelf">
-        {book.parts.map(p => [
-          <div className="part" key={"p" + p.no}>{p.label}</div>,
-          ...book.chapters.filter(c => c.part === p.no).map(c => {
+        {(book.parts?.length ? book.parts : [{ no: null, label: null }]).map(p => [   // 未分部（如论文）时列成一组
+          p.label && <div className="part" key={"p" + p.no}>{p.label}</div>,
+          ...book.chapters.filter(c => p.no === null || c.part === p.no).map(c => {
             const meta = modules[c.id]?.meta, ready = hasChapter(c.id);
             return (
               <a key={c.id} className={"ch" + (ready ? " ready" : "")} href={ready ? pageUrl(c.id) : undefined}>
                 {!ready && <span className="tag">制作中</span>}
-                <div className="n">{c.no === 0 ? "序" : c.no}</div><h3>{c.title_zh}</h3><div className="e">{c.title_en}</div>
+                <div className="n">{c.no === 0 ? (c.label ? book.chapters.indexOf(c) + 1 : "序") : c.no}</div><h3>{c.title_zh}</h3><div className="e">{c.title_en}</div>
                 {meta?.one_liner && <div className="one"><Rich>{meta.one_liner}</Rich></div>}
               </a>);
           })])}
