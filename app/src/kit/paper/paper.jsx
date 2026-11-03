@@ -4,6 +4,7 @@ import { Progress, Toc, TopBar, ChapterNav } from "../layout.jsx";
 import { ChapterProvider } from "../core.jsx";
 import { TextbookProvider, Tx, TxI, Rich } from "../math/tex.jsx";
 import { KeyEquations, Notation } from "../math/env.jsx";
+import { Weighted } from "./weighted.jsx";
 
 // 论文导读组件。论文的叙事骨架与教科书不同：缺口（Gap）→ 动机（Motivation）→ 方案（Solution）→ 结果（Result），
 // 再加局限与编者评注。公式、符号词典、交互图沿用 math/ 下的组件（Eq、Plot、Derivation…）。见 framework/spec/PAPER.md。
@@ -23,7 +24,8 @@ const block = c => (typeof c === "string" ? <Tx>{c}</Tx> : Array.isArray(c) ? c.
 
 // 论文页外壳。meta 除 TextbookPage 的字段外，另有 paper: { title, authors, venue, year, arxiv, doi, code, license }、
 // tldr（一句话说清这篇论文）、gmsr: { gap, motivation, solution, result }（四格速读，各 1–2 句）。
-export function PaperPage({ meta: m, notation = [], groups, concepts, relations, children, keyEquations = true }) {
+export function PaperPage({ meta: m, notation = [], groups, concepts, relations, children, keyEquations = true, weighted = false }) {
+  const W = weighted ? Weighted : ({ children }) => children;   // weighted：按重要性分配面积（扫读/精读、要点脊柱、重要性地图）
   useEffect(() => { document.title = `${m.title_zh || m.title_en} · ${book.title}`; }, [m]);
   const p = m.paper || book.paper || {};
   return (
@@ -32,7 +34,7 @@ export function PaperPage({ meta: m, notation = [], groups, concepts, relations,
         <Progress />
         <TopBar id={m.id} />
         <Toc />
-        <main className="tb pp">
+        <W><main className={"tb pp" + (weighted ? " pw-page" : "")}>
           <header className="tb-hero pp-hero" id="b-top" data-toc="速读">
             <div className="kicker">论文导读{m.label ? ` · ${m.label}` : ""}</div>
             <h1>{m.title_zh || m.title_en}</h1>
@@ -55,7 +57,7 @@ export function PaperPage({ meta: m, notation = [], groups, concepts, relations,
           </section>}
           <ChapterNav id={m.id} />
           <footer>{book.footer ?? "本页为论文的中文导读：讲解、图示与评注为本站自写；结论、数据与公式出自原论文，请以原文为准。"}</footer>
-        </main>
+        </main></W>
       </TextbookProvider>
     </ChapterProvider>);
 }
