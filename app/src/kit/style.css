@@ -744,7 +744,7 @@ a.pp-num{text-decoration:none;color:var(--ink)}a.pp-num:hover{outline:2px solid 
 .pw-fold-b{font-size:14.5px;color:#5d554a;padding:4px 10px 8px;border-left:2px solid var(--line)}
 .pw-num{display:flex;gap:16px;align-items:center;background:var(--card);border-radius:16px;padding:12px 18px;margin:16px 0;box-shadow:var(--shadow);border-left:6px solid var(--green)}
 .pw-num>b{font-family:var(--serif);font-size:40px;line-height:1.1;color:var(--green);white-space:nowrap}
-.pw-num span{display:block;font-size:17px;font-weight:600}.pw-num small{display:block;font-size:13.5px;color:var(--muted)}
+.pw-num>div{min-width:0}.pw-num>div>span{display:block;font-size:17px;font-weight:600}.pw-num>div>small{display:block;font-size:13.5px;color:var(--muted)}
 .pw-assume{background:#fff6e3;border:2px solid var(--gold);border-radius:16px;padding:14px 18px;margin:18px 0;font-size:16.5px}
 .pw-assume-h{font-weight:800;color:#8a6215;margin-bottom:4px}
 .pw-verdict{font-size:21px;font-weight:700;font-family:var(--serif);margin:22px 0;padding:14px 18px;background:var(--ink);color:var(--paper);border-radius:16px;line-height:1.6}
@@ -755,7 +755,7 @@ a.pp-num{text-decoration:none;color:var(--ink)}a.pp-num:hover{outline:2px solid 
 .pw-above-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start}
 .pw-above-g>*{margin:0!important}
 /* 扫读模式：细节折叠，正文略缩 */
-body.pw-skim .pw-1,body.pw-skim .pw-fold,body.pw-skim .pw-mineq{display:none}
+body.pw-skim .pw-1,body.pw-skim .pw-fold,body.pw-skim .pw-mineq,body.pw-skim .pw-deep{display:none}
 body.pw-skim .pw-page .tb-sec>p,body.pw-skim .pw-2{font-size:15px;color:#4a4238}
 /* 开关 */
 .pw-toggle{position:fixed;left:18px;bottom:18px;z-index:60;display:flex;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
@@ -777,3 +777,8 @@ body.pw-skim .pw-page .tb-sec>p,body.pw-skim .pw-2{font-size:15px;color:#4a4238}
 .pw-spine i.k-eq{color:var(--blue)}.pw-spine i.k-num{color:var(--green)}.pw-spine i.k-assume{color:var(--gold)}.pw-spine i.k-verdict{color:var(--ink)}
 @media(max-width:1400px){.pw-spine{display:none}}
 @media(max-width:700px){.pw-map{display:none}.pw-3{font-size:18px}.pw-num>b{font-size:30px}}
+/* 加权页：压缩 hero 的留白，让首屏要点进入第一屏 */
+.pw-page .tb-hero{padding:56px 0 18px;margin-bottom:22px}
+.pw-page .tb-hero .en{margin-bottom:12px}
+/* 扫读模式：页尾参考材料（符号表、关键公式汇总）收起——它们是查阅用的，不是论证 */
+body.pw-skim .pw-page #b-notation,body.pw-skim .pw-page #b-keyeq{display:none}

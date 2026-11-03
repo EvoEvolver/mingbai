@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Eq, Tx, TxI } from "../math/tex.jsx";
 
 // 按重要性分配页面面积（见 framework/spec/PAPER.md「重要性加权」）。
@@ -39,10 +40,17 @@ function useKey(label, kind, given) {
 const KIND_ICON = { claim: "◆", eq: "∑", num: "#", assume: "⚠", verdict: "✔" };
 
 // 段落：w=3 核心论断 / w=2 正文 / w=1 细节
-export function P({ w = 2, label, id, children }) {
+// deep：正文字号、但只在「精读」模式显示（用于交互图、长表格、旁注框等不宜缩小、扫读时又不必看的块）
+export function P({ w = 2, label, id, deep, children }) {
   const body = typeof children === "string" ? <Tx>{children}</Tx> : children;
   if (w === 3) return <KeyPara label={label} id={id}>{body}</KeyPara>;
-  return <div className={"pw pw-" + w}>{body}</div>;
+  return <div className={"pw pw-" + w + (deep ? " pw-deep" : "")}>{body}</div>;
+}
+
+// 把任意已有组件（Claim、KeyIdea、GapMap…）登记为权重 3 条目（进入要点脊柱与重要性地图），外观不变
+export function Key({ label, kind = "claim", id, children }) {
+  const kid = useKey(label, kind, id);
+  return <div className="pw-key" id={kid}>{children}</div>;
 }
 function KeyPara({ label, id, children }) {
   const kid = useKey(label || "核心论断", "claim", id);
@@ -65,18 +73,28 @@ export function BigEq({ n, meaning, label, say, parts, children }) {
 export const MinorEq = props => <div className="pw pw-1 pw-mineq"><Eq {...props} /></div>;
 
 // 例行推导：一行折叠条，展开看细节。扫读时整体收起。
+// 内容始终渲染（收起时 hidden）：其中带编号的公式照常登记，\eqref 与符号检查都能找到它们；
+// 页面内链接（\eqref、锚点）指向折叠内的元素时自动展开。
 export function Fold({ title = "推导", steps, note = "可跳过", children }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); const ref = useRef(null);
+  useEffect(() => {
+    const inside = id => { try { return id && ref.current?.querySelector("#" + CSS.escape(id)); } catch { return null; } };
+    const onClick = e => { const a = e.target.closest?.("a[href*='#']"); if (!a || ref.current?.contains(a)) return; const u = new URL(a.href, location.href);
+      if (u.pathname === location.pathname && inside(u.hash.slice(1))) flushSync(() => setOpen(true)); };
+    const onHash = () => { if (inside(decodeURIComponent(location.hash.slice(1)))) setOpen(true); };
+    onHash(); document.addEventListener("click", onClick, true); addEventListener("hashchange", onHash);
+    return () => { document.removeEventListener("click", onClick, true); removeEventListener("hashchange", onHash); };
+  }, []);
   return (
-    <div className={"pw-fold" + (open ? " open" : "")}>
-      <button onClick={() => setOpen(!open)}>{open ? "▾" : "▸"} <TxI>{title}</TxI>{steps ? ` · ${steps} 步` : ""}<em>{note}</em></button>
-      {open && <div className="pw-fold-b">{typeof children === "string" ? <Tx>{children}</Tx> : children}</div>}
+    <div className={"pw-fold" + (open ? " open" : "")} ref={ref}>
+      <button onClick={() => setOpen(!open)} aria-expanded={open}>{open ? "▾" : "▸"} <TxI>{title}</TxI>{steps ? ` · ${steps} 步` : ""}<em>{note}</em></button>
+      <div className="pw-fold-b" hidden={!open}>{typeof children === "string" ? <Tx>{children}</Tx> : children}</div>
     </div>);
 }
 
 // 决定性数字
 export function Number({ value, label, why, id }) {
-  const kid = useKey(`${typeof value === "string" ? value.replace(/\$/g, "") : value} ${label}`, "num", id);
+  const kid = useKey(`${value} ${label}`, "num", id);   // 标签按 TxI 渲染，保留 $…$
   return (
     <div className="pw-num" id={kid}>
       <b><TxI>{String(value)}</TxI></b>
@@ -122,7 +140,7 @@ function Spine() {
       const H = document.documentElement.scrollHeight, out = {};
       for (const it of w.items) { const el = document.getElementById(it.id); if (el) out[it.id] = (el.getBoundingClientRect().top + scrollY) / H; }
       setPos(out);
-      const mid = scrollY + innerHeight * 0.35; let c = null;
+      const mid = scrollY + innerHeight * 0.55; let c = null;   // 0.55：与 go() 的 block:"center" 对齐，点脊柱跳过去后被点的条目即为当前项
       for (const it of w.items) { const el = document.getElementById(it.id); if (el && el.getBoundingClientRect().top + scrollY <= mid) c = it.id; }
       setCur(c);
     };
@@ -136,13 +154,13 @@ function Spine() {
   const go = id => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "center" });
   return (<>
     <div className="pw-map" aria-label="重要性地图">
-      {sorted.map(it => <button key={it.id} className={"pw-dot k-" + it.kind + (cur === it.id ? " on" : "")} style={{ top: `${pos[it.id] * 100}%` }} onClick={() => go(it.id)} title={it.label} />)}
+      {sorted.map(it => <button key={it.id} className={"pw-dot k-" + it.kind + (cur === it.id ? " on" : "")} style={{ top: `${pos[it.id] * 100}%` }} onClick={() => go(it.id)} title={it.label.replace(/\$/g, "")} />)}
     </div>
     <aside className={"pw-spine" + (open ? "" : " closed")}>
       <button className="pw-spine-h" onClick={() => setOpen(!open)}>{open ? "要点脊柱 ▾" : "要点 ▸"}<small>{sorted.length}</small></button>
       {open && <ol>{sorted.map(it => (
         <li key={it.id} className={cur === it.id ? "on" : ""}><a href={"#" + it.id} onClick={e => { e.preventDefault(); go(it.id); }}>
-          <i className={"k-" + it.kind}>{KIND_ICON[it.kind] || "◆"}</i><TxI>{it.label}</TxI></a></li>))}</ol>}
+          <i className={"k-" + it.kind}>{KIND_ICON[it.kind] || "◆"}</i><span><TxI>{it.label}</TxI></span></a></li>))}</ol>}
     </aside>
   </>);
 }

@@ -17,4 +17,4 @@ export { TextbookPage } from "./math/textbook.jsx";
 export { SRef, Stmt, Proof, Erratum, RunCard, Check, MatrixView, DepGraph, StudyTable, Slider, Seg, pageIds, statements, stmtLabel, anchorOf } from "./math/proof.jsx";
 // ---- 论文导读：缺口 → 动机 → 方案 → 结果；说明见 framework/spec/PAPER.md ----
 export { PaperPage, PaperCite, GMSR, PaperSec, GapMap, Stakes, KeyIdea, Pipeline, Headline, Claim, ClaimBoard, Limits, EditorView, ReadingGuide, ROLES } from "./paper/paper.jsx";
-export { Weighted, P, BigEq, MinorEq, Fold, Number as KeyNumber, Assume, Verdict, AboveFold } from "./paper/weighted.jsx";
+export { Weighted, Key, P, BigEq, MinorEq, Fold, Number as KeyNumber, Assume, Verdict, AboveFold } from "./paper/weighted.jsx";
