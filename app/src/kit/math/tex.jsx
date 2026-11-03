@@ -30,7 +30,7 @@ export function expandMacros(tex) {
 // 当前章节的符号表（TextbookProvider 在渲染时设置；只同时显示一章）
 let ACTIVE = { table: null, ver: 0 };
 const cache = new Map(), usedCache = new Map();
-const trust = c => ["\\htmlData"].includes(c.command);
+const trust = c => ["\\htmlData", "\\htmlClass"].includes(c.command);
 
 export function renderTex(tex, display = false) {
   const key = ACTIVE.ver + (display ? "D" : "I") + tex;
