@@ -2,6 +2,7 @@ import { defineConfig, createServer } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
+import { MESSAGES, langOf } from "./src/kit/i18n/messages.js";
 
 // 多页静态站点（GitHub Pages 友好）：
 //   <outDir>/index.html            书架
@@ -77,7 +78,7 @@ function anchorMap(book, ids) {
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const strip = s => String(s ?? "").replace(/\$([^$]*)\$/g, "$1").replace(/\\[a-zA-Z]+/g, "").replace(/[{}]/g, "");
-function html({ title, desc, page, lang = "zh-CN" }) {
+function html({ title, desc, page, lang }) {
   return `<!doctype html>
 <html lang="${lang}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -135,13 +136,14 @@ export default defineConfig(async () => {
   fs.rmSync(GEN, { recursive: true, force: true });
   fs.mkdirSync(GEN, { recursive: true });
   const input = {};
-  fs.writeFileSync(path.join(GEN, "index.html"), html({ title: `${book.title} · 图书讲明白`, desc: book.intro, page: "" }));
+  const ui = MESSAGES[langOf(book)], lang = ui["html.lang"];
+  fs.writeFileSync(path.join(GEN, "index.html"), html({ title: `${book.title} · ${ui["site.brand"]}`, desc: book.intro, page: "", lang }));
   input.index = path.join(GEN, "index.html");
   for (const id of ids) {
     const c = book.chapters.find(x => x.id === id), m = data[id]?.meta || {};
-    const title = id === "connections" ? `全书脉络 · ${book.title}` : `${m.title_zh || c?.title_zh || id} · ${book.title}`;
+    const title = id === "connections" ? `${ui["nav.connections"]} · ${book.title}` : `${m.title_zh || m.title_en || c?.title_zh || c?.title_en || id} · ${book.title}`;
     fs.mkdirSync(path.join(GEN, id), { recursive: true });
-    fs.writeFileSync(path.join(GEN, id, "index.html"), html({ title, desc: m.one_liner || c?.title_en, page: id }));
+    fs.writeFileSync(path.join(GEN, id, "index.html"), html({ title, desc: m.one_liner || c?.title_en, page: id, lang }));
     input[id] = path.join(GEN, id, "index.html");
   }
   return {

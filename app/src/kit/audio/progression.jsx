@@ -1,10 +1,10 @@
+import { t } from "../i18n/index.js";
 // 和弦进行播放器：和弦卡片 + 播放头 + 速度/织体/连接方式/循环；可同步在 Tonnetz 上画出路线、在键盘上显示按键。
 import { useEffect, useMemo, useRef, useState } from "react";
 import { play, stop, later, onStop, useAudioState } from "./engine.js";
 import { parseChord, parseNotes, romanOf, voiceChord, mod12, prettyChord } from "./theory.js";
 import { Tonnetz, Keyboard } from "./components.jsx";
 
-const TEXTURES = { block: "柱式", arp: "琶音", pop: "低音 + 和弦" };
 
 // <Progression chords={["C","Am","F","G"]} keyName="C" tonnetz keyboard />
 // 属性：chords（和弦符号数组，可用 "C/E" 指定低音）· keyName（调，如 "C"、"Am"：自动标级数）· roman（自定义级数标签数组，优先于 keyName）
@@ -70,11 +70,11 @@ export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4,
       </button>)}
     </div>
     <div className="au-ctrl">
-      <button className="au-go" onClick={() => (on ? halt() : start(0))}>{on ? "■ 停止" : "▶ 播放进行"}</button>
-      <label className="au-lab">速度 <input type="range" min="40" max="160" value={bpm} onChange={e => setBpm(+e.target.value)} /> {bpm}</label>
-      {Object.entries(TEXTURES).map(([k, v]) => <button key={k} className={texture === k ? "on" : ""} onClick={() => setTexture(k)}>{v}</button>)}
-      <button className={voicing === "smooth" ? "on" : ""} onClick={() => setVoicing(voicing === "smooth" ? "close" : "smooth")} title="平滑连接：每个和弦选离上一个最近的转位">{voicing === "smooth" ? "平滑连接" : "原位排列"}</button>
-      <button className={loop ? "on" : ""} onClick={() => setLoop(!loop)}>⟲ 循环</button>
+      <button className="au-go" onClick={() => (on ? halt() : start(0))}>{on ? t("au.stopBtn") : t("au.playProg")}</button>
+      <label className="au-lab">{t("au.tempo")} <input type="range" min="40" max="160" value={bpm} onChange={e => setBpm(+e.target.value)} /> {bpm}</label>
+      {Object.entries(t("au.texture")).map(([k, v]) => <button key={k} className={texture === k ? "on" : ""} onClick={() => setTexture(k)}>{v}</button>)}
+      <button className={voicing === "smooth" ? "on" : ""} onClick={() => setVoicing(voicing === "smooth" ? "close" : "smooth")} title={t("au.smoothTitle")}>{voicing === "smooth" ? t("au.smooth") : t("au.close")}</button>
+      <button className={loop ? "on" : ""} onClick={() => setLoop(!loop)}>{t("au.loop")}</button>
     </div>
     {tz && <Tonnetz cols={10} rows={5} unit={50} compact {...tz} path={items.map(i => i.sym ?? { name: i.full, notes: i.notes })} current={cur} />}
     {keyboard && <Keyboard from="C2" to="B5" names="C" height={80} />}

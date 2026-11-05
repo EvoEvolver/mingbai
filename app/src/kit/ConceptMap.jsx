@@ -1,3 +1,5 @@
+import { t } from "./i18n/index.js";
+import { nameOf } from "./book.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { forceSimulation, forceManyBody, forceLink, forceCollide, forceX, forceY } from "d3-force";
 import { useChapter } from "./core.jsx";
@@ -39,7 +41,7 @@ export function ConceptMap({ height = 600, nodes: only, edges: customEdges }) {
 
   // 图数据（模拟会原地改写 x/y）
   const graph = useMemo(() => {
-    const nodes = concepts.map(c => ({ id: c.id, c, lw: labelW(c.name_zh) }));
+    const nodes = concepts.map(c => ({ id: c.id, c, lw: labelW(nameOf(c)) }));
     const N = Object.fromEntries(nodes.map(n => [n.id, n]));
     // 连线直接引用节点对象，节点给出初始位置，保证模拟启动前的首帧也能画
     nodes.forEach((n, i) => { const a = i / nodes.length * 2 * Math.PI; n.x = 300 * Math.cos(a); n.y = 300 * Math.sin(a); });
@@ -102,10 +104,10 @@ export function ConceptMap({ height = 600, nodes: only, edges: customEdges }) {
   return (
     <div className="mapwrap">
       <div className="map-tools">
-        <button onClick={() => zoom(1 / 1.25)} title="放大">＋</button>
-        <button onClick={() => zoom(1.25)} title="缩小">－</button>
-        <button onClick={fit} title="适应窗口">⤢ 适应</button>
-        <button onClick={relayout} title="重新布局">↻ 重新布局</button>
+        <button onClick={() => zoom(1 / 1.25)} title={t("map.zoomIn")}>＋</button>
+        <button onClick={() => zoom(1.25)} title={t("map.zoomOut")}>－</button>
+        <button onClick={fit} title={t("map.fitTitle")}>{t("map.fit")}</button>
+        <button onClick={relayout} title={t("map.relayoutTitle")}>{t("map.relayout")}</button>
       </div>
       <svg ref={svg} viewBox={`${v.x} ${v.y} ${v.w} ${v.h}`} style={{ height, cursor: panning ? "grabbing" : "grab" }}
         onPointerDown={ev => {
@@ -140,9 +142,9 @@ export function ConceptMap({ height = 600, nodes: only, edges: customEdges }) {
             onPointerDown={ev => { ev.stopPropagation(); svg.current.setPointerCapture(ev.pointerId); drag.current = { node: n, moved: false }; }}>
             <circle r={n.r} fill={color(n.c.group)} />
             <text textAnchor="middle" dy="5" fontSize={n.r * .9}>{n.c.icon}</text>
-            <SvgLabel y={n.r + 18} text={n.c.name_zh} w={Math.max(120, n.lw + 30)} cls="nlab" />
+            <SvgLabel y={n.r + 18} text={nameOf(n.c)} w={Math.max(120, n.lw + 30)} cls="nlab" />
           </g>)}
       </svg>
-      <div className="hint">拖动节点 · 拖空白处平移 · Ctrl/⌘+滚轮缩放 · 点击节点打开概念卡</div>
+      <div className="hint">{t("map.hint")}</div>
     </div>);
 }

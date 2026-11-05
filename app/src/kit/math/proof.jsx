@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 // 定理–证明类文本的组件（源自 ETH 论文书，已通用化）：定理环境、陈述引用、分步证明、证明依赖图、
 // 矩阵热图、勘误/注记框、可运行示例外壳、学习笔记总表。说明见 framework/spec/PROOF.md。
 //
@@ -9,22 +10,22 @@ import { useMemo, useRef, useState } from "react";
 import { TxI, Tx, EqRef, Rich, EqLine, HoverPop, extendInline } from "./tex.jsx";
 import { book, pageUrl, currentPage } from "../book.jsx";
 
-const DEFAULT_KIND = { definition: "定义", lemma: "引理", proposition: "命题", theorem: "定理", fact: "论断", cited: "引用", corollary: "推论", claim: "断言", conjecture: "猜想", example: "例" };
-const DEFAULT_STATUS = { checked: "✔ 已逐步核对", filled: "✚ 原文略写，本站已补全", note: "✎ 有注记" };
 // 登记表在使用时读取（避免与 virtual:book 的循环导入在模块初始化时触发）
 let _cache = null;
 function reg() {
   if (_cache && _cache.src === book?.statements) return _cache;
   const STMTS = book?.statements || {};
   const DEP_EDGES = Object.entries(STMTS).flatMap(([id, s]) => (s.deps || []).map(d => ({ from: d, to: id })));
-  const KIND_LABEL = { ...DEFAULT_KIND, ...(book?.statementKinds || {}) };
-  const STATUS_LABEL = { ...DEFAULT_STATUS, ...(book?.statementStatus || {}) };
+  const KIND_LABEL = { ...t("stmt.kind"), ...(book?.statementKinds || {}) };
+  const STATUS_LABEL = { ...t("stmt.status"), ...(book?.statementStatus || {}) };
   return (_cache = { src: book?.statements, STMTS, DEP_EDGES, KIND_LABEL, STATUS_LABEL });
 }
+// 陈述的主显示名：中文书写 zh（en 作副标题）；英文书只写 en。
+const nm = s => s.zh || s.en || "";
 export const statements = () => reg().STMTS;
 export const stmtLabel = id => {
   const { STMTS, KIND_LABEL } = reg(); const s = reg().STMTS[id]; if (!s) return id;
-  return s.kind === "fact" || s.kind === "cited" ? `${s.zh} ${s.n}` : `${reg().KIND_LABEL[s.kind] || s.kind} ${s.n}`;
+  return s.kind === "fact" || s.kind === "cited" ? `${nm(s)} ${s.n}` : `${reg().KIND_LABEL[s.kind] || s.kind} ${s.n}`;
 };
 
 const anchorOf = id => "thm-" + String(id).replace(/[^\w.-]/g, "_");
@@ -48,14 +49,14 @@ export function SRef({ id, children }) {
   const [show, setShow] = useState(false);
   const wrap = useRef(null);
   const s = reg().STMTS[id];
-  if (!s) return <span className="tex-error" title="未登记的陈述">{id}</span>;
+  if (!s) return <span className="tex-error" title={t("stmt.unknown")}>{id}</span>;
   return (
     <span className="ref-wrap sref-wrap" ref={wrap} onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
       <a className={"sref sref-" + s.kind} href={hrefOf(id)} onClick={e => go(id, e)}>{children ?? <Rich>{stmtLabel(id)}</Rich>}</a>
       {show && <HoverPop anchor={wrap.current} className="sref-pop">
-        <b><Rich>{stmtLabel(id)}</Rich></b>{s.kind !== "fact" && s.kind !== "cited" && <> · <Rich>{s.zh}</Rich></>} <i className="muted">{s.en}</i>
+        <b><Rich>{stmtLabel(id)}</Rich></b>{s.kind !== "fact" && s.kind !== "cited" && <> · <Rich>{nm(s)}</Rich></>} {s.zh && <i className="muted">{s.en}</i>}
         <span className="sref-stmt"><TxI>{s.stmt}</TxI></span>
-        <span className="muted sref-where">原文 p.{s.page} · 点击跳转</span>
+        <span className="muted sref-where">{t("stmt.page", s.page)}{t("stmt.clickJump")}</span>
       </HoverPop>}
     </span>);
 }
@@ -73,30 +74,30 @@ const usedBy = id => reg().DEP_EDGES.filter(e => e.from === id).map(e => e.to);
 export function Stmt({ id, children, notes = true, toc = true }) {
   const s = reg().STMTS[id];
   const [open, setOpen] = useState(true);
-  if (!s) return <div className="tex-error">未登记的陈述 {id}</div>;
+  if (!s) return <div className="tex-error">{t("stmt.unknown")} {id}</div>;
   const numbered = !["fact", "cited"].includes(s.kind);
   const ub = usedBy(id);
   return (
-    <div className={"stmt stmt-" + s.kind} id={anchorOf(id)} data-toc={toc && numbered ? `${reg().KIND_LABEL[s.kind]} ${s.n}` : undefined}>
+    <div className={"stmt stmt-" + s.kind} id={anchorOf(id)} data-toc={toc && numbered ? `${reg().KIND_LABEL[s.kind]} ${s.n}` : undefined} data-toc-level="2">
       <div className="stmt-h">
         <span className="stmt-kind">{numbered ? `${reg().KIND_LABEL[s.kind]} ${s.n}` : `${reg().KIND_LABEL[s.kind]} ${s.n}`}</span>
-        <span className="stmt-zh"><Rich>{s.zh}</Rich></span>
-        <span className="stmt-en">{s.en}</span>
-        <span className="stmt-page">原文 p.{s.page}</span>
+        <span className="stmt-zh"><Rich>{nm(s)}</Rich></span>
+        {s.zh && <span className="stmt-en">{s.en}</span>}
+        <span className="stmt-page">{t("stmt.page", s.page)}</span>
       </div>
       <div className="stmt-body"><TxI>{s.stmt}</TxI></div>
       {notes && <div className={"stmt-notes" + (open ? " open" : "")}>
         <div className="stmt-notes-h" onClick={() => setOpen(!open)}>
-          <span>{open ? "▾" : "▸"} 📒 学习笔记</span>
+          <span>{open ? "▾" : "▸"} {t("stmt.notes")}</span>
           <span className={"stmt-status st-" + s.status}>{reg().STATUS_LABEL[s.status]}</span>
         </div>
         {open && <div className="stmt-grid">
-          <div className="sn-lab">作用</div><div><TxI>{s.role}</TxI></div>
-          <div className="sn-lab">依赖</div><div>{s.deps?.length ? s.deps.map(d => <Dep key={d} d={d} />) : <span className="muted">无（自足）</span>}</div>
-          {ub.length > 0 && <><div className="sn-lab">被用于</div><div>{ub.map(d => <Dep key={d} d={d} />)}</div></>}
-          {s.key && <><div className="sn-lab">关键一步</div><div><TxI>{s.key}</TxI></div></>}
-          {s.pitfall && <><div className="sn-lab">易卡点</div><div><TxI>{s.pitfall}</TxI></div></>}
-          {s.statusNote && <><div className="sn-lab">核对说明</div><div><TxI>{s.statusNote}</TxI></div></>}
+          <div className="sn-lab">{t("stmt.role")}</div><div><TxI>{s.role}</TxI></div>
+          <div className="sn-lab">{t("stmt.deps")}</div><div>{s.deps?.length ? s.deps.map(d => <Dep key={d} d={d} />) : <span className="muted">{t("stmt.noDeps")}</span>}</div>
+          {ub.length > 0 && <><div className="sn-lab">{t("stmt.usedBy")}</div><div>{ub.map(d => <Dep key={d} d={d} />)}</div></>}
+          {s.key && <><div className="sn-lab">{t("stmt.key")}</div><div><TxI>{s.key}</TxI></div></>}
+          {s.pitfall && <><div className="sn-lab">{t("stmt.pitfall")}</div><div><TxI>{s.pitfall}</TxI></div></>}
+          {s.statusNote && <><div className="sn-lab">{t("stmt.statusNote")}</div><div><TxI>{s.statusNote}</TxI></div></>}
         </div>}
       </div>}
       {children && <div className="stmt-proof">{children}</div>}
@@ -105,7 +106,7 @@ export function Stmt({ id, children, notes = true, toc = true }) {
 
 // ---------- 分步证明 ----------
 // steps=[{ claim: "这一步断言了什么（可含 $…$ 与 \sref{}）", tex?: "可选的行间公式", why: "理由", uses?: ["L2.1","2.2"], fill?: true（原文略写、本站补全）}]
-export function Proof({ title = "证明", steps, collapsed = false, qed = true, source }) {
+export function Proof({ title = t("proof.title"), steps, collapsed = false, qed = true, source }) {
   const [open, setOpen] = useState(!collapsed);
   const [stepwise, setStepwise] = useState(false);
   const [k, setK] = useState(1);
@@ -115,25 +116,25 @@ export function Proof({ title = "证明", steps, collapsed = false, qed = true, 
     <div className={"proof" + (open ? " open" : "")}>
       <div className="proof-h" onClick={() => setOpen(!open)}>
         <span>{open ? "▾" : "▸"} <i>Proof.</i> <TxI>{title}</TxI></span>
-        <span className="proof-meta">{steps.length} 步{nfill ? ` · ${nfill} 步为本站补全` : ""}{!open && " · 点击展开"}</span>
+        <span className="proof-meta">{t("ui.steps", steps.length)}{nfill ? t("proof.filled", nfill) : ""}{!open && t("ui.clickExpand")}</span>
       </div>
       {open && <>
         <div className="tb-deriv-tools">
-          <button className={stepwise ? "" : "on"} onClick={() => setStepwise(false)}>全部显示</button>
-          <button className={stepwise ? "on" : ""} onClick={() => { setStepwise(true); setK(1); }}>逐步展开</button>
+          <button className={stepwise ? "" : "on"} onClick={() => setStepwise(false)}>{t("ui.showAll")}</button>
+          <button className={stepwise ? "on" : ""} onClick={() => { setStepwise(true); setK(1); }}>{t("proof.stepwise")}</button>
           {source && <span className="muted proof-src"><Rich>{source}</Rich></span>}
         </div>
         <ol className="proof-steps">{shown.map((s, i) =>
           <li key={i} className={"proof-step" + (s.fill ? " fill" : "")}>
-            <div className="ps-claim">{s.fill && <span className="ps-fill" title="原文略写，本站补全">补全</span>}<TxI>{s.claim}</TxI></div>
+            <div className="ps-claim">{s.fill && <span className="ps-fill" title={t("proof.fillTitle")}>{t("proof.fill")}</span>}<TxI>{s.claim}</TxI></div>
             {s.tex && <div className="ps-tex eq-click" data-eqtex={s.tex}><TexLine tex={s.tex} /></div>}
             {(s.why || s.uses?.length > 0) && <div className="ps-why">{s.why && <>∵ <TxI>{s.why}</TxI></>}{s.uses?.length > 0 && <span className="ps-uses">{s.uses.map(u => <Dep key={u} d={u} />)}</span>}</div>}
           </li>)}
         </ol>
         {stepwise && <div className="tb-deriv-ctrl">
-          <button disabled={k <= 1} onClick={() => setK(k - 1)}>← 上一步</button>
+          <button disabled={k <= 1} onClick={() => setK(k - 1)}>{t("ui.prevStep")}</button>
           <span>{k} / {steps.length}</span>
-          <button disabled={k >= steps.length} onClick={() => setK(k + 1)}>下一步 →</button>
+          <button disabled={k >= steps.length} onClick={() => setK(k + 1)}>{t("ui.nextStep")}</button>
         </div>}
         {qed && (!stepwise || k === steps.length) && <div className="proof-qed">∎</div>}
       </>}
@@ -148,7 +149,7 @@ const TexLine = ({ tex }) => <EqLine tex={tex} />;
 export function Erratum({ loc, title, kind = "note", children }) {
   return (
     <div className={"tb-box erratum er-" + kind}>
-      <div className="tb-box-h">{kind === "erratum" ? "📌 勘误" : "🔍 注记"}{title && <>：<TxI>{title}</TxI></>}{loc && <span className="er-loc"><Rich>{loc}</Rich></span>}</div>
+      <div className="tb-box-h">{kind === "erratum" ? t("er.erratum") : t("er.note")}{title && <>{t("p.colon")}<TxI>{title}</TxI></>}{loc && <span className="er-loc"><Rich>{loc}</Rich></span>}</div>
       <div className="tb-box-b">{typeof children === "string" ? <Tx>{children}</Tx> : children}</div>
     </div>);
 }
@@ -157,7 +158,7 @@ export function Erratum({ loc, title, kind = "note", children }) {
 export function RunCard({ title, lead, children }) {
   return (
     <div className="runcard card">
-      <div className="runcard-h"><span className="run-tag">▶ 浏览器内实际运行</span> <b><TxI>{title}</TxI></b></div>
+      <div className="runcard-h"><span className="run-tag">{t("run.tag")}</span> <b><TxI>{title}</TxI></b></div>
       {lead && <div className="runcard-lead"><TxI>{lead}</TxI></div>}
       {children}
     </div>);
@@ -241,7 +242,7 @@ export function DepGraph({ ids, highlight, focus, nodeW = 150, nodeH = 50, gapX 
   return (
     <div className="depgraph card">
       <div className="dg-legend">{Object.entries(KCOL).map(([k, c]) => <span key={k}><i style={{ background: c }} />{reg().KIND_LABEL[k]}</span>)}
-        {highlight && <span><i className="dg-hl" />本页的陈述</span>}</div>
+        {highlight && <span><i className="dg-hl" />{t("dg.here")}</span>}</div>
       <div className="dg-wrap">
         <div className="dg-scroll">
           <svg viewBox={`0 0 ${g.W} ${g.H}`} width={g.W} height={g.H} className="dg-svg" style={{ maxWidth: "100%", height: "auto", minWidth: Math.min(g.W, 760) }}>
@@ -257,21 +258,21 @@ export function DepGraph({ ids, highlight, focus, nodeW = 150, nodeH = 50, gapX 
               return <foreignObject key={id} x={p.x} y={p.y} width={nodeW} height={nodeH} className={dim ? "dim" : ""}>
                 <div className={"dg-node" + (sel === id ? " sel" : "") + (hl ? " hl" : "")} style={{ "--k": KCOL[s.kind] }}
                   onMouseEnter={() => setHover(id)} onMouseLeave={() => setHover(null)} onClick={() => setSel(sel === id ? null : id)}>
-                  <div className="dg-k">{stmtLabel(id).replace(s.zh + " ", "")}<span className="dg-ch">{s.ch === "appA" ? "附A" : s.ch === "appB" ? "附B" : "§" + s.ch.slice(2).replace(/^0/, "")}</span></div>
-                  <div className="dg-t"><Rich>{s.zh}</Rich></div>
+                  <div className="dg-k">{stmtLabel(id).replace(nm(s) + " ", "")}<span className="dg-ch">{s.ch === "appA" ? t("dg.appA") : s.ch === "appB" ? t("dg.appB") : "§" + s.ch.slice(2).replace(/^0/, "")}</span></div>
+                  <div className="dg-t"><Rich>{nm(s)}</Rich></div>
                 </div>
               </foreignObject>;
             })}
           </svg>
         </div>
         <div className="dg-panel">{S ? <>
-          <div className="dg-p-h"><b><Rich>{stmtLabel(sel)}</Rich></b> {S.kind !== "fact" && S.kind !== "cited" && <Rich>{S.zh}</Rich>}</div>
+          <div className="dg-p-h"><b><Rich>{stmtLabel(sel)}</Rich></b> {S.kind !== "fact" && S.kind !== "cited" && <Rich>{nm(S)}</Rich>}</div>
           <div className="dg-p-s"><TxI>{S.stmt}</TxI></div>
-          {S.role && <div className="dg-p-r"><span className="sn-lab">作用</span> <TxI>{S.role}</TxI></div>}
-          <div className="dg-p-r"><span className="sn-lab">依赖</span> {S.deps?.length ? S.deps.map(d => <Dep key={d} d={d} />) : "—"}</div>
+          {S.role && <div className="dg-p-r"><span className="sn-lab">{t("stmt.role")}</span> <TxI>{S.role}</TxI></div>}
+          <div className="dg-p-r"><span className="sn-lab">{t("stmt.deps")}</span> {S.deps?.length ? S.deps.map(d => <Dep key={d} d={d} />) : "—"}</div>
           <div className="dg-p-r"><span className={"stmt-status st-" + S.status}>{reg().STATUS_LABEL[S.status]}</span></div>
-          <a className="dg-go" href={hrefOf(sel)} onClick={e => go(sel, e)}>→ 去正文看证明</a>
-        </> : <div className="muted">点击任一节点：这里显示它的陈述、作用与依赖。悬停节点：高亮它的全部上游（证明它要用到的）与下游（用到它的）。</div>}</div>
+          <a className="dg-go" href={hrefOf(sel)} onClick={e => go(sel, e)}>{t("dg.go")}</a>
+        </> : <div className="muted">{t("dg.hint")}</div>}</div>
       </div>
     </div>);
 }
@@ -280,9 +281,9 @@ export function DepGraph({ ids, highlight, focus, nodeW = 150, nodeH = 50, gapX 
 export function StudyTable({ ids }) {
   return (
     <div className="tb-table-wrap"><table className="tb-table study">
-      <thead><tr><th>陈述</th><th>在整体证明中的作用</th><th>依赖</th><th>状态</th></tr></thead>
+      <thead><tr><th>{t("study.stmt")}</th><th>{t("study.role")}</th><th>{t("study.deps")}</th><th>{t("study.status")}</th></tr></thead>
       <tbody>{ids.map(id => { const s = reg().STMTS[id]; return <tr key={id}>
-        <td><SRef id={id} /><div className="muted"><Rich>{s.zh}</Rich></div></td>
+        <td><SRef id={id} /><div className="muted"><Rich>{nm(s)}</Rich></div></td>
         <td><TxI>{s.role}</TxI></td>
         <td>{s.deps?.map(d => <Dep key={d} d={d} />)}</td>
         <td className={"st-" + s.status}>{reg().STATUS_LABEL[s.status]}</td></tr>; })}</tbody>

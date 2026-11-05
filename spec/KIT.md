@@ -11,7 +11,7 @@
 
 **版权约束**：不要大段转写原文。原文引用最多 4 条，每条英文 ≤ 25 词；其余全部用自己的中文话语改写。
 
-所有面向读者的文字用中文，术语保留原文（如 *mathesis*）。
+所有面向读者的文字用本书的语言（默认中文，术语保留原文，如 *mathesis*）；英文书见文末「界面语言」。
 
 ## 文件
 - 原文：`/home/zijian/books/oot/text/<文件>.txt`（纯文本，含小节标题；文末注释可忽略）。必须分段读完全文。
@@ -36,7 +36,7 @@ export default function Chapter() { return <ChapterPage meta={meta} groups={grou
 ## 组件（from "@kit"）
 外壳与区块
 - `<ChapterPage meta groups concepts relations>` 自动渲染 Hero（标题、一句话、大问题）、进度条、侧边目录、上一章/下一章导航。
-- `<Block id toc kicker title lead>` 一个区块；有 `toc` 才进侧边目录。
+- `<Block id toc kicker title lead>` 一个区块；有 `toc` 才进目录。目录是页面右侧的一列横杠，悬停展开成标题面板；`<Sec>` 为一级，`<Sub>`、`<Stmt>` 为二级，都会自动进入。自定义元素可加 `data-toc="标题"`（可选 `data-toc-level="2"`）。
 - `<C id="concept_id">文字</C>` 正文里的行内概念链接，点击弹出概念卡。`<ConceptChip id>` 胶囊版。
 
 标准区块（推荐顺序，可增删调整；不适合本章的就不要硬塞）
@@ -83,3 +83,10 @@ export default function Chapter() { return <ChapterPage meta={meta} groups={grou
 
 ## 读者反馈（全站自动启用）
 `kit/Feedback.jsx`：读者选中任意文字后出现"✎ 反馈"悬浮按钮，点开面板填写反馈，"用邮件发送"以 `mailto:` 打开读者的邮件程序（正文含页面地址、页面标题、选中的纯文本、反馈与可选联系方式；选中内容最多带 600 字）；另有"复制内容"兜底。收件地址在 `kit/site.js` 的 `FEEDBACK_EMAIL`（为空则不显示），单本书可在 book.js 用 `feedbackEmail` 覆盖。章节作者无需做任何事。
+
+## 界面语言
+一本书只有一种界面语言，由 `book.js` 的 `lang` 决定：`"zh"`（缺省）或 `"en"`。它控制所有组件自带的文字（按钮、提示、页脚、“第 N 章”等）、`<html lang>`、西文字体和朗读语音。书的内容不做多语言：内容用什么语言写，页面就显示什么。
+
+- **写英文书**：`book.js` 加 `lang: "en"`；标题和名称只写 `title_en` / `name_en`（statements 只写 `en`），不写 `*_zh`。组件优先显示 `*_zh`，没有时显示 `*_en`；两者都有时 `*_en` 作副标题。`quotes` 的 `zh`、`Sec` 的 `zh` 同理可省略。
+- **加新的界面文字**：不要在组件里写死，在 `kit/i18n/zh.js` 和 `en.js` 各加一个键，用 `t("键名")` 取（`from "./i18n/index.js"`，章节文件 `from "@kit"`）。带参数的句子写成函数，如 `"ch.no": n => \`Chapter ${n}\``。默认参数里可以用 `t()`，但不要在模块顶层调用。
+- **加新语言**：照 `kit/i18n/zh.js` 写一份，在 `kit/i18n/messages.js` 登记，缺的键会退回中文。书库首页（`framework/library/index.html`）目前只有中文界面。

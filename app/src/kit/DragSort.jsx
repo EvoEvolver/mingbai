@@ -1,3 +1,4 @@
+import { t } from "./i18n/index.js";
 import { useEffect, useMemo, useState } from "react";
 import { shuffle } from "./core.jsx";
 
@@ -19,7 +20,7 @@ export function DragSort({ categories, items }) {
     if (items[i].answer === cat) { setPlaced(p => ({ ...p, [i]: cat })); setToast("✅ " + items[i].why); }
     else {
       setBad(null); requestAnimationFrame(() => setBad(i));
-      setToast(`不太对——再想想它和「${categories.find(c => c.id === cat)?.label}」的区别`);
+      setToast(t("sort.wrong", categories.find(c => c.id === cat)?.label));
     }
   };
   const ok = Object.keys(placed).length;
@@ -31,7 +32,7 @@ export function DragSort({ categories, items }) {
   return (
     <div className="sorter">
       <div className="pool">{order.filter(i => !placed[i]).map(i => <Item key={i} i={i} />)}
-        {ok === items.length && <span style={{ color: "var(--muted)" }}>全部归位 🎉</span>}</div>
+        {ok === items.length && <span style={{ color: "var(--muted)" }}>{t("sort.done")}</span>}</div>
       <div className="bins">{categories.map(c =>
         <div key={c.id} className={"bin" + (over === c.id ? " over" : "")}
           onDragOver={e => { e.preventDefault(); setOver(c.id); }} onDragLeave={() => setOver(null)}
@@ -41,7 +42,7 @@ export function DragSort({ categories, items }) {
           {order.filter(i => placed[i] === c.id).map(i => <Item key={i} i={i} />)}
         </div>)}
       </div>
-      <div className="score">已归位 {ok}/{items.length} · 尝试 {tries} 次{ok === items.length ? " · 全部正确 🎉" : ""}</div>
+      <div className="score">{t("sort.score", ok, items.length, tries)}{ok === items.length ? t("sort.allRight") : ""}</div>
       {toast && <div className="toast">{toast}</div>}
     </div>);
 }

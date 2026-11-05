@@ -1,6 +1,8 @@
+import { t } from "./i18n/index.js";
 import { Children, useState } from "react";
 import { Paras, useReveal, useChapter, ConceptChip } from "./core.jsx";
 import { Rich } from "./math/tex.jsx";
+import { titleOf, nameOf } from "./book.jsx";
 
 // 开场钩子：深色故事卡
 // children 中的字符串片段按（富）文本分段渲染，元素原样保留——允许「字符串 + JSX」混写
@@ -17,11 +19,11 @@ export function SectionCards({ sections }) {
   return <>
     <div className="secs">{sections.map(x =>
       <div key={x.id} className={"sec" + (x.id === open ? " open" : "")} onClick={() => setOpen(x.id === open ? null : x.id)}>
-        <div className="no">{x.no}</div><h3>{x.title_zh}</h3><div className="t-en">{x.title_en}</div><div className="gist"><Rich>{x.gist}</Rich></div>
+        <div className="no">{x.no}</div><h3>{titleOf(x)}</h3>{x.title_zh && <div className="t-en">{x.title_en}</div>}<div className="gist"><Rich>{x.gist}</Rich></div>
       </div>)}
     </div>
     <div className={"secdetail" + (s ? " open" : "")}>
-      {s && <><b>{s.no} · {s.title_zh}</b><Paras text={s.summary} />
+      {s && <><b>{s.no} · {titleOf(s)}</b><Paras text={s.summary} />
         <div className="chips">{(s.concept_ids || []).map(id => <ConceptChip key={id} id={id} />)}</div></>}
     </div>
   </>;
@@ -41,12 +43,12 @@ export function ConceptGrid() {
   const used = groups.length ? groups.map(x => x.id) : [...new Set(concepts.map(c => c.group))];
   return <>
     {used.length > 1 && <div className="filters">
-      {["*", ...used].map(x => <button key={x} className={g === x ? "on" : ""} onClick={() => setG(x)}>{x === "*" ? "全部" : groupLabel(x)}</button>)}
+      {["*", ...used].map(x => <button key={x} className={g === x ? "on" : ""} onClick={() => setG(x)}>{x === "*" ? t("blk.all") : groupLabel(x)}</button>)}
     </div>}
     <div className="cgrid">{concepts.filter(c => g === "*" || c.group === g).map(c =>
       <div key={c.id} className="ccard" style={{ "--g": color(c.group) }} onClick={() => open(c.id)}>
-        <div className="ic">{c.icon}</div><h3><Rich>{c.name_zh}</Rich></h3><div className="en"><Rich>{c.name_en}</Rich></div>
-        <div className="plain"><Rich>{c.plain}</Rich></div><div className="more">展开 →</div>
+        <div className="ic">{c.icon}</div><h3><Rich>{nameOf(c)}</Rich></h3>{c.name_zh && <div className="en"><Rich>{c.name_en}</Rich></div>}
+        <div className="plain"><Rich>{c.plain}</Rich></div><div className="more">{t("blk.more")}</div>
       </div>)}
     </div>
   </>;
@@ -64,17 +66,17 @@ function CompGroup({ g }) {
   const rich = g.examples.some(exDetail);
   if (!rich) return (
     <div className={"cgroup" + (done ? " done" : "")} onClick={() => setDone(!done)}>
-      <div className="lbl">原著例子 ×{g.examples.length} · {done ? "点击还原" : "点击压缩"}</div>
+      <div className="lbl">{t("blk.exLabel", g.examples.length)} · {done ? t("blk.clickRestore") : t("blk.clickCompress")}</div>
       <div className="ex">{g.examples.map((e, i) => <span key={i}>{exTag(e)}</span>)}</div>
       <div className="says">💡 <Rich>{g.says}</Rich></div>
     </div>);
   const cur = sel !== null ? g.examples[sel] : null;
   return (
     <div className={"cgroup rich" + (done ? " done" : "")}>
-      <div className="lbl">原著例子 ×{g.examples.length} · 点标签看这个例子讲了什么
+      <div className="lbl">{t("blk.exLabel", g.examples.length)} · {t("blk.tagHint")}
         <span className="cbtns">
-          <button className={all ? "on" : ""} onClick={() => { setAll(!all); setSel(null); }}>{all ? "收起全部" : "全部展开"}</button>
-          <button className={done ? "on" : ""} onClick={() => setDone(!done)}>{done ? "还原" : "压缩成一句话 →"}</button>
+          <button className={all ? "on" : ""} onClick={() => { setAll(!all); setSel(null); }}>{all ? t("blk.collapseAll") : t("blk.expandAll")}</button>
+          <button className={done ? "on" : ""} onClick={() => setDone(!done)}>{done ? t("blk.restore") : t("blk.compress")}</button>
         </span>
       </div>
       <div className="ex">{g.examples.map((e, i) => exDetail(e)
@@ -101,14 +103,14 @@ export function QuoteCarousel({ quotes }) {
   const go = d => setI((i + d + n) % n);
   return <>
     <div className="quotewrap">
-      {n > 1 && <button className="qarrow l" onClick={() => go(-1)} aria-label="上一句">‹</button>}
-      <div className="quote" onClick={() => go(1)} title={n > 1 ? "点击看下一句" : undefined}>
-        <div className="en">“{q.en}”</div><div className="zh"><Rich>{q.zh}</Rich></div><div className="meaning"><Rich>{q.meaning}</Rich></div>
-        {n > 1 && <div className="qhint">{i + 1} / {n} · 点击卡片或两侧箭头切换 →</div>}
+      {n > 1 && <button className="qarrow l" onClick={() => go(-1)} aria-label={t("blk.prevQuote")}>‹</button>}
+      <div className="quote" onClick={() => go(1)} title={n > 1 ? t("blk.clickNextQuote") : undefined}>
+        <div className="en">“{q.en}”</div>{q.zh && <div className="zh"><Rich>{q.zh}</Rich></div>}<div className="meaning"><Rich>{q.meaning}</Rich></div>
+        {n > 1 && <div className="qhint">{i + 1} / {n} · {t("blk.quoteHint")}</div>}
       </div>
-      {n > 1 && <button className="qarrow r" onClick={() => go(1)} aria-label="下一句">›</button>}
+      {n > 1 && <button className="qarrow r" onClick={() => go(1)} aria-label={t("blk.nextQuote")}>›</button>}
     </div>
-    {n > 1 && <div className="qnav">{quotes.map((_, j) => <button key={j} className={j === i ? "on" : ""} aria-label={`第${j + 1}句`} onClick={() => setI(j)} />)}</div>}
+    {n > 1 && <div className="qnav">{quotes.map((_, j) => <button key={j} className={j === i ? "on" : ""} aria-label={t("blk.quoteN", j + 1)} onClick={() => setI(j)} />)}</div>}
   </>;
 }
 
@@ -130,22 +132,22 @@ export function Quiz({ questions }) {
           {p !== undefined && <div className="qwhy">{p === q.answer ? "✅ " : "❌ "}<Rich>{q.why}</Rich></div>}
         </div>);
     })}
-    {answered === questions.length && <div className="score">得分 {right}/{answered}{right === answered ? " —— 完全掌握 🎉" : " —— 回到概念卡片再看看错题涉及的概念"}</div>}
+    {answered === questions.length && <div className="score">{t("blk.score", right, answered)}{right === answered ? t("blk.scoreAll") : t("blk.scoreSome")}</div>}
   </>;
 }
 
 export const Takeaways = ({ items }) => <div className="takeaways">{items.map((t, i) => <div className="tk" key={i}><Rich>{t}</Rich></div>)}</div>;
 
 // 下一章衔接
-export const Bridge = ({ title = "→ 下一章预告", children }) => (
+export const Bridge = ({ title = t("blk.bridge"), children }) => (
   <div className="bridge"><b>{title}</b>{richKids(children)}</div>);
 
 // 术语表（可搜索）。terms: [{term, zh, def}]
 export function Glossary({ terms }) {
   const [q, setQ] = useState("");
-  const list = terms.filter(g => !q || (g.term + g.zh + g.def).toLowerCase().includes(q.toLowerCase()));
+  const list = terms.filter(g => !q || (g.term + (g.zh || "") + g.def).toLowerCase().includes(q.toLowerCase()));
   return <>
-    <input className="search" placeholder="搜索术语…" value={q} onChange={e => setQ(e.target.value)} />
+    <input className="search" placeholder={t("blk.searchTerm")} value={q} onChange={e => setQ(e.target.value)} />
     <div className="gloss">{list.map((g, i) => <div key={i}><b>{g.term}</b> <i>{g.zh}</i><br /><Rich>{g.def}</Rich></div>)}</div>
   </>;
 }

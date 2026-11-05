@@ -9,7 +9,7 @@
 
 ## 步骤
 1. **建书目录** `/home/zijian/books/<slug>/`，内含：
-   - `book.js`：照抄 `oot/book.js` 的格式（title、title_en、author、subtitle、intro、parts、chapters[{id,no,title_zh,title_en,part,text}]）。章节 id 用 `ch00`（前言/引言，如有）、`ch01`…；parts 按原书结构划分。
+   - `book.js`：照抄 `oot/book.js` 的格式（title、title_en、author、subtitle、intro、parts、chapters[{id,no,title_zh,title_en,part,text}]）。英文书加 `lang: "en"` 并只写 `title_en`（见 KIT.md「界面语言」）。章节 id 用 `ch00`（前言/引言，如有）、`ch01`…；parts 按原书结构划分。
    - `text/`：每章一个纯文本文件。epub 用 `python3 -I /home/zijian/books/framework/extract.py <xhtml> <out.txt>`（先 unzip 到 `<slug>/src/`）；PDF 用 `pdftotext -layout -f <起页> -l <止页>`，先用目录页确定每章页码范围。抽出后抽查确认章节边界正确。
    - `chapters/`：章节 JSX。
 2. **每章一个独立 subagent**（并行），给每个 subagent 的说明要包括：

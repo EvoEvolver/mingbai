@@ -67,7 +67,7 @@ const strip = s => String(s || "").replace(/\$([^$]*)\$/g, "$1").replace(/\\(mat
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 let BOOKS = [], kind = "*";
 
-function chapterLabel(c) { return /^\d+$/.test(String(c.no)) ? (c.no === 0 ? c.title_zh : `${c.no} ${c.title_zh}`) : `${c.no} ${c.title_zh}`; }
+function chapterLabel(c) { const t = c.title_zh || c.title_en; return c.no === 0 ? t : `${c.no} ${t}`; }
 function card(b) {
   const chs = b.chapters.map(c => `<a class="${c.ready ? "" : "off"}" href="${esc(b.slug)}/${esc(c.id)}/" title="${esc(strip(c.one_liner || c.title_en))}">${esc(chapterLabel(c))}</a>`).join("");
   return `<article class="book k-${esc(b.kind)}">
@@ -89,7 +89,7 @@ function card(b) {
 function render() {
   const q = document.getElementById("q").value.trim().toLowerCase();
   const list = BOOKS.filter(b => (kind === "*" || b.kind === kind) &&
-    (!q || [b.title, b.title_en, b.author, b.intro, ...b.chapters.map(c => c.title_zh + " " + c.title_en)].join(" ").toLowerCase().includes(q)));
+    (!q || [b.title, b.title_en, b.author, b.intro, ...b.chapters.map(c => (c.title_zh || "") + " " + (c.title_en || ""))].join(" ").toLowerCase().includes(q)));
   document.getElementById("grid").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">没有匹配的书</div>`;
 }
 fetch("library.json").then(r => r.json()).then(lib => {

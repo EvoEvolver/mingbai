@@ -1,18 +1,19 @@
+import { t } from "./kit/i18n/index.js";
 import { useEffect, useState } from "react";
-import { book, modules, hasChapter, pageUrl } from "./kit/book.jsx";
+import { book, modules, hasChapter, pageUrl, titleOf } from "./kit/book.jsx";
 import { Rich } from "./kit/math/tex.jsx";
 import { TopBar } from "./kit/layout.jsx";
 
 export default function Shelf() {
-  useEffect(() => { document.title = `${book.title} · 图书讲明白`; }, []);
+  useEffect(() => { document.title = `${book.title} · ${t("site.brand")}`; }, []);
   return (
     <main>
       <TopBar id={null} />
       <header className="hero" style={{ minHeight: "52vh" }}>
         <div className="kicker">{book.author} · {book.subtitle}</div>
-        <h1>{book.title}</h1><div className="en">{book.title_en}</div>
+        <h1>{book.title}</h1>{book.title_en && book.title_en !== book.title && <div className="en">{book.title_en}</div>}
         <div className="one"><Rich>{book.intro}</Rich></div>
-        {hasChapter("connections") && <p><a className="cta" href={pageUrl("connections")}>🧭 全书脉络：章节之间如何连接 →</a></p>}
+        {hasChapter("connections") && <p><a className="cta" href={pageUrl("connections")}>{t("shelf.connections")}</a></p>}
       </header>
       <div className="shelf">
         {(book.parts?.length ? book.parts : [{ no: null, label: null }]).map(p => [   // 未分部（如论文）时列成一组
@@ -21,12 +22,12 @@ export default function Shelf() {
             const meta = modules[c.id]?.meta, ready = hasChapter(c.id);
             return (
               <a key={c.id} className={"ch" + (ready ? " ready" : "")} href={ready ? pageUrl(c.id) : undefined}>
-                {!ready && <span className="tag">制作中</span>}
-                <div className="n">{c.no === 0 ? (c.label ? book.chapters.indexOf(c) + 1 : "序") : c.no}</div><h3>{c.title_zh}</h3><div className="e">{c.title_en}</div>
+                {!ready && <span className="tag">{t("shelf.wip")}</span>}
+                <div className="n">{c.no === 0 ? (c.label ? book.chapters.indexOf(c) + 1 : t("shelf.preface")) : c.no}</div><h3>{titleOf(c)}</h3>{c.title_zh && <div className="e">{c.title_en}</div>}
                 {meta?.one_liner && <div className="one"><Rich>{meta.one_liner}</Rich></div>}
               </a>);
           })])}
       </div>
-      <footer>图书讲明白 · 把晦涩原著拆成核心概念 + 类比 + 互动</footer>
+      <footer>{t("shelf.footer")}</footer>
     </main>);
 }

@@ -1,3 +1,4 @@
+import { t } from "./i18n/index.js";
 import { useState } from "react";
 import { useReveal } from "./core.jsx";
 
@@ -39,9 +40,9 @@ export function StepThrough({ steps, render }) {
     <div className="st-dots">{steps.map((s, j) => <button key={j} className={j === i ? "on" : j < i ? "done" : ""} onClick={() => setI(j)}>{j + 1}. {s.label}</button>)}</div>
     <div className="st-body">{steps[i].content}</div>
     <div className="st-ctrl">
-      <button disabled={i === 0} onClick={() => setI(i - 1)}>← 上一步</button>
+      <button disabled={i === 0} onClick={() => setI(i - 1)}>{t("ui.prevStep")}</button>
       <span>{i + 1} / {steps.length}</span>
-      <button disabled={i === steps.length - 1} onClick={() => setI(i + 1)}>下一步 →</button>
+      <button disabled={i === steps.length - 1} onClick={() => setI(i + 1)}>{t("ui.nextStep")}</button>
     </div>
   </div>;
 }

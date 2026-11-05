@@ -1,6 +1,6 @@
+import { t } from "../i18n/index.js";
 import { useEffect } from "react";
-import { book } from "../book.jsx";
-import { pageUrl } from "../book.jsx";
+import { book, chapterNo, pageUrl } from "../book.jsx";
 import { Progress, Toc, TopBar, ChapterNav } from "../layout.jsx";
 import { ChapterProvider } from "../core.jsx";
 import { TextbookProvider, Tx, TxI, Rich } from "./tex.jsx";
@@ -14,7 +14,7 @@ import { KeyEquations, Notation } from "./env.jsx";
 // groups / concepts / relations: 核心物理概念（与人文版同一格式，可用 <ConceptGrid/>、<ConceptMap/>、<C id>）
 export function TextbookPage({ meta: m, notation = [], groups, concepts, relations, children, keyEquations = true }) {
   useEffect(() => { document.title = `${m.no ? m.no + " " : ""}${m.title_zh || m.title_en} · ${book.title}`; }, [m]);
-  const label = m.label ?? book.chapters?.find(c => c.id === m.id)?.label ?? (/^\d+$/.test(String(m.no)) ? `第 ${m.no} 章` : `附录 ${m.no}`);   // label 可覆盖（如“第 I 章补充”）
+  const label = chapterNo({ no: m.no, label: m.label ?? book.chapters?.find(c => c.id === m.id)?.label });   // label 可覆盖（如“第 I 章补充”）
   return (
     <ChapterProvider meta={m} groups={groups} concepts={concepts} relations={relations}>
       <TextbookProvider chapterId={m.id} notation={notation}>
@@ -22,32 +22,32 @@ export function TextbookPage({ meta: m, notation = [], groups, concepts, relatio
         <TopBar id={m.id} />
         <Toc />
         <main className="tb">
-          <header className="tb-hero" id="b-top" data-toc="本章概览">
-            <div className="kicker">{book.author} · {book.title} · {label}{m.pages ? ` · 原书 pp. ${m.pages}` : ""}</div>
+          <header className="tb-hero" id="b-top" data-toc={t("toc.overview")}>
+            <div className="kicker">{book.author} · {book.title} · {label}{m.pages ? t("tb.pages", m.pages) : ""}</div>
             <h1>{m.no ? <span className="tb-chno">{m.no}</span> : null}{m.title_zh || m.title_en}</h1>
             {m.title_zh && <div className="en">{m.title_en}</div>}
             {m.one_liner && <div className="one"><TxI>{m.one_liner}</TxI></div>}
-            {m.big_question && <div className="bigq"><small>本章真正的问题</small><TxI>{m.big_question}</TxI></div>}
+            {m.big_question && <div className="bigq"><small>{t("hero.bigq")}</small><TxI>{m.big_question}</TxI></div>}
             {m.why_it_matters && <p className="why"><TxI>{m.why_it_matters}</TxI></p>}
             {m.overview && <div className="tb-overview"><Tx>{m.overview}</Tx></div>}
             <div className="tb-meta-row">
-              {m.objectives?.length > 0 && <div className="tb-obj"><b>学完本章你应当能够</b><ul>{m.objectives.map((o, i) => <li key={i}><TxI>{o}</TxI></li>)}</ul></div>}
-              {m.prereq?.length > 0 && <div className="tb-pre"><b>前置知识</b><ul>{m.prereq.map((p, i) => <li key={i}>{p.ch ? <a href={pageUrl(p.ch)}><Rich>{p.what}</Rich></a> : <TxI>{p.what}</TxI>}</li>)}</ul></div>}
+              {m.objectives?.length > 0 && <div className="tb-obj"><b>{t("tb.objectives")}</b><ul>{m.objectives.map((o, i) => <li key={i}><TxI>{o}</TxI></li>)}</ul></div>}
+              {m.prereq?.length > 0 && <div className="tb-pre"><b>{t("tb.prereq")}</b><ul>{m.prereq.map((p, i) => <li key={i}>{p.ch ? <a href={pageUrl(p.ch)}><Rich>{p.what}</Rich></a> : <TxI>{p.what}</TxI>}</li>)}</ul></div>}
             </div>
-            <div className="tb-tip">💡 点击任一公式可放大并逐符号解读；点击公式中的符号可直接查看定义。</div>
+            <div className="tb-tip">{t("tb.tip")}</div>
           </header>
           {children}
-          {keyEquations && <section className="tb-sec" id="b-keyeq" data-toc="关键方程">
-            <h2 className="tb-h2">本章关键方程</h2>
-            <p className="lead">点击任一方程跳回正文所在位置。</p>
+          {keyEquations && <section className="tb-sec" id="b-keyeq" data-toc={t("toc.keyeq")}>
+            <h2 className="tb-h2">{t("tb.keyeq")}</h2>
+            <p className="lead">{t("tb.keyeqLead")}</p>
             <KeyEquations />
           </section>}
-          {notation?.length > 0 && <section className="tb-sec" id="b-notation" data-toc="符号表">
-            <h2 className="tb-h2">本章符号表</h2>
+          {notation?.length > 0 && <section className="tb-sec" id="b-notation" data-toc={t("toc.notation")}>
+            <h2 className="tb-h2">{t("tb.notation")}</h2>
             <Notation rows={notation} />
           </section>}
           <ChapterNav id={m.id} />
-          <footer>{book.footer ?? "本页为原书的中文学习版：结构、公式编号与插图依原书，正文为编者重新组织的讲解。插图版权归原书出版方所有，仅供个人学习。"}</footer>
+          <footer>{book.footer ?? t("footer.textbook")}</footer>
         </main>
       </TextbookProvider>
     </ChapterProvider>);

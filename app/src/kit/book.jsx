@@ -1,4 +1,5 @@
 import { book, available, data, anchors } from "virtual:book";
+import { t } from "./i18n/index.js";
 export { anchors };
 
 // 全书层面的数据与链接工具（多页静态站点）。
@@ -44,7 +45,12 @@ export function useLibrary() {
   return (PAGE ? "../" : "./") + "../";
 }
 
-export const chapterLabel = c => (c.no === 0 ? c.title_zh : `第 ${c.no} 章 · ${c.title_zh}`);
+// 内容字段的主显示名：中文书写 *_zh（*_en 作副标题）；英文书只写 *_en。
+export const titleOf = x => x?.title_zh || x?.title_en || "";
+export const nameOf = c => c?.name_zh || c?.name_en || "";
+// 章节称呼：可被 label 覆盖；非数字编号视为附录（"A" → 附录 A）
+export const chapterNo = c => c.label ?? (/^\d+$/.test(String(c.no)) ? t("ch.no", c.no) : t("ch.appendix", c.no));
+export const chapterLabel = c => (c.no === 0 ? titleOf(c) : `${chapterNo(c)} · ${titleOf(c)}`);
 
 let conceptCache = null;
 // 全书各章的概念，id 加章节前缀，group = 章节 id

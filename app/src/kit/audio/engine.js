@@ -23,7 +23,6 @@ const TIMBRES = {
   organ: { harm: [1, 0.6, 0.35, 0.15, 0.18, 0, 0.08, 0.06], attack: 0.02, decay: 0.1, sustain: 0.75, release: 0.12, bright: 8, brightEnd: 8, maxHz: 4000 },
   sine: { harm: [1], attack: 0.015, decay: 0.2, sustain: 0.8, release: 0.15, bright: 60, brightEnd: 60, maxHz: 20000 },
 };
-export const TIMBRE_LABELS = { piano: "钢琴", organ: "风琴", sine: "正弦" };
 
 function ensure() {
   if (!ctx) {

@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 // 谱例：ABC 记谱 → 两种视图一键切换（全站共享偏好）：
 //   五线谱（abcjs 渲染）⇄ 卷帘 Piano Roll（像 Logic Pro：横轴时间、纵轴音高、左侧键盘，音符是长条）。
 // 声音走本站引擎（engine.js），播放时音符同步高亮、卷帘有播放头；点任意音符/音条单独试听。
@@ -64,7 +65,7 @@ export function Score({ abc, bass, keySig, meter, unit, tempo = 80, title, capti
         tune.current = { events, msPerWhole, chords: chords.sort((a, b) => a.ms - b.ms), total, notes, bars, end, qpm };
         setReady(true);
       } catch (e) { setErr(String(e.message || e)); }
-    }).catch(e => setErr("乐谱组件加载失败：" + e.message));
+    }).catch(e => setErr(t("au.scoreFail", e.message)));
     return () => { dead = true; };
   }, [text, scale, width]); // eslint-disable-line
 
@@ -93,11 +94,11 @@ export function Score({ abc, bass, keySig, meter, unit, tempo = 80, title, capti
     {view === "roll" && ready && <PianoRoll data={tune.current} pos={on ? pos : -1} active={active} accomp={accomp} />}
     {err && <div className="au-note">{err}</div>}
     <figcaption>
-      {playable && <button className="au-go" disabled={!ready} onClick={go}>{on ? "■ 停止" : "▶ 播放乐谱"}</button>}
-      <button className="au-view" onClick={toggleView} title="在五线谱与卷帘（Piano Roll）之间切换，全站谱例一起切换">
-        {view === "roll" ? "𝄞 五线谱" : "🎹 卷帘"}</button>
+      {playable && <button className="au-go" disabled={!ready} onClick={go}>{on ? t("au.stopBtn") : t("au.playScore")}</button>}
+      <button className="au-view" onClick={toggleView} title={t("au.viewTitle")}>
+        {view === "roll" ? t("au.viewStaff") : t("au.viewRoll")}</button>
       {caption && <span>{caption}</span>}
-      {playable && <span className="au-hint">{view === "roll" ? "点音条可单独试听" : "点任意音符或和弦可单独试听"}</span>}
+      {playable && <span className="au-hint">{view === "roll" ? t("au.rollHint") : t("au.staffHint")}</span>}
     </figcaption>
   </figure>;
 }

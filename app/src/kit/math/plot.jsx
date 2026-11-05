@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { useId, useMemo, useRef, useState } from "react";
 import { renderTex, Rich } from "./tex.jsx";
 
@@ -111,7 +112,7 @@ export function Plot({ x, y, params = [], series, vlines, samples = 300, height 
             onChange={e => setPv(s => ({ ...s, [p.id]: fromS(+e.target.value) }))} />
         </label>;
       })}
-        <button className="plot-reset" onClick={() => setPv(Object.fromEntries(params.map(p => [p.id, p.value])))}>重置</button>
+        <button className="plot-reset" onClick={() => setPv(Object.fromEntries(params.map(p => [p.id, p.value])))}>{t("ui.reset")}</button>
       </div>}
       <svg ref={svg} viewBox={`0 0 ${W} ${H}`} className="plot-svg"
         onMouseMove={e => { const pt = svg.current.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(svg.current.getScreenCTM().inverse()); setHx(q.x >= m.l && q.x <= m.l + iw ? inv(q.x) : null); }}

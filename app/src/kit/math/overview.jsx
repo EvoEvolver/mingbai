@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { useMemo, useState } from "react";
 import { TxI, Rich, FitTex, plainText, useTextbook, anchor } from "./tex.jsx";
 import { EqChip } from "./env.jsx";
@@ -95,6 +96,6 @@ export function EqMap({ edges, labels = {}, colW = 420, rowH = 124 }) {
             <div className={"eqm-elab" + (related && !isDim(x.e) ? " on" : "")} title={plainText(x.e.label)}><span className="eqm-elab-t"><TxI>{x.e.label}</TxI></span></div>
           </foreignObject>)}
       </svg>
-      <div className="hint">箭头上的文字说明这一步用了什么 · 悬停节点高亮上下游 · 点击节点放大公式 · 图较宽时可横向滚动</div>
+      <div className="hint">{t("eqmap.hint")}</div>
     </div>);
 }

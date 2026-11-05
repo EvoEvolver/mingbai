@@ -1,6 +1,7 @@
+import { t, lang } from "../i18n/index.js";
 // 可听、可互动的音乐组件。说明见 framework/spec/AUDIO.md
 import { useEffect, useMemo, useRef, useState } from "react";
-import { play, sequence, stop, onStop, setSettings, useAudioState, TIMBRE_LABELS } from "./engine.js";
+import { play, sequence, stop, onStop, setSettings, useAudioState } from "./engine.js";
 import { parseNote, parseNotes, parseChord, triadCore, pcName, isBlack, mod12, cycle, cycleCount, intervalName, tonnetzPc, triadName } from "./theory.js";
 import "./audio.css";
 
@@ -34,21 +35,21 @@ export function Play({ notes, chord, seq, arp = 0, melodic, gap = 0.6, octave, c
     if (steps.length === 1) { play(steps[0].notes, { arp }); setTimeout(() => setOn(false), 1200); }
     else sequence(steps, { gap, arp, onStep: i => i < 0 && setOn(false) });
   };
-  return <button className={"au-play" + (on ? " on" : "")} onClick={go} title={title || "点击试听"}><i>{on ? "♪" : "▶"}</i>{children}</button>;
+  return <button className={"au-play" + (on ? " on" : "")} onClick={go} title={title || t("au.tryIt")}><i>{on ? "♪" : "▶"}</i>{children}</button>;
 }
 
 // 右下角固定的声音控制条（每章放一次）。tuning=true 时显示律制切换
 export function SoundBar({ tuning = false }) {
   const { settings: s, active } = useAudioState();
   return <div className="au-bar">
-    <button onClick={() => setSettings({ muted: !s.muted })} title={s.muted ? "取消静音" : "静音"}>{s.muted ? "🔇" : active.size ? "🔊" : "🔈"}</button>
-    <input type="range" min="0" max="1" step="0.05" value={s.volume} onChange={e => setSettings({ volume: +e.target.value, muted: false })} aria-label="音量" />
-    <select value={s.timbre} onChange={e => setSettings({ timbre: e.target.value })} aria-label="音色">
-      {Object.entries(TIMBRE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+    <button onClick={() => setSettings({ muted: !s.muted })} title={s.muted ? t("au.unmute") : t("au.mute")}>{s.muted ? "🔇" : active.size ? "🔊" : "🔈"}</button>
+    <input type="range" min="0" max="1" step="0.05" value={s.volume} onChange={e => setSettings({ volume: +e.target.value, muted: false })} aria-label={t("au.volume")} />
+    <select value={s.timbre} onChange={e => setSettings({ timbre: e.target.value })} aria-label={t("au.timbreLabel")}>
+      {Object.entries(t("au.timbre")).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
     </select>
-    {tuning && <select value={s.tuning} onChange={e => setSettings({ tuning: e.target.value })} aria-label="律制">
-      <option value="equal">平均律</option><option value="just">纯律</option></select>}
-    <button onClick={stop} title="停止">■</button>
+    {tuning && <select value={s.tuning} onChange={e => setSettings({ tuning: e.target.value })} aria-label={t("au.tuning")}>
+      <option value="equal">{t("au.equal")}</option><option value="just">{t("au.just")}</option></select>}
+    <button onClick={stop} title={t("au.stop")}>■</button>
   </div>;
 }
 
@@ -77,9 +78,7 @@ export function Keyboard({ from = "C4", to = "B5", highlight = [], marks = {}, o
   </svg>;
 }
 
-const SHAPES = { 2: "直径（两两相对）", 3: "正三角形", 4: "正方形", 6: "正六边形", 12: "十二芒星" };
 const CYCLE_COLORS = ["#9b2c1f", "#2c4a6e", "#3c6b4a", "#b8862b", "#5b3f7a", "#7a5b3f"];
-const STEP_NAMES = { 1: "半音", 2: "全音", 3: "小三度", 4: "大三度", 5: "纯四度", 6: "三全音", 7: "纯五度", 8: "小六度", 9: "大六度", 10: "小七度", 11: "大七度" };
 
 // 十二音循环圈：选步长 → 画出所有循环并可播放；可在「半音阶排列」与「五度圈排列」间切换（带动画）
 // steps：可选的步长；arrange："chromatic" | "fifths"；lockArrange：隐藏排列切换
@@ -113,8 +112,8 @@ export function PitchCircle({ step: step0 = 1, steps = [1, 2, 3, 4, 5, 6, 7], st
   const n = mine.length;
   return <div className="card au-circle">
     <div className="au-ctrl">
-      <span className="au-lab">步长</span>
-      {steps.map(s => <button key={s} className={s === step ? "on" : ""} onClick={() => { stop(); setCur(-1); setStep(s); }}>{s}<small>{STEP_NAMES[s]}</small></button>)}
+      <span className="au-lab">{t("au.stepLabel")}</span>
+      {steps.map(s => <button key={s} className={s === step ? "on" : ""} onClick={() => { stop(); setCur(-1); setStep(s); }}>{s}<small>{t("au.stepName")[s]}</small></button>)}
     </div>
     <svg viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: size * 1.25 }}>
       <circle cx={C} cy={C} r={R} className="au-ring" />
@@ -134,17 +133,17 @@ export function PitchCircle({ step: step0 = 1, steps = [1, 2, 3, 4, 5, 6, 7], st
       })}
     </svg>
     <div className="au-info">
-      <b>每步 {step} 个半音（{STEP_NAMES[step]}）</b>：从 {pcName(start)} 出发经过 {n} 个音回到起点，画出{n === 12 ? ((step === 1 || step === 11) === (target === 0) ? "一个圆（正十二边形）" : "十二芒星") : SHAPES[n] || n + " 边形"}；
-      这样的循环共有 <b>{groups.length}</b> 组{groups.length > 1 ? "（浅色为其余各组）" : "，走遍全部十二个音"}。
+      <b>{t("au.perStep", step, t("au.stepName")[step])}</b>{t("au.route", pcName(start), n, n === 12 ? ((step === 1 || step === 11) === (target === 0) ? t("au.circle") : t("au.shape")[12]) : t("au.shape")[n] || t("au.polygon", n))}
+      {t("au.cycles")}<b>{groups.length}</b>{t("au.cyclesTail", groups.length > 1)}
       <div className="au-seq">{mine.map((pc, k) => <span key={k} className={cur === k ? "on" : ""}>{pcName(pc)}</span>)}<span className={cur === n ? "on" : ""}>{pcName(mine[0])}</span></div>
     </div>
     <div className="au-ctrl">
-      <button className="au-go" onClick={playCycle}>▶ 播放这个循环</button>
+      <button className="au-go" onClick={playCycle}>{t("au.playCycle")}</button>
       {!lockArrange && <>
-        <button className={target === 0 ? "on" : ""} onClick={() => setTarget(0)}>半音阶排列</button>
-        <button className={target === 1 ? "on" : ""} onClick={() => setTarget(1)}>五度圈排列</button>
+        <button className={target === 0 ? "on" : ""} onClick={() => setTarget(0)}>{t("au.chromatic")}</button>
+        <button className={target === 1 ? "on" : ""} onClick={() => setTarget(1)}>{t("au.fifths")}</button>
       </>}
-      <span className="au-hint">点圆上的音：试听并设为起点</span>
+      <span className="au-hint">{t("au.circleHint")}</span>
     </div>
   </div>;
 }
@@ -156,19 +155,19 @@ export function IntervalLab({ from = "C4", to = "B5", lo: lo0 = "C4", hi: hi0 = 
   const pick = m => { if (next === 0) { setLo(m); if (m >= hi) setHi(m + 4); setNext(1); } else { if (m > lo) setHi(m); else { setHi(lo); setLo(m); } setNext(0); } };
   const invert = () => { if (st <= 0) return; if (lo + 12 > hi) { setLo(hi); setHi(lo + 12); } else setLo(lo + 12); };
   return <div className="card au-ilab">
-    <Keyboard from={from} to={to} onNote={pick} highlight={[lo, hi]} marks={{ [lo]: "根", [hi]: "冠" }} names="C" />
+    <Keyboard from={from} to={to} onNote={pick} highlight={[lo, hi]} marks={{ [lo]: t("au.markRoot"), [hi]: t("au.markTop") }} names="C" />
     <div className="au-ireadout">
-      <div><small>根音 → 冠音</small><b>{pcName(lo)} → {pcName(hi)}</b></div>
-      <div><small>半音数</small><b>{st}</b></div>
-      <div><small>音程</small><b>{intervalName(st)}</b></div>
+      <div><small>{t("au.rootTop")}</small><b>{pcName(lo)} → {pcName(hi)}</b></div>
+      <div><small>{t("au.semitones")}</small><b>{st}</b></div>
+      <div><small>{t("au.interval")}</small><b>{intervalName(st)}</b></div>
     </div>
     <div className="au-ctrl">
-      <button className="au-go" onClick={() => play([lo, hi], { arp: 0.5, dur: 1.6 })}>▶ 先后（旋律音程）</button>
-      <button className="au-go" onClick={() => play([lo, hi], { dur: 1.6 })}>▶ 同时（和声音程）</button>
-      <button onClick={invert} disabled={st <= 0 || st > 12}>⇅ 转位</button>
-      <span className="au-hint">{next === 0 ? "在键盘上点一个音作为根音" : "再点一个音作为冠音"}</span>
+      <button className="au-go" onClick={() => play([lo, hi], { arp: 0.5, dur: 1.6 })}>{t("au.melodic")}</button>
+      <button className="au-go" onClick={() => play([lo, hi], { dur: 1.6 })}>{t("au.harmonic")}</button>
+      <button onClick={invert} disabled={st <= 0 || st > 12}>{t("au.invert")}</button>
+      <span className="au-hint">{next === 0 ? t("au.pickRoot") : t("au.pickTop")}</span>
     </div>
-    {st > 0 && st < 12 && <div className="au-note">转位后是 <b>{intervalName(12 - st)}</b>：{st} + {12 - st} = 12 个半音，正好一个纯八度。</div>}
+    {st > 0 && st < 12 && <div className="au-note">{t("au.invertedIs")}<b>{intervalName(12 - st)}</b>{t("au.invertedSum", st, 12 - st)}</div>}
   </div>;
 }
 
@@ -263,13 +262,14 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
     return out;
   }, [path && JSON.stringify(path), cols, rows, center, unit]); // eslint-disable-line
   const curItem = route[current];
-  const AX = { fifths: { d: [1, 0], col: "#b8862b", name: "横线：纯五度循环（五度圈）" }, M3: { d: [0, 1], col: "#9b2c1f", name: "右上斜线：大三度循环（3 个音）" }, m3: { d: [-1, 1], col: "#2c4a6e", name: "左上斜线：小三度循环（4 个音）" } };
-  const roleOf = (t, pc) => pc === t.root ? "根" : pc === mod12(t.root + 7) ? "五" : "三";
+  const axisT = t("au.axis");
+  const AX = { fifths: { d: [1, 0], col: "#b8862b", axis: axisT.fifths }, M3: { d: [0, 1], col: "#9b2c1f", axis: axisT.M3 }, m3: { d: [-1, 1], col: "#2c4a6e", axis: axisT.m3 } };
+  const roleOf = (tri, pc) => pc === tri.root ? t("au.roleRoot") : pc === mod12(tri.root + 7) ? t("au.roleFifth") : t("au.roleThird");
   return <div className="card au-tonnetz">
     {showAxesToggle && <div className="au-ctrl">
-      <span className="au-lab">显示循环</span>
+      <span className="au-lab">{t("au.showCycles")}</span>
       {Object.entries(AX).map(([k, a]) => <button key={k} className={ax.includes(k) ? "on" : ""} style={{ "--c": a.col }}
-        onClick={() => setAx(ax.includes(k) ? ax.filter(x => x !== k) : [...ax, k])}>{a.name.split("：")[1]}</button>)}
+        onClick={() => setAx(ax.includes(k) ? ax.filter(x => x !== k) : [...ax, k])}>{a.axis[1]}</button>)}
     </div>}
     <svg viewBox={vb.join(" ")}>
       {tris.map(t => {
@@ -315,17 +315,17 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
         return <text key={"ol" + k} x={top.x + 22} y={top.y - 12} className="au-tlabel dark halo" textAnchor="start">{h.sym}</text>; })}
     </svg>
     {compact ? null : selT ? <div className="au-info">
-      <b style={{ color: selT.minor ? "var(--blue)" : "var(--accent)" }}>{triadName(selT.root, selT.minor, spell)}</b>：{selT.minor ? "小三和弦（小三度 + 大三度），朝下的蓝色三角" : "大三和弦（大三度 + 小三度），朝上的红色三角"}；
-      根音 {pcName(selT.root, spell)} · 三音 {pcName(selT.root + (selT.minor ? 3 : 4), spell)} · 五音 {pcName(selT.root + 7, spell)}。
+      <b style={{ color: selT.minor ? "var(--blue)" : "var(--accent)" }}>{triadName(selT.root, selT.minor, spell)}</b>{selT.minor ? t("au.triadMinor") : t("au.triadMajor")}
+      {t("au.triadParts", pcName(selT.root, spell), pcName(selT.root + (selT.minor ? 3 : 4), spell), pcName(selT.root + 7, spell))}
       <button className="au-mini" onClick={() => { const t = tris.find(x => x.root === selT.root && x.minor !== selT.minor); if (t) clickTri(t); }}>
-        ⇅ 只把三音{selT.minor ? "升" : "降"}半音 → {triadName(selT.root, !selT.minor, spell)}</button>
-    </div> : <div className="au-info au-hint">点任意三角形听和弦，点交点听单音。{caption}</div>}
-    {ax.length > 0 && <div className="au-legend">{ax.map(k => <span key={k} style={{ "--c": AX[k].col }}>{AX[k].name}</span>)}</div>}
+        {t("au.flipThird", selT.minor, triadName(selT.root, !selT.minor, spell))}</button>
+    </div> : <div className="au-info au-hint">{t("au.tonnetzHint")}{caption}</div>}
+    {ax.length > 0 && <div className="au-legend">{ax.map(k => <span key={k} style={{ "--c": AX[k].col }}>{AX[k].axis[0]}{t("p.colon")}{AX[k].axis[1]}</span>)}</div>}
   </div>;
 }
 
 // 听音练习。items: [{ q, play:{chord|notes|seq, arp, melodic}, options:[...], answer:索引, why }]
-export function EarQuiz({ items, title = "听音练习" }) {
+export function EarQuiz({ items, title = t("au.earTitle") }) {
   const [k, setK] = useState(0), [pick, setPick] = useState(null), [score, setScore] = useState(0), [heard, setHeard] = useState(false);
   const it = items[k], done = k >= items.length;
   const listen = () => {
@@ -334,22 +334,22 @@ export function EarQuiz({ items, title = "听音练习" }) {
     stop(); steps.length === 1 ? play(steps[0].notes, { arp: p.arp || 0, dur: 1.8 }) : sequence(steps, { gap: p.gap || 0.7 });
     setHeard(true);
   };
-  if (done) return <div className="card au-ear"><b>{title}完成：{score} / {items.length}</b>
-    <button className="au-go" onClick={() => { setK(0); setScore(0); setPick(null); setHeard(false); }}>再练一次</button></div>;
+  if (done) return <div className="card au-ear"><b>{t("au.earDone", title, score, items.length)}</b>
+    <button className="au-go" onClick={() => { setK(0); setScore(0); setPick(null); setHeard(false); }}>{t("au.again")}</button></div>;
   return <div className="card au-ear">
-    <div className="au-eartop"><small>{title} · {k + 1} / {items.length}</small><span>得分 {score}</span></div>
+    <div className="au-eartop"><small>{title} · {k + 1} / {items.length}</small><span>{t("au.score", score)}</span></div>
     <p>{it.q}</p>
-    <button className="au-go big" onClick={listen}>▶ {heard ? "再听一次" : "播放"}</button>
+    <button className="au-go big" onClick={listen}>▶ {heard ? t("au.replay") : t("au.play")}</button>
     <div className="au-opts">{it.options.map((o, i) => <button key={i} disabled={!heard || pick !== null}
       className={pick === null ? "" : i === it.answer ? "ok" : i === pick ? "bad" : ""}
       onClick={() => { setPick(i); if (i === it.answer) setScore(score + 1); }}>{o}</button>)}</div>
-    {pick !== null && <div className="au-note">{pick === it.answer ? "✓ 对了。" : "✗ 正确答案是：" + it.options[it.answer] + "。"}{it.why}
-      <button className="au-mini" onClick={() => { setK(k + 1); setPick(null); setHeard(false); }}>下一题 →</button></div>}
+    {pick !== null && <div className="au-note">{pick === it.answer ? t("au.right") : t("au.wrong", it.options[it.answer])}{it.why}
+      <button className="au-mini" onClick={() => { setK(k + 1); setPick(null); setHeard(false); }}>{t("au.nextQ")}</button></div>}
   </div>;
 }
 
 // 朗读本区块：用浏览器语音合成（speechSynthesis）读出所在 Block 的文字。浏览器不支持时不显示。
-export function Narrate({ label = "朗读本节", rate = 1 }) {
+export function Narrate({ label = t("au.narrate"), rate = 1 }) {
   const [on, setOn] = useState(false), ref = useRef();
   const ok = typeof window !== "undefined" && "speechSynthesis" in window;
   useEffect(() => () => ok && on && speechSynthesis.cancel(), [on, ok]);
@@ -360,15 +360,16 @@ export function Narrate({ label = "朗读本节", rate = 1 }) {
     const clone = sec.cloneNode(true);
     clone.querySelectorAll("button, svg, select, input, .au-bar, .au-narr").forEach(n => n.remove());
     const text = clone.innerText.replace(/\s+/g, " ").trim();
-    const parts = text.match(/[^。！？；\n]{1,160}[。！？；]?/g) || [];
-    const voice = speechSynthesis.getVoices().find(v => /zh[-_]CN/i.test(v.lang)) || speechSynthesis.getVoices().find(v => /^zh/i.test(v.lang));
+    const parts = text.match(lang() === "zh" ? /[^。！？；\n]{1,160}[。！？；]?/g : /[^.!?;\n]{1,160}[.!?;]?/g) || [];
+    const sl = t("speech.lang"), voices = speechSynthesis.getVoices(), norm = v => v.lang.replace("_", "-").toLowerCase();
+    const voice = voices.find(v => norm(v) === sl.toLowerCase()) || voices.find(v => norm(v).startsWith(sl.split("-")[0]));
     speechSynthesis.cancel();
     parts.forEach((p, i) => {
-      const u = new SpeechSynthesisUtterance(p); u.lang = "zh-CN"; u.rate = rate; if (voice) u.voice = voice;
+      const u = new SpeechSynthesisUtterance(p); u.lang = sl; u.rate = rate; if (voice) u.voice = voice;
       if (i === parts.length - 1) u.onend = () => setOn(false);
       speechSynthesis.speak(u);
     });
     setOn(true);
   };
-  return <button ref={ref} className={"au-narr" + (on ? " on" : "")} onClick={go}>{on ? "■ 停止朗读" : "🗣 " + label}</button>;
+  return <button ref={ref} className={"au-narr" + (on ? " on" : "")} onClick={go}>{on ? t("au.stopNarrate") : "🗣 " + label}</button>;
 }

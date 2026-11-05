@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { assetUrl } from "../book.jsx";
 import { useState, useEffect, Children } from "react";
 import { renderTex, EqLine, FitTex, Tx, TxI, Rich, plainText, anchor, useTextbook } from "./tex.jsx";
@@ -17,9 +18,9 @@ function SecCard({ gist, why, gives }) {
   const tb = useTextbook();
   return (
     <div className="tb-seccard">
-      {gist && <div className="tb-sc-gist"><span className="tb-sc-lab">本节要点</span><TxI>{gist}</TxI></div>}
-      {why && <div className="tb-sc-why"><span className="tb-sc-lab">为什么</span><TxI>{why}</TxI></div>}
-      {gives?.length > 0 && <div className="tb-sc-gives"><span className="tb-sc-lab">产出</span>{gives.map(n => <EqChip key={n} n={n} tb={tb} />)}</div>}
+      {gist && <div className="tb-sc-gist"><span className="tb-sc-lab">{t("sec.gist")}</span><TxI>{gist}</TxI></div>}
+      {why && <div className="tb-sc-why"><span className="tb-sc-lab">{t("sec.why")}</span><TxI>{why}</TxI></div>}
+      {gives?.length > 0 && <div className="tb-sc-gives"><span className="tb-sc-lab">{t("sec.gives")}</span>{gives.map(n => <EqChip key={n} n={n} tb={tb} />)}</div>}
     </div>);
 }
 // 小号公式卡（读取登记表；点击放大）
@@ -27,31 +28,28 @@ export function EqChip({ n, tb: tb0, label }) {
   const tb = useTextbook() || tb0;
   const info = tb?.eqs.current.get(String(n));
   return (
-    <span className="eq-chip" onClick={() => info && tb.openEq({ tex: info.tex, n, title: info.title, say: info.say })} title="点击放大">
+    <span className="eq-chip" onClick={() => info && tb.openEq({ tex: info.tex, n, title: info.title, say: info.say })} title={t("ui.clickZoom")}>
       {label && <b>{label}</b>}
       {info && <FitTex tex={info.tex} min={0.45} className="eq-chip-m" />}<span className="eq-chip-n">({n})</span>
     </span>);
 }
 export function Sub({ n, title, zh, children }) {
   return (
-    <section className="tb-sub" id={anchor("sec", n)}>
+    <section className="tb-sub" id={anchor("sec", n)} data-toc={`${n} ${plainText(zh || title)}`} data-toc-level="2">
       <h3 className="tb-h3"><span className="tb-num">{n}</span> <Rich>{zh || title}</Rich>{zh && title && <small className="tb-en">{title}</small>}</h3>
       {children}
     </section>);
 }
 
 // ---------- 环境框 ----------
-const KINDS = {
-  definition: ["定义", "📐"], result: ["结论", "✅"], note: ["注", "📝"], example: ["例", "🔎"],
-  physics: ["物理图像", "💡"], warning: ["易错点", "⚠️"], aside: ["拓展", "📎"], key: ["要点", "🔑"], data: ["观测", "🔭"],
-};
+const KIND_ICONS = { definition: "📐", result: "✅", note: "📝", example: "🔎", physics: "💡", warning: "⚠️", aside: "📎", key: "🔑", data: "🔭" };
 // <Box kind="physics" title="为什么光子能量随 1/a 衰减">{String.raw`...含 $公式$ 的正文...`}</Box>（children 也可为 JSX）
 // n：可选编号（如原书的 "Example 5.12" → <Box kind="example" n="5.12">），显示为「例 5.12」并生成锚点 example-5.12，可用 \\exref 之外的 pageUrl(…, "example-5.12") 链接
 export function Box({ kind = "note", title, n, children }) {
-  const [label, icon] = KINDS[kind] || KINDS.note;
+  const k = KIND_ICONS[kind] ? kind : "note", icon = KIND_ICONS[k], label = t("box." + k);
   return (
     <div className={"tb-box tb-" + kind} id={n ? anchor(kind, n) : undefined}>
-      <div className="tb-box-h">{icon} {label}{n && <> {n}</>}{title && <>：<TxI>{title}</TxI></>}</div>
+      <div className="tb-box-h">{icon} {label}{n && <> {n}</>}{title && <>{t("p.colon")}<TxI>{title}</TxI></>}</div>
       <div className="tb-box-b">{typeof children === "string" ? <Tx>{children}</Tx> : children}</div>
     </div>);
 }
@@ -59,7 +57,7 @@ export function Box({ kind = "note", title, n, children }) {
 // ---------- 推导 ----------
 // 每一步：一行公式 + 理由。steps=[{tex, why}]；why 支持 $...$ 与引用。
 // mode：默认全部展开；stepwise 时逐步揭示。collapsed 时默认折叠（长推导）。
-export function Derivation({ title = "推导", steps, collapsed = false, result }) {
+export function Derivation({ title = t("der.title"), steps, collapsed = false, result }) {
   const [open, setOpen] = useState(!collapsed);
   const [stepwise, setStepwise] = useState(false);
   const [k, setK] = useState(1);
@@ -68,12 +66,12 @@ export function Derivation({ title = "推导", steps, collapsed = false, result 
     <div className={"tb-deriv" + (open ? " open" : "")}>
       <div className="tb-deriv-h" onClick={() => setOpen(!open)}>
         <span>{open ? "▾" : "▸"} 🧮 <TxI>{title}</TxI></span>
-        <span className="tb-deriv-meta">{steps.length} 步{!open && " · 点击展开"}</span>
+        <span className="tb-deriv-meta">{t("ui.steps", steps.length)}{!open && t("ui.clickExpand")}</span>
       </div>
       {open && <>
         <div className="tb-deriv-tools">
-          <button className={stepwise ? "" : "on"} onClick={() => setStepwise(false)}>全部显示</button>
-          <button className={stepwise ? "on" : ""} onClick={() => { setStepwise(true); setK(1); }}>逐步推导</button>
+          <button className={stepwise ? "" : "on"} onClick={() => setStepwise(false)}>{t("ui.showAll")}</button>
+          <button className={stepwise ? "on" : ""} onClick={() => { setStepwise(true); setK(1); }}>{t("der.stepwise")}</button>
         </div>
         <ol className="tb-steps">{shown.map((s, i) =>
           <li key={i} className="tb-step">
@@ -82,9 +80,9 @@ export function Derivation({ title = "推导", steps, collapsed = false, result 
           </li>)}
         </ol>
         {stepwise && <div className="tb-deriv-ctrl">
-          <button disabled={k <= 1} onClick={() => setK(k - 1)}>← 上一步</button>
+          <button disabled={k <= 1} onClick={() => setK(k - 1)}>{t("ui.prevStep")}</button>
           <span>{k} / {steps.length}</span>
-          <button disabled={k >= steps.length} onClick={() => setK(k + 1)}>下一步 →</button>
+          <button disabled={k >= steps.length} onClick={() => setK(k + 1)}>{t("ui.nextStep")}</button>
         </div>}
         {result && (!stepwise || k === steps.length) && <div className="tb-deriv-res">∴ <TxI>{result}</TxI></div>}
       </>}
@@ -105,15 +103,15 @@ export function Figure({ n, caption, children, illustration, interactive, width 
   return (
     <figure className="tb-fig" id={anchor("fig", n)}>
       {interactive && <div className="seg tb-fig-tabs">
-        <button className={tab === 0 ? "on" : ""} onClick={() => setTab(0)}>{illustration ? "自绘图" : "原书图"}</button>
-        <button className={tab === 1 ? "on" : ""} onClick={() => setTab(1)}>交互版</button>
+        <button className={tab === 0 ? "on" : ""} onClick={() => setTab(0)}>{illustration ? t("fig.own") : t("fig.original")}</button>
+        <button className={tab === 1 ? "on" : ""} onClick={() => setTab(1)}>{t("fig.interactive")}</button>
       </div>}
       {tab === 0 || !interactive
         ? illustration
           ? <div className="tb-fig-int" data-illustration={n}>{illustration}</div>
-          : <img src={img} alt={`图 ${n}`} style={{ maxWidth: width }} onClick={() => setZoom(true)} title="点击放大" loading="lazy" />
+          : <img src={img} alt={t("fig.n", n)} style={{ maxWidth: width }} onClick={() => setZoom(true)} title={t("ui.clickZoom")} loading="lazy" />
         : <div className="tb-fig-int">{interactive}</div>}
-      <figcaption><b>图 {n}</b> <TxI>{caption}</TxI>{children}</figcaption>
+      <figcaption><b>{t("fig.n", n)}</b> <TxI>{caption}</TxI>{children}</figcaption>
       {zoom && <div className="tb-zoom" onClick={() => setZoom(false)}><img src={img} alt="" /></div>}
     </figure>);
 }
@@ -126,14 +124,14 @@ export function Exercise({ n, title, level, children, hint, solution, fromBook }
   const body = x => (typeof x === "string" ? <Tx>{x}</Tx> : x);
   return (
     <div className="tb-ex" id={anchor("ex", n)}>
-      <div className="tb-ex-h"><b>习题 {n}</b>{title && <> · <TxI>{title}</TxI></>}{level && <span className="tb-ex-lv">{level}</span>}</div>
+      <div className="tb-ex-h"><b>{t("ex.n", n)}</b>{title && <> · <TxI>{title}</TxI></>}{level && <span className="tb-ex-lv">{level}</span>}</div>
       <div className="tb-ex-b">{body(children)}</div>
       <div className="tb-ex-tools">
-        {hint && <button onClick={() => setH(!h)}>{h ? "收起提示" : "💡 提示"}</button>}
-        {solution && <button onClick={() => setS(!s)}>{s ? "收起解答" : "📖 解答"}</button>}
+        {hint && <button onClick={() => setH(!h)}>{h ? t("ex.hideHint") : t("ex.hint")}</button>}
+        {solution && <button onClick={() => setS(!s)}>{s ? t("ex.hideSolution") : t("ex.solution")}</button>}
       </div>
       {h && <div className="tb-ex-hint">{body(hint)}</div>}
-      {s && <div className="tb-ex-sol">{fromBook && <div className="tb-ex-src">依据原书附录 A 的解答整理</div>}{body(solution)}</div>}
+      {s && <div className="tb-ex-sol">{fromBook && <div className="tb-ex-src">{t("ex.fromBook")}</div>}{body(solution)}</div>}
     </div>);
 }
 
@@ -143,8 +141,8 @@ export function Notation({ rows }) {
   const [q, setQ] = useState("");
   const list = rows.filter(r => !q || (r.sym + r.name + (r.def || "")).toLowerCase().includes(q.toLowerCase()));
   return <>
-    {rows.length > 8 && <input className="search" placeholder="搜索符号…" value={q} onChange={e => setQ(e.target.value)} />}
-    <table className="tb-table tb-notation"><thead><tr><th>符号</th><th>名称</th><th>定义 / 说明</th><th>首见</th></tr></thead>
+    {rows.length > 8 && <input className="search" placeholder={t("not.search")} value={q} onChange={e => setQ(e.target.value)} />}
+    <table className="tb-table tb-notation"><thead><tr><th>{t("not.sym")}</th><th>{t("not.name")}</th><th>{t("not.def")}</th><th>{t("not.first")}</th></tr></thead>
       <tbody>{list.map((r, i) => <tr key={i}>
         <td dangerouslySetInnerHTML={{ __html: renderTex(r.sym) }} />
         <td><Rich>{r.name}</Rich></td><td><TxI>{r.def}</TxI></td><td>{r.eq ? <TxI>{`\\eqref{${r.eq}}`}</TxI> : ""}</td></tr>)}

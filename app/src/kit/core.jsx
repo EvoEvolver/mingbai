@@ -1,6 +1,7 @@
+import { t } from "./i18n/index.js";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Rich, RichParas, plainText } from "./math/tex.jsx";
-import { pageUrl } from "./book.jsx";
+import { pageUrl, nameOf } from "./book.jsx";
 
 // ---------- 小工具 ----------
 // 分段文本；含 $…$ / \eqref 等记号时自动按公式渲染（见 math/tex.jsx 的 RichParas），否则与原来完全相同
@@ -54,14 +55,14 @@ export function ConceptChip({ id, prefix }) {
   const { byId, open } = useChapter();
   const c = byId[id];
   if (!c) return null;
-  return <span className="chip" onClick={() => open(id)}>{prefix != null ? <Rich>{prefix}</Rich> : c.icon} <Rich>{c.name_zh}</Rich>{c.chapter && <small className="chip-ch"> · {c.chapter.label.split(" · ")[0]}</small>}</span>;
+  return <span className="chip" onClick={() => open(id)}>{prefix != null ? <Rich>{prefix}</Rich> : c.icon} <Rich>{nameOf(c)}</Rich>{c.chapter && <small className="chip-ch"> · {c.chapter.label.split(" · ")[0]}</small>}</span>;
 }
 
 // 正文中的行内概念链接：<C id="mathesis">数理</C>
 export function C({ id, children }) {
   const { byId, open, color } = useChapter();
   const c = byId[id];
-  return <span className="cref" style={{ "--g": c ? color(c.group) : undefined }} onClick={() => open(id)} title={plainText(c?.plain)}>{children ?? <Rich>{c?.name_zh ?? id}</Rich>}</span>;
+  return <span className="cref" style={{ "--g": c ? color(c.group) : undefined }} onClick={() => open(id)} title={plainText(c?.plain)}>{children ?? <Rich>{(c && nameOf(c)) || id}</Rich>}</span>;
 }
 
 function ConceptModal({ c, onClose }) {
@@ -74,23 +75,23 @@ function ConceptModal({ c, onClose }) {
     return () => { removeEventListener("keydown", k); document.body.style.overflow = ""; };
   }, [onClose]);
   const tabs = [
-    c.explain && ["深入解释", <Paras text={c.explain} />],
-    c.analogy && ["现代类比", <Paras text={c.analogy} />],
-    c.book_example && ["书中例子", <><p><b>例子：</b><Rich>{c.book_example.what}</Rich></p><p><b>说明了：</b><Rich>{c.book_example.point}</Rich></p></>],
+    c.explain && [t("cc.explain"), <Paras text={c.explain} />],
+    c.analogy && [t("cc.analogy"), <Paras text={c.analogy} />],
+    c.book_example && [t("cc.example"), <><p><b>{t("cc.exWhat")}</b><Rich>{c.book_example.what}</Rich></p><p><b>{t("cc.exPoint")}</b><Rich>{c.book_example.point}</Rich></p></>],
   ].filter(Boolean);
   const rel = relations.filter(r => r.from === c.id || r.to === c.id);
   return (
     <div id="modal" onClick={e => e.target.id === "modal" && onClose()}>
       <div className="modal-card" role="dialog" style={{ "--g": color(c.group) }}>
-        <button className="close" aria-label="关闭" onClick={onClose}>×</button>
+        <button className="close" aria-label={t("ui.close")} onClick={onClose}>×</button>
         <div className="mhead"><div className="ic">{c.icon}</div>
-          <div><h3><Rich>{c.name_zh}</Rich></h3><div className="muted-it"><Rich>{c.name_en}</Rich></div></div></div>
+          <div><h3><Rich>{nameOf(c)}</Rich></h3>{c.name_zh && <div className="muted-it"><Rich>{c.name_en}</Rich></div>}</div></div>
         {c.chapter && <a className="xch" href={pageUrl(c.chapter.id)}>📖 {c.chapter.label} →</a>}
         <div className="mplain"><Rich>{c.plain}</Rich></div>
         <div className="tabs">{tabs.map((t, i) => <button key={i} className={i === tab ? "on" : ""} onClick={() => setTab(i)}>{t[0]}</button>)}</div>
         <div className="tabpane">{tabs[tab]?.[1]}</div>
-        {c.misconception && <div className="warn"><b>⚠ 常见误解：</b><Rich>{c.misconception}</Rich></div>}
-        {rel.length > 0 && <div className="related">关联：{rel.map((r, i) => {
+        {c.misconception && <div className="warn"><b>{t("cc.misconception")}</b><Rich>{c.misconception}</Rich></div>}
+        {rel.length > 0 && <div className="related">{t("cc.related")}{rel.map((r, i) => {
           const out = r.from === c.id;
           return <ConceptChip key={i} id={out ? r.to : r.from} prefix={`${out ? "→" : "←"} ${r.label} ·`} />;
         })}</div>}

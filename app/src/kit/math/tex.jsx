@@ -1,8 +1,9 @@
+import { t } from "../i18n/index.js";
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { book, modules, pageUrl, assetUrl, anchors } from "../book.jsx";
+import { book, modules, pageUrl, assetUrl, anchors, chapterNo } from "../book.jsx";
 import { buildTable, annotate, symKey } from "./sym.js";
 
 // ---------- KaTeX 渲染 ----------
@@ -204,7 +205,7 @@ export function chapterOfNum(n, kind = "eq") {
 }
 const anchor = (kind, n) => `${kind}-${String(n).replace(/[^\w.-]/g, "_")}`;
 const hrefTo = (kind, n, here) => pageUrl(chapterOfNum(n, kind) || here, anchor(kind, n));
-const chapterName = id => { const c = book.chapters.find(x => x.id === id); return c ? c.label ?? (/^\d+$/.test(String(c.no)) ? `第 ${c.no} 章` : `附录 ${c.no}`) : id; };
+const chapterName = id => { const c = book.chapters.find(x => x.id === id); return c ? chapterNo(c) : id; };
 
 // ---------- 符号弹卡 ----------
 function SymbolPop({ id, x, y, top, onClose }) {
@@ -225,15 +226,15 @@ function SymbolPop({ id, x, y, top, onClose }) {
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   return (
     <div className="sym-pop" ref={ref} style={pos} role="dialog">
-      <button className="sym-x" onClick={onClose} aria-label="关闭">×</button>
+      <button className="sym-x" onClick={onClose} aria-label={t("ui.close")}>×</button>
       <div className="sym-head">
         <span className="sym-big" dangerouslySetInnerHTML={{ __html: katex.renderToString(expandMacros(e.sym), { throwOnError: false, macros: { ...macros() } }) }} />
         <span><b><Rich>{e.name}</Rich></b>{e.en && <i className="muted"> {e.en}</i>}</span>
       </div>
       {e.def && <div className="sym-def"><TxI>{e.def}</TxI></div>}
-      {e.unit && <div className="sym-row"><span>单位/量纲</span><TxI>{e.unit}</TxI></div>}
-      {e.eq && <div className="sym-row"><span>定义见</span><EqRef n={e.eq} />{e.chapter !== tb.chapterId && <span className="muted">（{chapterName(e.chapter)}）</span>}</div>}
-      {uses.length > 0 && <div className="sym-row"><span>本章出现</span><span className="sym-uses">{uses.slice(0, 12).map(n => <EqRef key={n} n={n} />)}{uses.length > 12 && <span className="muted"> 等 {uses.length} 处</span>}</span></div>}
+      {e.unit && <div className="sym-row"><span>{t("sym.unit")}</span><TxI>{e.unit}</TxI></div>}
+      {e.eq && <div className="sym-row"><span>{t("sym.defined")}</span><EqRef n={e.eq} />{e.chapter !== tb.chapterId && <span className="muted">{t("p.paren", chapterName(e.chapter))}</span>}</div>}
+      {uses.length > 0 && <div className="sym-row"><span>{t("sym.uses")}</span><span className="sym-uses">{uses.slice(0, 12).map(n => <EqRef key={n} n={n} />)}{uses.length > 12 && <span className="muted">{t("sym.more", uses.length)}</span>}</span></div>}
     </div>);
 }
 
@@ -246,23 +247,23 @@ function EqModal({ tex, n, title, say, onClose }) {
   return (
     <div className="tb-modal" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="tb-modal-card" role="dialog">
-        <button className="close" onClick={onClose} aria-label="关闭">×</button>
-        <div className="tb-modal-h">{n ? `式 (${n})` : "公式"}{title && <> · <Rich>{title}</Rich></>}</div>
+        <button className="close" onClick={onClose} aria-label={t("ui.close")}>×</button>
+        <div className="tb-modal-h">{n ? t("eq.n", n) : t("eq.formula")}{title && <> · <Rich>{title}</Rich></>}</div>
         <div className="tb-modal-eq"><EqLine tex={tex} n={n} min={0.45} /></div>
         {say && <div className="tb-modal-say">🗣 <TxI>{say}</TxI></div>}
         {ids.length > 0 && <>
-          <div className="tb-modal-sub">式中符号（点击公式中的符号也可查看）</div>
+          <div className="tb-modal-sub">{t("eq.symbols")}</div>
           <table className="tb-table tb-symlist"><tbody>{ids.map(id => {
             const e = tb.sym.byId[id] || tb.sym.byId[tb.chapterId + "-" + id]; if (!e) return null;
             return <tr key={id}>
               <td className="sym-cell" dangerouslySetInnerHTML={{ __html: katex.renderToString(expandMacros(e.sym), { throwOnError: false, macros: { ...macros() } }) }} />
-              <td><b><Rich>{e.name}</Rich></b></td><td><TxI>{e.def || ""}</TxI>{e.eq && <> · 见 <EqRef n={e.eq} /></>}</td>
+              <td><b><Rich>{e.name}</Rich></b></td><td><TxI>{e.def || ""}</TxI>{e.eq && <> · {t("eq.see")} <EqRef n={e.eq} /></>}</td>
             </tr>;
           })}</tbody></table>
         </>}
         <div className="tb-modal-tools">
-          {n && <a href={hrefTo("eq", n, tb.chapterId)} onClick={() => onClose()}>↩ 定位到正文</a>}
-          <button onClick={() => { navigator.clipboard?.writeText(tex); setCopied(true); }}>{copied ? "已复制" : "复制 LaTeX"}</button>
+          {n && <a href={hrefTo("eq", n, tb.chapterId)} onClick={() => onClose()}>{t("eq.locate")}</a>}
+          <button onClick={() => { navigator.clipboard?.writeText(tex); setCopied(true); }}>{copied ? t("ui.copied") : t("eq.copyTex")}</button>
         </div>
       </div>
     </div>);
@@ -281,7 +282,7 @@ export function Eq({ n, children, keyEq = false, title, say }) {
       data-eqtex={tb ? tex : undefined} data-eqn={n || undefined} data-eqtitle={title || undefined} data-eqsay={say || undefined}>
       {keyEq && title && <div className="eq-title"><Rich>{title}</Rich></div>}
       <EqLine tex={tex} n={n} className="eq-body" />
-      {tb && <span className="eq-zoom" title="放大并逐符号解读">⤢</span>}
+      {tb && <span className="eq-zoom" title={t("eq.zoomTitle")}>⤢</span>}
     </div>);
 }
 
@@ -320,14 +321,14 @@ export function EqRef({ n, paren = true }) {
   const tb = useTextbook();
   const preview = () => {
     const info = tb?.eqs.current.get(String(n));
-    if (!info) return <span className="muted">{chapterName(chapterOfNum(n))} 式 ({n}) — 点击跳转</span>;
+    if (!info) return <span className="muted">{t("eq.jump", chapterName(chapterOfNum(n)), n)}</span>;
     return <EqLine tex={info.tex} n={n} min={0.5} />;
   };
   return <Ref kind="eq" n={n} label={paren ? `(${n})` : n} preview={preview} />;
 }
-export const FigRef = ({ n }) => <Ref kind="fig" n={n} label={`图 ${n}`} preview={() => <img src={assetUrl(`figures/fig-${n}.png`)} alt="" style={{ maxWidth: 360, display: "block" }} />} />;
+export const FigRef = ({ n }) => <Ref kind="fig" n={n} label={t("fig.n", n)} preview={() => <img src={assetUrl(`figures/fig-${n}.png`)} alt="" style={{ maxWidth: 360, display: "block" }} />} />;
 export const SecRef = ({ n }) => <Ref kind="sec" n={n} label={`§${n}`} />;
-export const ExRef = ({ n }) => <Ref kind="ex" n={n} label={`习题 ${n}`} />;
+export const ExRef = ({ n }) => <Ref kind="ex" n={n} label={t("ex.n", n)} />;
 export { anchor };
 
 // ---------- 带公式的正文 ----------

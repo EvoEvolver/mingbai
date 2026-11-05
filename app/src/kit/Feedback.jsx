@@ -1,7 +1,8 @@
+import { t } from "./i18n/index.js";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { book } from "./book.jsx";
-import { FEEDBACK_EMAIL, SITE_NAME } from "./site.js";
+import { FEEDBACK_EMAIL } from "./site.js";
 
 // 选中文字 → 悬浮"反馈"按钮 → 反馈面板 → mailto: 打开读者的邮件客户端（收件人、标题、正文已填好）。
 // 正文包含：页面地址、页面标题、选中的纯文本、读者的反馈与（可选）联系方式。纯静态，无需后端。
@@ -58,49 +59,49 @@ export default function Feedback() {
   if (!to) return null;
 
   const open = () => { setPanel({ text: btn.text }); setBtn(null); setMsg(""); setCopied(false); window.getSelection()?.removeAllRanges(); };
-  const sel = panel ? (panel.text.length > MAX_SEL ? panel.text.slice(0, MAX_SEL) + "…（已截断）" : panel.text) : "";
+  const sel = panel ? (panel.text.length > MAX_SEL ? panel.text.slice(0, MAX_SEL) + t("fb.truncated") : panel.text) : "";
   const body = () => [
-    `页面：${location.href}`,
-    `标题：${document.title}`,
+    `${t("fb.page")}${location.href}`,
+    `${t("fb.pageTitle")}${document.title}`,
     "",
-    "【选中的内容】",
+    t("fb.selected"),
     sel,
     "",
-    "【反馈】",
-    msg.trim() || "（未填写）",
-    ...(contact.trim() ? ["", `【联系方式】${contact.trim()}`] : []),
+    t("fb.feedback"),
+    msg.trim() || t("fb.empty"),
+    ...(contact.trim() ? ["", `${t("fb.contact")}${contact.trim()}`] : []),
   ].join("\n");
   const send = () => {
-    const subject = `[${SITE_NAME} 反馈] ${document.title}`;
+    const subject = t("fb.subject", document.title);
     location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body())}`;
   };
-  const copy = () => { navigator.clipboard?.writeText(`收件人：${to}\n${body()}`).then(() => setCopied(true)); };
+  const copy = () => { navigator.clipboard?.writeText(`${t("fb.to")}${to}\n${body()}`).then(() => setCopied(true)); };
 
   const below = btn && btn.top < 56;
   return createPortal(<>
     {btn && !panel && (
       <button className="fb-float" style={{ left: btn.x, top: below ? btn.bottom + 8 : btn.top - 40 }}
-        onMouseDown={e => e.preventDefault()} onClick={open} title="对选中的内容提出反馈或纠错">
-        ✎ 反馈
+        onMouseDown={e => e.preventDefault()} onClick={open} title={t("fb.floatTitle")}>
+        {t("fb.float")}
       </button>
     )}
     {panel && (
-      <div className="fb-panel" role="dialog" aria-label="反馈">
+      <div className="fb-panel" role="dialog" aria-label={t("fb.aria")}>
         <div className="fb-head">
-          <b>反馈 / 纠错</b>
-          <button className="fb-x" onClick={() => setPanel(null)} aria-label="关闭">×</button>
+          <b>{t("fb.head")}</b>
+          <button className="fb-x" onClick={() => setPanel(null)} aria-label={t("ui.close")}>×</button>
         </div>
-        <div className="fb-label">选中的内容</div>
+        <div className="fb-label">{t("fb.selLabel")}</div>
         <blockquote className="fb-sel">{sel}</blockquote>
-        <div className="fb-label">你的反馈</div>
+        <div className="fb-label">{t("fb.yours")}</div>
         <textarea ref={area} value={msg} onChange={e => setMsg(e.target.value)} rows={5}
-          placeholder="哪里有误、哪里看不懂、有什么建议……" />
-        <input value={contact} onChange={e => setContact(e.target.value)} placeholder="联系方式（可选）" />
+          placeholder={t("fb.placeholder")} />
+        <input value={contact} onChange={e => setContact(e.target.value)} placeholder={t("fb.contactPh")} />
         <div className="fb-actions">
-          <button className="fb-send" onClick={send} disabled={!msg.trim()}>用邮件发送</button>
-          <button onClick={copy}>{copied ? "已复制" : "复制内容"}</button>
+          <button className="fb-send" onClick={send} disabled={!msg.trim()}>{t("fb.send")}</button>
+          <button onClick={copy}>{copied ? t("ui.copied") : t("fb.copy")}</button>
         </div>
-        <div className="fb-note">点击"用邮件发送"会打开你的邮件程序，内容已填好，确认后发送即可；没有邮件程序时可复制内容，发送到 {to}。页面地址会一并附上。</div>
+        <div className="fb-note">{t("fb.note", to)}</div>
       </div>
     )}
   </>, document.body);

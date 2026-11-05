@@ -1,3 +1,4 @@
+import { t, lang } from "../i18n/index.js";
 // 乐理工具（纯函数，无声音）。音高用 MIDI 编号（C4 = 60），音级 pc = 0..11（C = 0）。
 
 export const SHARP = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
@@ -80,7 +81,8 @@ export const INTERVALS = [
   { st: 10, zh: "小七度", en: "Minor 7th" }, { st: 11, zh: "大七度", en: "Major 7th" },
   { st: 12, zh: "纯八度", en: "Perfect octave" },
 ];
-export const intervalName = st => (st >= 0 && st <= 12 ? INTERVALS[st].zh : st > 12 ? "复音程（" + INTERVALS[st % 12 || 12].zh + " + 八度）" : "");
+const ivName = st => INTERVALS[st][lang()] ?? INTERVALS[st].zh;
+export const intervalName = st => (st >= 0 && st <= 12 ? ivName(st) : st > 12 ? t("au.compound", ivName(st % 12 || 12)) : "");
 
 // 频率。tuning: "equal"（十二平均律）| "just"（相对 ref 的纯律比值）
 export const JUST = [1, 16 / 15, 9 / 8, 6 / 5, 5 / 4, 4 / 3, 45 / 32, 3 / 2, 8 / 5, 5 / 3, 9 / 5, 15 / 8];
