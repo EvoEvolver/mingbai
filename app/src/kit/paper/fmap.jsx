@@ -1,7 +1,7 @@
 import { t } from "../i18n/index.js";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { renderTex, TxI, Tx } from "../math/tex.jsx";
-import { roleLabel } from "./lens.jsx";
+import { drawInk } from "./ink.js";
 
 // 公式树图（FormulaMap）：公式的结构树画成 treemap。嵌套 = 结构，叶子面积 ∝ 重要性。
 // 公式由树生成，树是唯一数据源，所以公式里的每个记号都必然属于某个节点。
@@ -164,10 +164,12 @@ export function FormulaMap({ n, title, tree, height = 460, start }) {
         el.classList.toggle("fm-on", id === lit);
       });
       E.classList.toggle("fm-focus", !!h);
+      drawInk(E, lit ? [...E.querySelectorAll(".flm-" + lit)] : []);
     }
     detail.current?.querySelectorAll(".fm-card").forEach(el => el.classList.toggle("show", el.dataset.id === (lit || "")));
   }, [nodes]);
   useLayoutEffect(paint);
+  useLayoutEffect(() => { let live = true; document.fonts?.ready.then(() => live && paint()); return () => { live = false; }; }, [paint]);   // KaTeX 字体加载后字形位置会变
 
   const setHover = id => { if (hover.current !== id) { hover.current = id; paint(); } };
   const select = id => { sel.current = sel.current === id ? null : id; paint(); };
@@ -198,6 +200,6 @@ export function FormulaMap({ n, title, tree, height = 460, start }) {
             {x.note && <Tx>{x.note}</Tx>}
           </div>))}
       </div>
-      <div className="fl-legend">{[...new Set(Object.values(nodes).map(x => x.role || "const"))].map(r => <span key={r} data-role={r}><i />{roleLabel(r)}</span>)}</div>
+      <div className="fm-legend">{[...new Set(Object.values(nodes).map(x => x.role || "const"))].map(r => <span key={r} data-role={r}><i />{t("fm.role")[r]}</span>)}</div>
     </figure>);
 }

@@ -324,11 +324,7 @@ export default {
   "w.readTitle": "Show everything",
   "w.read": "Read",
   "w.map": "Importance map",
-  "lens.role": { unknown: "Unknown to solve for", known: "Measured / known", design: "Your choice", const: "Constant / structure", result: "Result" },
-  "lens.note": "Notes",
-  "lens.step": "Steps",
-  "lens.code": "Code",
-  "lens.codeHint": "Hover a line to light up the matching part of the formula",
+  "fm.role": { unknown: "Unknown to solve for", known: "Measured / known", design: "Your choice", const: "Constant / structure", result: "Result" },
   "fm.hint": "Nesting = structure · area = importance · hover to compare with the formula · click to pin the note",
   "fm.empty": "Click any block to see its full note here.",
 };

@@ -786,66 +786,24 @@ body.pw-skim .pw-page .tb-sec>p,body.pw-skim .pw-2{font-size:15px;color:#4a4238}
 /* 扫读模式：页尾参考材料（符号表、关键公式汇总）收起——它们是查阅用的，不是论证 */
 body.pw-skim .pw-page #b-notation,body.pw-skim .pw-page #b-keyeq{display:none}
 
-/* ---------- 公式透镜（kit/paper/lens.jsx） ---------- */
-.fl{margin:24px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(60,40,10,.1);padding:14px 18px 12px}
-.fl [data-role=unknown]{--rc:#b4372a}.fl [data-role=known]{--rc:#2c5d8f}.fl [data-role=design]{--rc:#2f7a4a}.fl [data-role=const]{--rc:#9a6b12}.fl [data-role=result]{--rc:#6a3f8f}
-.fl-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-.fl-title{font-size:16px}.fl-n{color:var(--muted);font-family:var(--serif)}
-.fl-modes{margin-left:auto;display:flex;background:var(--paper);border-radius:99px;padding:3px}
-.fl-modes button{border:0;background:none;border-radius:99px;padding:4px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--muted)}
-.fl-modes button.on{background:var(--ink);color:var(--paper)}
-.fl-stage{position:relative;overflow:visible}
-.fl-eq{position:relative;z-index:1;text-align:center;font-size:1.75em;padding:8px 0}
-.fl-eq .katex-display{margin:0}
-.fl-eq .flm{color:var(--rc);transition:opacity .25s,background .2s;border-radius:6px}
-.fl-eq .flm .flm{color:var(--rc)}
-.fl-eq .flm.fl-on{background:color-mix(in srgb,var(--rc) 16%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--rc) 16%,transparent)}
-.fl-eq.fl-stepping .flm.fl-dim{opacity:.13}
-.fl-eq.fl-stepping{color:rgba(31,27,22,.25)}
-.fl-eq.fl-stepping .flm:not(.fl-dim){color:var(--rc)}
-.fl-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:0}
-.fl-ln path{fill:none;stroke:var(--rc);stroke-width:1.4;opacity:.55}
-.fl-ln.on path{stroke-width:2.4;opacity:1}
-.fl-lab{position:absolute;z-index:2;display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--rc);border-radius:12px;padding:5px 9px;font-size:13px;line-height:1.35;cursor:default;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.fl-lab.on{background:color-mix(in srgb,var(--rc) 10%,#fff);box-shadow:0 4px 14px rgba(0,0,0,.12)}
-.fl-glyph{flex:none;font-size:1.65em;color:var(--rc);line-height:1}
-.fl-lt{color:var(--ink)}
-.fl-notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px;margin-top:10px}
-.fl-note{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:start;line-height:1.6;border-left:4px solid var(--rc);background:var(--paper);border-radius:0 10px 10px 0;padding:7px 12px;font-size:14px}
-.fl-note.on{background:color-mix(in srgb,var(--rc) 10%,var(--paper))}
-.fl-note .fl-chip{grid-row:span 2;font-size:1.3em;color:var(--rc)}
-.fl-note b{font-size:14px}.fl-note span:last-child{color:#5d554a}
-.fl-steps{margin-top:8px}
-.fl-step-t{display:flex;gap:12px;align-items:baseline;background:var(--paper);border-radius:12px;padding:10px 14px;min-height:64px}
-.fl-step-t>span{flex:none;font-size:12px;background:var(--ink);color:var(--paper);border-radius:99px;padding:1px 9px}
-.fl-step-t p{margin:0}
-.fl-step-nav{display:flex;align-items:center;gap:12px;margin-top:8px}
-.fl-step-nav button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 14px;font:inherit;font-size:13.5px;cursor:pointer}
-.fl-step-nav button:disabled{opacity:.35;cursor:default}
-.fl-dots{flex:1;display:flex;gap:6px;justify-content:center}
-.fl-dots i{width:9px;height:9px;border-radius:50%;background:var(--line);cursor:pointer}.fl-dots i.done{background:#bfae8d}.fl-dots i.on{background:var(--ink)}
-.fl-code{margin-top:8px;background:#1f1b16;border-radius:14px;padding:10px 0;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:14px}
-.fl-cl{display:flex;flex-wrap:wrap;gap:4px 14px;padding:3px 16px;color:#f2ead8;border-left:3px solid transparent}
-.fl-cl.on{background:rgba(255,255,255,.07);border-left-color:var(--gold)}
-.fl-cl code{white-space:pre;font-family:inherit}.fl-cc{color:#9fb88f}
-.fl-code-h{font-family:var(--sans);font-size:12px;color:#8f8676;padding:6px 16px 0}
-.fl-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--muted)}
-.fl-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--rc);margin-right:5px;vertical-align:-1px}
-@media(max-width:700px){.fl-eq{font-size:1.25em}.fl-lab{font-size:11.5px}}
-.fl-before{position:relative;opacity:.9;margin:14px 0 6px}
-.fl-before>span{position:absolute;left:10px;top:-10px;z-index:2;font-size:12px;background:var(--muted);color:#fff;border-radius:6px;padding:0 8px}
+/* ---------- 公式局部高亮（kit/paper/ink.js）：画在公式背后 ---------- */
+.ink-layer{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+.ink-layer>i{position:absolute;display:block;border-radius:7px;background:color-mix(in srgb,var(--rc) 16%,transparent);opacity:0;transition:opacity .12s}
+.ink-layer>i.on{opacity:1}
+.fm-eq .katex-display{position:relative;z-index:1}
 
 /* ---------- 公式树图（kit/paper/fmap.jsx） ---------- */
 .fm{margin:26px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(60,40,10,.1);padding:14px 18px 12px}
 .fm [data-role=unknown],.fm-cell[data-role=unknown]{--rc:#b4372a}.fm [data-role=known]{--rc:#2c5d8f}.fm [data-role=design]{--rc:#2f7a4a}.fm [data-role=const]{--rc:#9a6b12}.fm [data-role=result]{--rc:#6a3f8f}
+.fm-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.fm-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--rc);margin-right:5px;vertical-align:-1px}
 .fm-bar{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.fm-n{color:var(--muted);font-family:var(--serif)}
 .fm-hint{margin-left:auto;font-size:12.5px;color:var(--muted)}
-.fm-eq{text-align:center;font-size:1.45em;padding:10px 0 14px;overflow-x:auto;overflow-y:hidden}
+.fm-eq{position:relative;text-align:center;font-size:1.45em;padding:16px 0;overflow-x:auto;overflow-y:hidden}
 .fm-eq .katex-display{margin:0}
-.fm-eq .flm{border-radius:5px;transition:background .15s,color .15s}
+.fm-eq .flm{transition:color .15s}
 .fm-eq.fm-focus{color:rgba(31,27,22,.35)}
 .fm-eq.fm-focus .flm.fm-on,.fm-eq.fm-focus .flm.fm-on *{color:var(--rc)}
-.fm-eq .flm.fm-on{background:color-mix(in srgb,var(--rc) 14%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--rc) 14%,transparent)}
 .fm-map{position:relative;width:100%;user-select:none}
 .fm-cell{position:absolute;box-sizing:border-box;border-radius:10px;overflow:hidden;transition:box-shadow .12s}
 .fm-cell.leaf{cursor:pointer;background:color-mix(in srgb,var(--rc) 13%,#fffdf8);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--rc) 50%,transparent)}

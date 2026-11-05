@@ -325,7 +325,7 @@ export default {
   "au.staffHint": "点任意音符或和弦可单独试听",
   "au.compound": name => `复音程（${name} + 八度）`,
 
-  // 加权阅读、公式透镜、公式树图
+  // 加权阅读、公式树图
   "w.claim": "核心论断",
   "w.keyEq": "关键公式",
   "w.skippable": "可跳过",
@@ -339,11 +339,7 @@ export default {
   "w.readTitle": "显示全部内容",
   "w.read": "精读",
   "w.map": "重要性地图",
-  "lens.role": { unknown: "要求的未知量", known: "测得 / 已知", design: "可以自己选的", const: "常数 / 结构", result: "结果" },
-  "lens.note": "注释",
-  "lens.step": "逐步",
-  "lens.code": "代码",
-  "lens.codeHint": "把鼠标放在一行上，公式里对应的部分会亮起来",
+  "fm.role": { unknown: "要求的未知量", known: "测得 / 已知", design: "可以自己选的", const: "常数 / 结构", result: "结果" },
   "fm.hint": "嵌套 = 结构 · 面积 = 重要性 · 悬停对照原式 · 点击固定说明",
   "fm.empty": "点任意一块，在这里看它的完整说明。",
 };
