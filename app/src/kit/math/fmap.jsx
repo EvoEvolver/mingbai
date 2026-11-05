@@ -2,7 +2,7 @@ import { t } from "../i18n/index.js";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { renderTex, TxI, Tx, EqLine, anchor, useRegisterEq } from "./tex.jsx";
-import { drawInk } from "./ink.js";
+import { drawInk, inkRect } from "./ink.js";
 
 // FormulaMap: draws a formula's structure tree as a treemap. Nesting = structure, leaf area ∝ importance.
 // The formula is generated from the tree, and the tree is the single source of truth, so every symbol in the formula necessarily belongs to some node.
@@ -103,7 +103,7 @@ function FitGlyph({ tex, fs, maxW, maxH }) {
     const fit = () => {
       if (!live) return;
       el.style.fontSize = fs + "px";
-      const r = el.firstElementChild?.getBoundingClientRect(); if (!r?.width) return;
+      const r = inkRect(el); if (!r.width) return;   // tall fractions overflow the KaTeX box, so measure the glyphs
       el.style.fontSize = fs * Math.min(1, maxW / r.width, Math.max(12, maxH) / r.height) + "px";
     };
     fit(); document.fonts?.ready.then(fit);

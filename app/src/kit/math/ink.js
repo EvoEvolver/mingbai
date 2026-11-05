@@ -4,7 +4,7 @@
 const INK = "svg, .frac-line, .hline, .overline-line, .underline-line";
 
 // Bounding rectangle of all glyphs in an element (viewport coordinates)
-function inkRect(el) {
+export function inkRect(el) {
   let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
   const add = r => {
     if (r.width < 0.5 && r.height < 0.5) return;
