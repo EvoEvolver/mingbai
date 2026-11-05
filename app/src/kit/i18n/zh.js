@@ -1,4 +1,4 @@
-// UI text (Chinese, the default language). Holds only the components' own text; book content doesn't go here.
+// UI text in Chinese. A missing key falls back to English. Holds only the components' own text; book content doesn't go here.
 // A value can be a string, a function (sentence with parameters), or an object (a set of labels). To add a language: write a copy of this file, then register it in messages.js.
 export default {
   "html.lang": "zh-CN",

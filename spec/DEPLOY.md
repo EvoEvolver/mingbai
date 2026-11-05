@@ -26,7 +26,7 @@ At build time (`vite.config.js`), Vite SSR loads each chapter module and extract
 This data supplies the shelf's one-line summaries, cross-chapter links, cross-chapter concept cards, the cross-chapter notation dictionary, and the book map page, without loading the code of other chapters.
 So: **these exports must be plain data** (strings, numbers, arrays, objects); functions and JSX are dropped.
 
-So that chapters in a book directory can resolve dependencies such as `react`, the build automatically creates a symlink `node_modules → <framework>/app/node_modules` in the book directory (already ignored by .gitignore).
+So that chapters in a book directory can resolve dependencies such as `react`, the build automatically creates a symlink `node_modules → <framework>/app/node_modules` in the book directory (add `node_modules` to your books repo's .gitignore).
 
 ## In-site links (when writing chapters)
 - Use `pageUrl(id, anchor)` (`import { pageUrl } from "@kit"`): `pageUrl("ch03")`, `pageUrl("ch03", "eq-3.12")`, `pageUrl(null)` (the shelf). On the same page it returns `#anchor`.
@@ -39,7 +39,7 @@ cd app
 BOOK=/path/to/my-book npx vite build                      # → my-book/dist
 BOOK=… OUT=/tmp/site npx vite build                       # set the output directory
 ONLY=ch02,ch03 BOOK=… npx vite build                      # build only some chapters (the shelf lists only these)
-../build-all.sh                                           # all books in the current directory (or BOOKS_DIR)
+BOOKS_DIR=/path/to/books ../build-all.sh                  # all books in that directory
 ```
 
 ## Deploying to GitHub Pages

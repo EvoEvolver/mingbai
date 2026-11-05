@@ -12,6 +12,7 @@ export { Callout, Card, Grid, Reveal, Tabs, StepThrough, Toggle, Timeline } from
 export { M, Eq, EqRef, FigRef, SecRef, ExRef, Tx, TxI, Rich, RichParas, EqLine, FitTex, extendInline, plainText, renderTex, symbolsIn, useTextbook } from "./math/tex.jsx";
 export { Sec, Sub, Box, Derivation, Figure, Exercise, Notation, Table, KeyEquations, Details, EqChip } from "./math/env.jsx";
 export { Roadmap, EqMap } from "./math/overview.jsx";
+export { FormulaMap } from "./math/fmap.jsx";
 export { Plot, num } from "./math/plot.jsx";
 export { TextbookPage } from "./math/textbook.jsx";
 // ---- Theorem-proof texts (papers, math books): the statement registry comes from statements in book.js; see spec/PROOF.md ----
@@ -19,4 +20,3 @@ export { SRef, Stmt, Proof, Erratum, RunCard, Check, MatrixView, DepGraph, Study
 // ---- Paper guides: gap → motivation → solution → result; see spec/PAPER.md ----
 export { PaperPage, PaperCite, GMSR, PaperSec, GapMap, Stakes, KeyIdea, Pipeline, Headline, Claim, ClaimBoard, Limits, EditorView, ReadingGuide, ROLES } from "./paper/paper.jsx";
 export { Weighted, Key, P, BigEq, MinorEq, Fold, Number as KeyNumber, Assume, Verdict, AboveFold } from "./paper/weighted.jsx";
-export { FormulaMap } from "./paper/fmap.jsx";

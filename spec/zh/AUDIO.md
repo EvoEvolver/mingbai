@@ -57,4 +57,4 @@ import { Play, SoundBar, Keyboard, PitchCircle, IntervalLab, Tonnetz, EarQuiz, N
 
 ## 已知限制 / 后续
 - 合成音色是「示意级」，不追求真实钢琴；若需要真实音色，可在 `engine.js` 增加采样音源（注意体积与版权）。
-- `Narrate` 依赖系统中文语音，质量因浏览器/系统而异；需要高质量朗读时应预生成音频文件。
+- `Narrate` 依赖系统里对应书籍语言的语音，质量因浏览器/系统而异；需要高质量朗读时应预生成音频文件。

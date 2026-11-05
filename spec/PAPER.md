@@ -38,6 +38,29 @@ Additional meta fields: `paper` (optional; defaults to book.paper), `tldr` (one 
 | `EditorView strengths concerns questions` | Editor's commentary, clearly labeled on the page as not representing the authors' views |
 | `ReadingGuide rows` | Where in the paper to read, and what to skip, for different goals |
 
+## Formula treemaps (`FormulaMap`)
+
+`FormulaMap` draws a formula's structure as a treemap: nesting shows the structure, and leaf area shows importance. It works in paper and textbook pages. With `n` it replaces `<Eq>`: it registers the equation for `\eqref`, hover previews, and `KeyEquations`, and provides the `eq-<n>` anchor. Use it for long formulas that deserve a walkthrough, not for every equation.
+
+```jsx
+const TREE = {                                   // define at module level
+  id: "eq", tex: String.raw`#lhs\approx#rhs`, name: "approx", label: "One-line meaning", role: "const",
+  kids: [
+    { id: "lhs", tex: "F", w: 4, name: "figure_of_merit", label: "Lower is better", role: "result", note: "Full note." },
+    { id: "rhs", tex: String.raw`\sqrt{#S/#N}`, name: "per_param", label: "Normalization", role: "const", kids: [
+      { id: "S", tex: "S'", w: 3, name: "time_cost", label: "Shots", role: "design" },
+      { id: "N", tex: "N", w: 1, name: "n_params", label: "Parameters", role: "const" },
+    ] },
+  ],
+};
+<FormulaMap n="28" keyEq title="Short title" say="What it says in words." tree={TREE} start="S" />
+```
+
+- **The tree is the formula.** The displayed TeX is generated from `tex`, with `#childId` placeholders that must match `kids` one to one. Ids contain only letters and digits. Symbols not in a child, such as `=`, `√`, and `∑`, belong to the node. The root is the relation (`=` or `≈`).
+- **Area:** `w` on a leaf is its importance, and area is proportional to it. Parents have no `w`. The map grows taller rather than dropping nodes; `height` is the minimum.
+- **Fields:** `name` is a code-like name, `label` a short meaning, `note` the full explanation, and `role` one of `unknown`, `known`, `design`, `const`, or `result`. `glyph` overrides what a parent's title shows, which nodes with no visible symbol need (`\times` for implicit multiplication).
+- **Limits:** a placeholder can't span `&` or `\\`, so multi-line `aligned` formulas don't work.
+
 ## Writing requirements
 - **Write the explanation yourself**: don't translate sentence by sentence or rewrite the paper's paragraphs; reorganize it as "gap → motivation → solution → result". Use the paper's own words only as short quotations.
 - **Draw the figures yourself**: redraw result figures as interactive figures using data reported in the paper (values, trends) or our own numerical experiments; don't crop figures from the paper.

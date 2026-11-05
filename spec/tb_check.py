@@ -34,7 +34,7 @@ cfg = json.load(open(cfg_path)) if os.path.exists(cfg_path) else {}
 ex_split = re.split(rf"\n\s*{re.escape(cfg.get('problems_heading', 'Exercises'))}\s*\n", text, maxsplit=1)
 body, exer = (ex_split + [""])[:2]
 eq_book = set(re.findall(cfg["eq_regex"] if cfg.get("eq_regex") else rf"\(({P}\.\d+[a-z]?)\)\s*$", text, re.M))   # eq_regex in check.json can override the number format
-eq_jsx = set(re.findall(r'<Eq\b[^>]*\bn="([^"]+)"', jsx))
+eq_jsx = set(re.findall(r'<(?:Eq|FormulaMap)\b[^>]*\bn="([^"]+)"', jsx))
 _fj = os.path.join(book, "public/figures/figures.json")
 fig_book = {f["num"] for f in json.load(open(_fj)) if f["num"].split(".")[0] == prefix} if os.path.exists(_fj) else set()
 fig_jsx = set(re.findall(r'<Figure\b[^>]*\bn="([^"]+)"', jsx))
@@ -63,11 +63,11 @@ if cfg.get("examples"):
     bad += report("Examples", exm_book, exm_jsx)
 if bad_refs: print("Dangling references (equations not in this chapter):", ", ".join(sorted(bad_refs, key=natkey))); bad += len(bad_refs)
 # ---- Structure checks (high-level understanding layer + equation readings + section key points) ----
-eq_tags = re.findall(r"<Eq\b([^>]*)>", jsx)
+eq_tags = re.findall(r"<(?:Eq|FormulaMap)\b([^>]*)>", jsx)
 no_say = [re.search(r'n="([^"]+)"', a).group(1) for a in eq_tags if re.search(r'\bn="', a) and "say=" not in a]
 if no_say: print(f"Equations without say ({len(no_say)}): {', '.join(sorted(no_say, key=natkey)[:30])}{' …' if len(no_say) > 30 else ''}"); bad += len(no_say)
 secs = re.findall(r"<Sec\b([^>]*)>", jsx)
-no_gist = [re.search(r'n="([^"]+)"', a).group(1) for a in secs if 'n="' in a and "gist=" not in a and "习题" not in a and ".E" not in a]
+no_gist = [re.search(r'n="([^"]+)"', a).group(1) for a in secs if 'n="' in a and "gist=" not in a and "习题" not in a and "Exercises" not in a and ".E" not in a]
 if no_gist: print("Sections without gist:", ", ".join(no_gist)); bad += len(no_gist)
 for comp in ["Hook", "Roadmap", "EqMap", "ConceptGrid", "Takeaways", "Quiz", "Bridge"]:
     if not re.search(rf"<{comp}\b", jsx): print(f"Missing component <{comp}>"); bad += 1

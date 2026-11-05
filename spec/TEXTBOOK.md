@@ -40,7 +40,7 @@ TextbookPage (renders automatically: title, one_liner, big_question, why_it_matt
 `Block / Hook / ConceptGrid / ConceptMap / Takeaways / Quiz / Bridge / C` work the same as in the humanities version (see KIT.md). The `concepts` format is the same as in the humanities version (id, name_zh, name_en, icon, group, plain, explain, analogy, book_example{what,point}, misconception), and they're passed in through `TextbookPage`'s `groups/concepts/relations`. In the body, `<C id="…">` can link to concept cards (must be written in JSX; not supported inside Tx strings).
 
 ## Theorem–proof content
-Papers, math books, and other texts built on definitions, lemmas, theorems, and proofs additionally use `Stmt / SRef / \sref{} / Proof / DepGraph / Erratum / RunCard …` (with the statement registry in `statements` in book.js). See `spec/PROOF.md`; the complete example is the ETH book at `/home/zijian/books/eth`.
+Papers, math books, and other texts built on definitions, lemmas, theorems, and proofs additionally use `Stmt / SRef / \sref{} / Proof / DepGraph / Erratum / RunCard …` (with the statement registry in `statements` in book.js). See `spec/PROOF.md`; the complete example is the ETH book at [`eth`](https://github.com/EvoEvolver/mingbai-notes/tree/main/eth).
 
 ## Links
 Use `pageUrl(id, anchor)` for in-site links and notation such as `\eqref{}` for references; a chapter's exported notation, concepts, and so on must be plain data. See `DEPLOY.md`.
@@ -107,3 +107,5 @@ Run all heavy commands, such as builds and Playwright/Chromium screenshots, thro
    ```
    Use Read to view `/tmp/check-<book-dir-name>-<id>/shot.png`; spot-check at least 15 formulas character by character against the page images; screenshot the interactive figures and check their values.
 5. Delivery report: file list; tb_check output; remaining symMiss items with reasons; list of interactive figures and how they were verified; added derivations; errata (corrected) and uncertain items.
+
+For long formulas that deserve a walkthrough, use `<FormulaMap n="…" tree={…}>` instead of `<Eq>`; see "Formula treemaps" in `spec/PAPER.md`.

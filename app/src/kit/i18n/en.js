@@ -1,4 +1,4 @@
-// UI strings in English. Keys mirror zh.js; a missing key falls back to Chinese.
+// UI strings in English, the default language. A value can be a string, a function (sentence with parameters), or an object (a set of labels).
 export default {
   "html.lang": "en",
   "speech.lang": "en-US",

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Single-chapter build + screenshot self-check. Usage: check.sh <chapterId> [BOOK_DIR]
+# Single-chapter build + screenshot self-check. Usage: check.sh <chapterId> <BOOK_DIR>
 # Outputs under /tmp/check-<book-dir-name>-<id>/: shot.png (full page), shot-modal.png (concept modal), and a JSON report (block list, console errors)
 set -euo pipefail
 ID=${1:?usage: check.sh <chapter-id> <book-dir>}; BOOK=$(cd "${2:?usage: check.sh <chapter-id> <book-dir>}" && pwd)

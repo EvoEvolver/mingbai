@@ -1,6 +1,6 @@
 import { t } from "../i18n/index.js";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { renderTex, TxI, Tx } from "../math/tex.jsx";
+import { renderTex, TxI, Tx, EqLine, anchor, useRegisterEq } from "./tex.jsx";
 import { drawInk } from "./ink.js";
 
 // FormulaMap: draws a formula's structure tree as a treemap. Nesting = structure, leaf area ∝ importance.
@@ -11,6 +11,8 @@ import { drawInk } from "./ink.js";
 //   kids  child nodes; must match the placeholders in tex one to one, otherwise an error is thrown. The root is usually a relation (= or ≈), with the two sides as children.
 //   w     leaf importance, proportional to its area; a parent's area follows from its children (plus the title bar) and isn't specified.
 //   glyph symbol shown in the parent's title, defaults to tex (children shown as □); needed for nodes with no visible symbol such as implicit multiplication, e.g. "\times".
+// With `n` it is a numbered equation and can replace <Eq>: it registers the formula (for \\eqref, hover previews, and KeyEquations)
+// and provides the eq-<n> anchor. `keyEq`, `title`, and `say` mean the same as on <Eq>. Define `tree` at module level so it stays stable.
 // Hover and highlight change classes directly, without React re-renders.
 
 const SLOT = /(?<!\\)#([A-Za-z][A-Za-z0-9]*)/g;   // ids are alphanumeric only, so #lam_{…} and #a-#b aren't misread
@@ -131,9 +133,9 @@ function Cell({ id, nodes, rects, origin }) {
     </div>);
 }
 
-export function FormulaMap({ n, title, tree, height = 460, start }) {
+export function FormulaMap({ n, title, tree, height = 460, start, keyEq = false, say }) {
   const nodes = useMemo(() => compile(tree), [tree]);
-  const html = useMemo(() => renderTex(nodes[tree.id].marked, true), [nodes, tree.id]);
+  useRegisterEq(n, nodes[tree.id].plain, { keyEq, title, say });
   const box = useRef(null), eqRef = useRef(null), detail = useRef(null), root = useRef(null);
   const hover = useRef(null), sel = useRef(start || null);
   const [W, setW] = useState(760);
@@ -164,7 +166,7 @@ export function FormulaMap({ n, title, tree, height = 460, start }) {
         el.classList.toggle("fm-on", id === lit);
       });
       E.classList.toggle("fm-focus", !!h);
-      drawInk(E, lit ? [...E.querySelectorAll(".flm-" + lit)] : []);
+      drawInk(E.querySelector(".eqline-m"), lit ? [...E.querySelectorAll(".flm-" + lit)] : []);
     }
     detail.current?.querySelectorAll(".fm-card").forEach(el => el.classList.toggle("show", el.dataset.id === (lit || "")));
   }, [nodes]);
@@ -177,11 +179,14 @@ export function FormulaMap({ n, title, tree, height = 460, start }) {
   const flmOf = e => { const el = e.target.closest?.(".flm"); return el && [...el.classList].find(c => c.startsWith("flm-"))?.slice(4); };
 
   return (
-    <figure className="fm">
-      <div className="fm-bar">{title && <b><TxI>{title}</TxI></b>}{n && <span className="fm-n">({n})</span>}<span className="fm-hint">{t("fm.hint")}</span></div>
-      <div className="fm-eq" ref={eqRef} dangerouslySetInnerHTML={{ __html: html }}
+    <figure className="fm" id={n ? anchor("eq", n) : undefined}>
+      <div className="fm-bar">{title && <b><TxI>{title}</TxI></b>}<span className="fm-hint">{t("fm.hint")}</span></div>
+      {say && <div className="fm-say"><TxI>{say}</TxI></div>}
+      <div className="fm-eq" ref={eqRef}
         onMouseOver={e => { const id = flmOf(e); if (id && nodes[id]) setHover(id); }} onMouseLeave={() => setHover(null)}
-        onClick={e => { const id = flmOf(e); if (id && nodes[id]) select(id); }} />
+        onClick={e => { const id = flmOf(e); if (id && nodes[id]) select(id); }}>
+        <EqLine tex={nodes[tree.id].marked} n={n} />
+      </div>
       {/* Only leaves and parent title bars respond to hover: moving across gaps between blocks changes nothing, so there's no flicker */}
       <div className="fm-map" ref={el => { box.current = el; root.current = el; }} style={{ height: H }}
         onMouseOver={e => { const id = hitOf(e); if (id) setHover(id); }} onMouseLeave={() => setHover(null)}

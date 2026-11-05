@@ -40,7 +40,7 @@ TextbookPage（自动渲染：标题、one_liner、big_question、why_it_matters
 `Block / Hook / ConceptGrid / ConceptMap / Takeaways / Quiz / Bridge / C` 用法同人文版（见 KIT.md）；概念 `concepts` 的格式与人文版相同（id, name_zh, name_en, icon, group, plain, explain, analogy, book_example{what,point}, misconception），并通过 `TextbookPage` 的 `groups/concepts/relations` 传入。正文中可用 `<C id="…">` 链接概念卡（需在 JSX 中写，Tx 字符串内不支持）。
 
 ## 定理–证明类内容
-论文、数学书等以定义/引理/定理/证明为骨架的文本，另用 `Stmt / SRef / \sref{} / Proof / DepGraph / Erratum / RunCard …`（陈述登记表放在 book.js 的 `statements`），见 `spec/zh/PROOF.md`，完整范例为 ETH 书 `/home/zijian/books/eth`。
+论文、数学书等以定义/引理/定理/证明为骨架的文本，另用 `Stmt / SRef / \sref{} / Proof / DepGraph / Erratum / RunCard …`（陈述登记表放在 book.js 的 `statements`），见 `spec/zh/PROOF.md`，完整范例为 ETH 书 [`eth`](https://github.com/EvoEvolver/mingbai-notes/tree/main/eth)。
 
 ## 链接
 站内链接用 `pageUrl(id, anchor)`，引用用 `\eqref{}` 等记号；章节导出的 notation/concepts 等必须是纯数据。见 `DEPLOY.md`。
@@ -107,3 +107,5 @@ export default function Chapter(){ return <TextbookPage meta={meta} notation={no
    ```
    用 Read 查看 `/tmp/check-<书目录名>-<id>/shot.png`；抽查 ≥15 个公式与页面图像逐字符核对；交互图截图并核对数值。
 5. 交付报告：文件列表；tb_check 输出；symMiss 剩余项及理由；交互图清单及验证；补充推导；勘误（已改正）与存疑条目。
+
+值得逐项讲解的长公式可以用 `<FormulaMap n="…" tree={…}>` 代替 `<Eq>`，见 `spec/zh/PAPER.md` 的「公式树图」。

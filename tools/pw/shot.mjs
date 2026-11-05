@@ -15,7 +15,7 @@ await p.evaluate(async () => {
   const click = sel => document.querySelectorAll(sel).forEach(e => e.click());
   click(".tb-deriv:not(.open) .tb-deriv-h"); click(".tb-details:not(.open) .tb-details-h"); click(".proof:not(.open) .proof-h");
   await new Promise(r => setTimeout(r, 200));
-  document.querySelectorAll(".tb-ex-tools button").forEach(b => { if (!/收起/.test(b.textContent)) b.click(); });
+  document.querySelectorAll(".tb-ex-tools button").forEach(b => { if (!/收起|Hide/.test(b.textContent)) b.click(); });
   await new Promise(r => setTimeout(r, 400));
 });
 const info = await p.evaluate(() => ({

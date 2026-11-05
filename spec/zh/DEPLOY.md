@@ -18,7 +18,7 @@ dist/
 - 页面地址：`<站点>/ch02/`；页内锚点用普通 hash：`<站点>/ch02/#eq-2.23`、`#sec-2.1`、`#fig-2.3`、`#ex-2.4`、`#thm-L2.1`。
 - 所有链接与资源都是相对路径，因此可以部署在任意子路径（如 `https://<user>.github.io/<repo>/my-book/`）。
 - 旧式哈希链接 `#/ch02/eq-2.23` 仍可用：打开时自动跳转到 `ch02/#eq-2.23`；内容里残留的 `href="#/…"` 会被自动改写。
-- 每页的 `<title>` 与 `<meta name="description">` 在构建时由章节的 `meta.title_zh` / `meta.one_liner` 生成。
+- 每页的 `<title>` 与 `<meta name="description">` 在构建时由章节的 `meta.title_zh`（或 `title_en`）/ `meta.one_liner` 生成。
 
 ## 跨章数据
 构建时（`vite.config.js`）用 Vite SSR 加载每个章节模块，提取其中可 JSON 序列化的导出
@@ -26,7 +26,7 @@ dist/
 书架的一句话简介、跨章联系、跨章概念卡、跨章符号词典、全书脉络页都由它提供，不需要加载其他章节的代码。
 因此：**这些导出必须是纯数据**（字符串/数字/数组/对象）；函数和 JSX 会被丢弃。
 
-为了让书目录里的章节能解析 `react` 等依赖，构建时会在书目录下自动创建软链接 `node_modules → <框架>/app/node_modules`（已被 .gitignore 忽略）。
+为了让书目录里的章节能解析 `react` 等依赖，构建时会在书目录下自动创建软链接 `node_modules → <框架>/app/node_modules`（记得在书库仓库的 .gitignore 里忽略 node_modules）。
 
 ## 站内链接（写章节时）
 - 用 `pageUrl(id, anchor)`（`import { pageUrl } from "@kit"`）：`pageUrl("ch03")`、`pageUrl("ch03", "eq-3.12")`、`pageUrl(null)`（书架）。同页时返回 `#anchor`。
@@ -39,7 +39,7 @@ cd app
 BOOK=/path/to/my-book npx vite build                      # → my-book/dist
 BOOK=… OUT=/tmp/site npx vite build                       # 指定输出目录
 ONLY=ch02,ch03 BOOK=… npx vite build                      # 只构建部分章节（书架只列出这些）
-../build-all.sh                                           # 当前目录（或 BOOKS_DIR）下的全部书
+BOOKS_DIR=/path/to/books ../build-all.sh                  # 该目录下的全部书
 ```
 
 ## 部署到 GitHub Pages

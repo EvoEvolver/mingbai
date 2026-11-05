@@ -276,10 +276,16 @@ function EqModal({ tex, n, title, say, onClose }) {
 // <Eq n="2.23" keyEq title="Christoffel symbols" say="one-line reading">{String.raw`…`}</Eq>
 // keyEq: key equation (highlighted + in the end-of-chapter summary); say: what the equation says, in words (shown in the zoom window).
 // Omit n for unnumbered display equations. For multiple lines use \begin{aligned}…\end{aligned}. Click an equation to zoom, click a symbol to see its definition.
+// Add a numbered equation to the chapter's registry, for \\eqref, hover previews, and KeyEquations
+export function useRegisterEq(n, tex, { keyEq = false, title, say } = {}) {
+  const tb = useTextbook();
+  if (n && tb) tb.register(String(n), { tex, key: keyEq, title, say, used: symbolsIn(tex) });
+}
+
 export function Eq({ n, children, keyEq = false, title, say }) {
   const tb = useTextbook();
   const tex = String(children).trim();
-  if (n && tb) tb.register(String(n), { tex, key: keyEq, title, say, used: symbolsIn(tex) });
+  useRegisterEq(n, tex, { keyEq, title, say });
   return (
     <div className={"eq" + (keyEq ? " eq-key" : "") + (tb ? " eq-click" : "")} id={n ? anchor("eq", n) : undefined}
       data-eqtex={tb ? tex : undefined} data-eqn={n || undefined} data-eqtitle={title || undefined} data-eqsay={say || undefined}>

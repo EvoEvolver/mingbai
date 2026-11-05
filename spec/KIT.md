@@ -85,7 +85,7 @@ It builds your chapter alone, takes screenshots, and outputs a JSON report (bloc
 ## Delivery reply (brief)
 File list; list of concept ids; what the chapter-specific diagram does; anything you're unsure about in your understanding of the source text.
 
-## Reader feedback (enabled automatically across the site)
+## Reader feedback (enabled once an address is set)
 `kit/Feedback.jsx`: when a reader selects any text, a floating "✎ Feedback" button appears. It opens a panel for writing feedback, and "Send by email" opens the reader's mail program through `mailto:` (the body contains the page address, the page title, the selected plain text, the feedback, and optional contact details; at most 600 characters of the selection are included). "Copy text" is the fallback. The recipient address is `FEEDBACK_EMAIL` in `kit/site.js` (when empty, the feature isn't shown), and a single book can override it with `feedbackEmail` in book.js. Chapter authors don't need to do anything.
 
 ## UI languages

@@ -786,20 +786,24 @@ body.pw-skim .pw-page .tb-sec>p,body.pw-skim .pw-2{font-size:15px;color:#4a4238}
 /* Skim mode: collapse end-of-page reference material (symbol table, key equation summary); it's for lookup, not part of the argument */
 body.pw-skim .pw-page #b-notation,body.pw-skim .pw-page #b-keyeq{display:none}
 
-/* ---------- Partial equation highlight (kit/paper/ink.js): drawn behind the equation ---------- */
+/* ---------- Partial equation highlight (kit/math/ink.js): drawn behind the equation ---------- */
 .ink-layer{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
 .ink-layer>i{position:absolute;display:block;border-radius:7px;background:color-mix(in srgb,var(--rc) 16%,transparent);opacity:0;transition:opacity .12s}
 .ink-layer>i.on{opacity:1}
 .fm-eq .katex-display{position:relative;z-index:1}
 
-/* ---------- Formula tree map (kit/paper/fmap.jsx) ---------- */
+/* ---------- Formula tree map (kit/math/fmap.jsx) ---------- */
 .fm{margin:26px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(60,40,10,.1);padding:14px 18px 12px}
 .fm [data-role=unknown],.fm-cell[data-role=unknown]{--rc:#b4372a}.fm [data-role=known]{--rc:#2c5d8f}.fm [data-role=design]{--rc:#2f7a4a}.fm [data-role=const]{--rc:#9a6b12}.fm [data-role=result]{--rc:#6a3f8f}
 .fm-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--muted)}
 .fm-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--rc);margin-right:5px;vertical-align:-1px}
-.fm-bar{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.fm-n{color:var(--muted);font-family:var(--serif)}
+.fm{scroll-margin-top:64px}
+.fm-say{margin-top:4px;font-size:15px;color:#4a4238}
+.fm-bar{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .fm-hint{margin-left:auto;font-size:12.5px;color:var(--muted)}
-.fm-eq{position:relative;text-align:center;font-size:1.45em;padding:16px 0;overflow-x:auto;overflow-y:hidden}
+.fm-eq{font-size:1.45em;padding:6px 0}
+.fm-eq .eqline-m{position:relative;padding:14px 0}
+.fm-eq .eqline-n{font-size:.78em}
 .fm-eq .katex-display{margin:0}
 .fm-eq .flm{transition:color .15s}
 .fm-eq.fm-focus{color:rgba(31,27,22,.35)}

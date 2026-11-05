@@ -67,12 +67,12 @@ async function extractData(ids) {
 // With split chapters (e.g. ch07 / ch07b both belong to chapter 7), inferring the chapter from a number goes wrong: scan each chapter's source for <Eq n> <Figure n> <Sec n> <Sub n>,
 // and record the numbers whose "actual chapter ≠ chapter inferred from the number", for chapterOfNum(n, kind) to use first.
 function anchorMap(book, ids) {
-  const KIND = { Eq: "eq", Figure: "fig", Sec: "sec", Sub: "sec" }, out = {};
+  const KIND = { Eq: "eq", FormulaMap: "eq", Figure: "fig", Sec: "sec", Sub: "sec" }, out = {};
   const guess = n => { const h = String(n).split(".")[0]; return /^\d+$/.test(h) ? book.chapters.find(c => String(c.no) === h)?.id : book.chapters.find(c => c.id === "app" + h)?.id; };
   for (const id of ids) {
     let src = "";
     try { for (const f of fs.readdirSync(CHAPTERS)) if (f === id + ".jsx" || (f.startsWith(`_${id}_`) && f.endsWith(".jsx"))) src += fs.readFileSync(path.join(CHAPTERS, f), "utf8"); } catch { continue; }
-    for (const m of src.matchAll(/<(Eq|Figure|Sec|Sub)\b[^>]*?\bn="([^"]+)"/g)) if (guess(m[2]) !== id) out[`${KIND[m[1]]}:${m[2]}`] = id;
+    for (const m of src.matchAll(/<(Eq|FormulaMap|Figure|Sec|Sub)\b[^>]*?\bn="([^"]+)"/g)) if (guess(m[2]) !== id) out[`${KIND[m[1]]}:${m[2]}`] = id;
   }
   return out;
 }
