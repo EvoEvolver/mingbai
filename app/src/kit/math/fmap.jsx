@@ -1,5 +1,6 @@
 import { t } from "../i18n/index.js";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { renderTex, TxI, Tx, EqLine, anchor, useRegisterEq } from "./tex.jsx";
 import { drawInk } from "./ink.js";
 
@@ -13,6 +14,8 @@ import { drawInk } from "./ink.js";
 //   glyph symbol shown in the parent's title, defaults to tex (children shown as □); needed for nodes with no visible symbol such as implicit multiplication, e.g. "\times".
 // With `n` it is a numbered equation and can replace <Eq>: it registers the formula (for \\eqref, hover previews, and KeyEquations)
 // and provides the eq-<n> anchor. `keyEq`, `title`, and `say` mean the same as on <Eq>. Define `tree` at module level so it stays stable.
+// `height` is the starting height and `maxHeight` the inline cap. A formula too dense for the cap can open in a full panel,
+// which shares the selection and has the room to show every node at a readable size.
 // Hover and highlight change classes directly, without React re-renders.
 
 const SLOT = /(?<!\\)#([A-Za-z][A-Za-z0-9]*)/g;   // ids are alphanumeric only, so #lam_{…} and #a-#b aren't misread
@@ -80,15 +83,14 @@ function layoutAt(nodes, rootId, W, H) {
   return rects;
 }
 
-// Grow taller automatically when the height can't fit all leaves: no node is ever dropped
-function layoutTree(nodes, rootId, W, minH) {
+// Grow taller up to maxH while leaves don't fit. Past that the leaves just get smaller: no node is ever dropped.
+function layoutTree(nodes, rootId, W, minH, maxH) {
   const leaves = Object.keys(nodes).filter(id => !nodes[id].kids.length);
-  let H = minH, rects;
-  for (let i = 0; i < 14; i++, H = Math.round(H * 1.12)) {
-    rects = layoutAt(nodes, rootId, W, H);
-    if (leaves.every(id => rects[id].w >= MIN_W && rects[id].h >= MIN_H)) break;
+  for (let H = minH; ; H = Math.min(maxH, Math.ceil(H * 1.12))) {
+    const rects = layoutAt(nodes, rootId, W, H);
+    const fits = leaves.every(id => rects[id].w >= MIN_W && rects[id].h >= MIN_H);
+    if (fits || H >= maxH) return { rects, H, fits };
   }
-  return { rects, H };
 }
 
 // Scale the formula to fit its cell (changes styles directly, without a re-render)
@@ -110,7 +112,7 @@ function FitGlyph({ tex, fs, maxW, maxH }) {
   return <div className="fm-g" ref={ref} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function Cell({ id, nodes, rects, origin }) {
+function Cell({ id, nodes, rects, origin, maxFs }) {
   const n = nodes[id], r = rects[id], area = r.w * r.h, style = { left: r.x - origin.x, top: r.y - origin.y, width: r.w, height: r.h };
   if (n.kids.length) {
     return (
@@ -118,34 +120,34 @@ function Cell({ id, nodes, rects, origin }) {
         <div className="fm-head" data-hit={id} tabIndex={0} role="button" title={n.name}>
           <span className="fm-g" dangerouslySetInnerHTML={{ __html: glyph(n.head) }} /><code>{n.name}</code><span className="fm-l"><TxI>{n.label}</TxI></span>
         </div>
-        {n.kids.map(k => <Cell key={k.id} id={k.id} nodes={nodes} rects={rects} origin={r} />)}
+        {n.kids.map(k => <Cell key={k.id} id={k.id} nodes={nodes} rects={rects} origin={r} maxFs={maxFs} />)}
       </div>);
   }
-  const fs = Math.max(13, Math.min(56, Math.sqrt(area) / 4.2));
+  const fs = Math.max(13, Math.min(maxFs, Math.sqrt(area) / 4.2));
   const showCode = r.h >= 120 && r.w >= 110, showLab = r.h >= 62 && r.w >= 90, longLab = area > 26000;
   return (
     <div className="fm-cell leaf" data-id={id} data-hit={id} data-role={n.role || "const"} style={style} tabIndex={0} role="button" title={n.name}>
       <div className="fm-body">
-        <FitGlyph tex={n.plain} fs={fs} maxW={r.w - 12} maxH={r.h - 8 - (showCode ? 24 : 0) - (showLab ? (longLab ? 44 : 22) : 0)} />
+        <FitGlyph tex={n.plain} fs={fs} maxW={r.w - 20} maxH={r.h - 8 - (showCode ? 24 : 0) - (showLab ? (longLab ? 44 : 22) : 0)} />
         {showCode && <code>{n.name}</code>}
         {showLab && <div className={"fm-l" + (longLab ? "" : " one")}><TxI>{n.label}</TxI></div>}
       </div>
     </div>);
 }
 
-export function FormulaMap({ n, title, tree, height = 460, start, keyEq = false, say }) {
-  const nodes = useMemo(() => compile(tree), [tree]);
-  useRegisterEq(n, nodes[tree.id].plain, { keyEq, title, say });
-  const box = useRef(null), eqRef = useRef(null), detail = useRef(null), root = useRef(null);
-  const hover = useRef(null), sel = useRef(start || null);
-  const [W, setW] = useState(760);
+// The formula, map, and notes. Rendered inline and again in the panel; `sel` is shared between the two.
+function FormulaView({ nodes, rootId, n, title, say, sel, height, maxHeight, panel, onExpand, onClose }) {
+  const box = useRef(null), eqRef = useRef(null), detail = useRef(null), root = useRef(null), hover = useRef(null);
+  const [size, setSize] = useState({ w: 760, h: 0 });
   useLayoutEffect(() => {
-    const update = () => setW(box.current?.clientWidth || 760);
+    const update = () => setSize({ w: box.current.clientWidth || 760, h: box.current.clientHeight });
     update();
     const ro = new ResizeObserver(update); ro.observe(box.current);
     return () => ro.disconnect();
   }, []);
-  const { rects, H } = useMemo(() => layoutTree(nodes, tree.id, W, height), [nodes, tree.id, W, height]);
+  // Inline: from `height` up to the cap. Panel: fill the space, and scroll only if the leaves still don't fit.
+  const minH = panel ? Math.max(size.h, 200) : Math.min(height, maxHeight), maxH = panel ? minH * 3 : maxHeight;
+  const { rects, H, fits } = useMemo(() => layoutTree(nodes, rootId, size.w, minH, maxH), [nodes, rootId, size.w, minH, maxH]);
 
   // Paint the current state to the DOM. lit: the hovered item if any, otherwise the selected one; unrelated blocks fade only on hover, so the view stays clean at rest.
   const paint = useCallback(() => {
@@ -169,7 +171,7 @@ export function FormulaMap({ n, title, tree, height = 460, start, keyEq = false,
       drawInk(E.querySelector(".eqline-m"), lit ? [...E.querySelectorAll(".flm-" + lit)] : []);
     }
     detail.current?.querySelectorAll(".fm-card").forEach(el => el.classList.toggle("show", el.dataset.id === (lit || "")));
-  }, [nodes]);
+  }, [nodes, sel]);
   useLayoutEffect(paint);
   useLayoutEffect(() => { let live = true; document.fonts?.ready.then(() => live && paint()); return () => { live = false; }; }, [paint]);   // glyph positions change once the KaTeX fonts load
 
@@ -178,22 +180,30 @@ export function FormulaMap({ n, title, tree, height = 460, start, keyEq = false,
   const hitOf = e => e.target.closest?.("[data-hit]")?.dataset.hit;
   const flmOf = e => { const el = e.target.closest?.(".flm"); return el && [...el.classList].find(c => c.startsWith("flm-"))?.slice(4); };
 
-  return (
-    <figure className="fm" id={n ? anchor("eq", n) : undefined}>
-      <div className="fm-bar">{title && <b><TxI>{title}</TxI></b>}<span className="fm-hint">{t("fm.hint")}</span></div>
-      {say && <div className="fm-say"><TxI>{say}</TxI></div>}
-      <div className="fm-eq" ref={eqRef}
-        onMouseOver={e => { const id = flmOf(e); if (id && nodes[id]) setHover(id); }} onMouseLeave={() => setHover(null)}
-        onClick={e => { const id = flmOf(e); if (id && nodes[id]) select(id); }}>
-        <EqLine tex={nodes[tree.id].marked} n={n} min={0.42} />
-      </div>
-      {/* Only leaves and parent title bars respond to hover: moving across gaps between blocks changes nothing, so there's no flicker */}
-      <div className="fm-map" ref={el => { box.current = el; root.current = el; }} style={{ height: H }}
-        onMouseOver={e => { const id = hitOf(e); if (id) setHover(id); }} onMouseLeave={() => setHover(null)}
-        onFocus={e => { const id = hitOf(e); if (id) setHover(id); }} onBlur={() => setHover(null)}
-        onClick={e => { const id = hitOf(e); if (id) select(id); }}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { const id = hitOf(e); if (id) { e.preventDefault(); select(id); } } }}>
-        <Cell id={tree.id} nodes={nodes} rects={rects} origin={{ x: 0, y: 0 }} />
+  return <>
+    <div className="fm-bar">
+      {title && <b><TxI>{title}</TxI></b>}
+      <span className="fm-hint">{t("fm.hint")}</span>
+      {panel
+        ? <button className="fm-btn" onClick={onClose} autoFocus aria-label={t("ui.close")}>×</button>
+        : <button className={"fm-btn" + (fits ? "" : " tight")} onClick={onExpand}>{t("fm.expand")}</button>}
+    </div>
+    {say && <div className="fm-say"><TxI>{say}</TxI></div>}
+    <div className="fm-eq" ref={eqRef}
+      onMouseOver={e => { const id = flmOf(e); if (id && nodes[id]) setHover(id); }} onMouseLeave={() => setHover(null)}
+      onClick={e => { const id = flmOf(e); if (id && nodes[id]) select(id); }}>
+      <EqLine tex={nodes[rootId].marked} n={n} min={0.42} />
+    </div>
+    <div className="fm-main">
+      <div className="fm-scroll" ref={box}>
+        {/* Only leaves and parent title bars respond to hover: moving across gaps between blocks changes nothing, so there's no flicker */}
+        <div className="fm-map" ref={root} style={{ height: H }}
+          onMouseOver={e => { const id = hitOf(e); if (id) setHover(id); }} onMouseLeave={() => setHover(null)}
+          onFocus={e => { const id = hitOf(e); if (id) setHover(id); }} onBlur={() => setHover(null)}
+          onClick={e => { const id = hitOf(e); if (id) select(id); }}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { const id = hitOf(e); if (id) { e.preventDefault(); select(id); } } }}>
+          <Cell id={rootId} nodes={nodes} rects={rects} origin={{ x: 0, y: 0 }} maxFs={panel ? 56 : 44} />
+        </div>
       </div>
       {/* All notes stack in one grid cell, with height set by the longest: content below doesn't jump on switching */}
       <div className="fm-detail" ref={detail} onClick={e => { const id = e.target.closest?.("[data-crumb]")?.dataset.crumb; if (id) select(id); }}>
@@ -205,6 +215,38 @@ export function FormulaMap({ n, title, tree, height = 460, start, keyEq = false,
             {x.note && <Tx>{x.note}</Tx>}
           </div>))}
       </div>
-      <div className="fm-legend">{[...new Set(Object.values(nodes).map(x => x.role || "const"))].map(r => <span key={r} data-role={r}><i />{t("fm.role")[r]}</span>)}</div>
+    </div>
+    <div className="fm-legend">{[...new Set(Object.values(nodes).map(x => x.role || "const"))].map(r => <span key={r} data-role={r}><i />{t("fm.role")[r]}</span>)}</div>
+  </>;
+}
+
+function FormulaPanel({ onClose, children }) {
+  useEffect(() => {
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    // Escape closes a symbol popover or equation modal first, if one is open over the panel
+    const onKey = e => { if (e.key === "Escape" && !document.querySelector(".sym-pop, .tb-modal")) onClose(); };
+    addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = overflow; removeEventListener("keydown", onKey); };
+  }, [onClose]);
+  // A reference link in a note jumps within the page underneath, so the panel gets out of the way
+  return createPortal(
+    <div className="fm-overlay" onClick={e => { if (e.target === e.currentTarget || e.target.closest("a[href]")) onClose(); }}>
+      <div className="fm fm-panel" role="dialog" aria-modal="true">{children}</div>
+    </div>, document.body);
+}
+
+export function FormulaMap({ n, title, tree, height = 460, maxHeight = 520, start, keyEq = false, say }) {
+  const nodes = useMemo(() => compile(tree), [tree]);
+  useRegisterEq(n, nodes[tree.id].plain, { keyEq, title, say });
+  const sel = useRef(start || null);
+  const [open, setOpen] = useState(false);
+  const opener = useRef(null);
+  const close = useCallback(() => { setOpen(false); opener.current?.focus({ preventScroll: true }); }, []);
+  const view = { nodes, rootId: tree.id, n, title, say, sel };
+  return (
+    <figure className="fm" id={n ? anchor("eq", n) : undefined}>
+      <FormulaView {...view} height={height} maxHeight={maxHeight} onExpand={e => { opener.current = e.currentTarget; setOpen(true); }} />
+      {open && <FormulaPanel onClose={close}><FormulaView {...view} panel onClose={close} /></FormulaPanel>}
     </figure>);
 }

@@ -341,5 +341,6 @@ export default {
   "w.map": "重要性地图",
   "fm.role": { unknown: "要求的未知量", known: "测得 / 已知", design: "可以自己选的", const: "常数 / 结构", result: "结果" },
   "fm.hint": "嵌套 = 结构 · 面积 = 重要性 · 悬停对照原式 · 点击固定说明",
+  "fm.expand": "⤢ 放大",
   "fm.empty": "点任意一块，在这里看它的完整说明。",
 };

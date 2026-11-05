@@ -326,5 +326,6 @@ export default {
   "w.map": "Importance map",
   "fm.role": { unknown: "Unknown to solve for", known: "Measured / known", design: "Your choice", const: "Constant / structure", result: "Result" },
   "fm.hint": "Nesting = structure · area = importance · hover to compare with the formula · click to pin the note",
+  "fm.expand": "⤢ Expand",
   "fm.empty": "Click any block to see its full note here.",
 };

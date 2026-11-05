@@ -159,7 +159,7 @@ export function TextbookProvider({ chapterId, notation = [], children }) {
   useEffect(() => {
     const onClick = e => {
       const s = e.target.closest?.("[data-sym]");
-      if (s && s.closest(".tb, .tb-modal")) {
+      if (s && s.closest(".tb, .tb-modal, .fm-panel")) {
         e.preventDefault(); e.stopPropagation();
         const r = s.getBoundingClientRect();
         setPop({ id: s.dataset.sym, x: r.left + r.width / 2, y: r.bottom, top: r.top });

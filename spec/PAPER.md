@@ -57,7 +57,7 @@ const TREE = {                                   // define at module level
 ```
 
 - **The tree is the formula.** The displayed TeX is generated from `tex`, with `#childId` placeholders that must match `kids` one to one. Ids contain only letters and digits. Symbols not in a child, such as `=`, `√`, and `∑`, belong to the node. The root is the relation (`=` or `≈`).
-- **Area:** `w` on a leaf is its importance, and area is proportional to it. Parents have no `w`. The map grows taller rather than dropping nodes; `height` is the minimum.
+- **Area:** `w` on a leaf is its importance, and area is proportional to it. Parents have no `w`. No node is ever dropped. The inline map grows from `height` (460) up to `maxHeight` (520), and past that its leaves get smaller. Readers can open any map in a full panel, which has room for every node.
 - **Fields:** `name` is a code-like name, `label` a short meaning, `note` the full explanation, and `role` one of `unknown`, `known`, `design`, `const`, or `result`. `glyph` overrides what a parent's title shows, which nodes with no visible symbol need (`\times` for implicit multiplication).
 - **Limits:** a placeholder can't span `&` or `\\`, so multi-line `aligned` formulas don't work.
 
