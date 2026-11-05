@@ -31,7 +31,7 @@ export function expandMacros(tex) {
 // 当前章节的符号表（TextbookProvider 在渲染时设置；只同时显示一章）
 let ACTIVE = { table: null, ver: 0 };
 const cache = new Map(), usedCache = new Map();
-const trust = c => ["\\htmlData"].includes(c.command);
+const trust = c => ["\\htmlData", "\\htmlClass"].includes(c.command);
 
 export function renderTex(tex, display = false) {
   const key = ACTIVE.ver + (display ? "D" : "I") + tex;
@@ -195,13 +195,16 @@ export function TextbookProvider({ chapterId, notation = [], children }) {
 }
 
 // 编号 → 章节 id（"2.23" → ch02，"A.3" → appA）
+// 编号里不含章号的书（论文、按节编号的教科书）：在 book.js 的章节上声明 eqs —— 正则字符串（如 "^[A-F]-\\d+"）或 true（兜底：其余编号都在这一页）
 // 拆分章节（ch07 / ch07b）里的编号由构建时扫描得到的 anchors 表决定（kind：eq / fig / sec）
 export function chapterOfNum(n, kind = "eq") {
   const hit = anchors?.[`${kind}:${n}`];
   if (hit) return hit;
   const head = String(n).split(".")[0];
-  if (/^\d+$/.test(head)) return book.chapters.find(c => String(c.no) === head)?.id;
-  return book.chapters.find(c => c.id === "app" + head)?.id;
+  const byNo = /^\d+$/.test(head) ? book.chapters.find(c => String(c.no) === head && c.no !== 0)?.id : book.chapters.find(c => c.id === "app" + head)?.id;
+  if (byNo) return byNo;
+  const own = book.chapters.find(c => typeof c.eqs === "string" && new RegExp(c.eqs).test(String(n))) || book.chapters.find(c => c.eqs === true);
+  return own?.id;
 }
 const anchor = (kind, n) => `${kind}-${String(n).replace(/[^\w.-]/g, "_")}`;
 const hrefTo = (kind, n, here) => pageUrl(chapterOfNum(n, kind) || here, anchor(kind, n));
