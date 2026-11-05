@@ -185,7 +185,7 @@ export function FormulaMap({ n, title, tree, height = 460, start, keyEq = false,
       <div className="fm-eq" ref={eqRef}
         onMouseOver={e => { const id = flmOf(e); if (id && nodes[id]) setHover(id); }} onMouseLeave={() => setHover(null)}
         onClick={e => { const id = flmOf(e); if (id && nodes[id]) select(id); }}>
-        <EqLine tex={nodes[tree.id].marked} n={n} />
+        <EqLine tex={nodes[tree.id].marked} n={n} min={0.42} />
       </div>
       {/* Only leaves and parent title bars respond to hover: moving across gaps between blocks changes nothing, so there's no flicker */}
       <div className="fm-map" ref={el => { box.current = el; root.current = el; }} style={{ height: H }}
