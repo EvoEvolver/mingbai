@@ -226,8 +226,8 @@ function FormulaPanel({ onClose, children }) {
     document.body.style.overflow = "hidden";
     // Escape closes a symbol popover or equation modal first, if one is open over the panel
     const onKey = e => { if (e.key === "Escape" && !document.querySelector(".sym-pop, .tb-modal")) onClose(); };
-    addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = overflow; removeEventListener("keydown", onKey); };
+    addEventListener("keydown", onKey, true);   // capture: check before the popover's own handler removes it
+    return () => { document.body.style.overflow = overflow; removeEventListener("keydown", onKey, true); };
   }, [onClose]);
   // A reference link in a note jumps within the page underneath, so the panel gets out of the way
   return createPortal(
