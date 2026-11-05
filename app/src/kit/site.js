@@ -1,3 +1,3 @@
-// 全站配置。
-// 读者反馈（kit/Feedback.jsx）的收件地址。留空则不显示反馈功能；一般在书的 book.js 里用 feedbackEmail 设置。
+// Site-wide configuration.
+// Recipient address for reader feedback (kit/Feedback.jsx). Empty hides the feedback feature; usually set with feedbackEmail in the book's book.js.
 export const FEEDBACK_EMAIL = "";

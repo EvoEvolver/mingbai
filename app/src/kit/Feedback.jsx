@@ -4,10 +4,10 @@ import { createPortal } from "react-dom";
 import { book } from "./book.jsx";
 import { FEEDBACK_EMAIL } from "./site.js";
 
-// 选中文字 → 悬浮"反馈"按钮 → 反馈面板 → mailto: 打开读者的邮件客户端（收件人、标题、正文已填好）。
-// 正文包含：页面地址、页面标题、选中的纯文本、读者的反馈与（可选）联系方式。纯静态，无需后端。
-// 收件地址：book.js 的 feedbackEmail（缺省取 kit/site.js 的 FEEDBACK_EMAIL）；为空则不启用。
-const MAX_SEL = 600;   // mailto 链接过长时部分邮件客户端会截断，选中内容只带前 600 字
+// Select text → floating "feedback" button → feedback panel → mailto: opens the reader's email client (recipient, subject, and body prefilled).
+// The body includes: page URL, page title, the selected plain text, the reader's feedback, and (optionally) contact details. Purely static, no backend needed.
+// Recipient: feedbackEmail in book.js (defaults to FEEDBACK_EMAIL in kit/site.js); disabled if empty.
+const MAX_SEL = 600;   // some email clients truncate very long mailto links, so only the first 600 characters of the selection are included
 
 function selectionInfo() {
   const s = window.getSelection();
@@ -23,8 +23,8 @@ function selectionInfo() {
 
 export default function Feedback() {
   const to = book?.feedbackEmail ?? FEEDBACK_EMAIL;
-  const [btn, setBtn] = useState(null);       // 悬浮按钮 {text, x, top, bottom}
-  const [panel, setPanel] = useState(null);   // 面板 {text}
+  const [btn, setBtn] = useState(null);       // floating button {text, x, top, bottom}
+  const [panel, setPanel] = useState(null);   // panel {text}
   const [msg, setMsg] = useState("");
   const [contact, setContact] = useState("");
   const [copied, setCopied] = useState(false);

@@ -1,5 +1,7 @@
 # 可听组件（`@kit/audio`）—— 给音乐/声音类书籍
 
+[English](../AUDIO.md)
+
 让读者**边看边听**：页面里的和弦、音程、音阶都能点了就响，图解本身就是乐器。
 试点书：《图解和声》（[完整范例](https://github.com/EvoEvolver/mingbai-notes/blob/main/harmony/chapters/ch01.jsx)，在 mingbai-notes 仓库）。
 

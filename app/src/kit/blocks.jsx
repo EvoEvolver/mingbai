@@ -4,14 +4,14 @@ import { Paras, useReveal, useChapter, ConceptChip } from "./core.jsx";
 import { Rich } from "./math/tex.jsx";
 import { titleOf, nameOf } from "./book.jsx";
 
-// 开场钩子：深色故事卡
-// children 中的字符串片段按（富）文本分段渲染，元素原样保留——允许「字符串 + JSX」混写
+// Opening hook: dark story card
+// String pieces in children render as (rich) text split into paragraphs; elements are kept as is, so strings and JSX can be mixed
 const richKids = kids => Children.map(kids, c => (typeof c === "string" ? <Paras text={c} /> : c));
 
 export const Hook = ({ title, children }) => (
   <div className="hook"><h2><Rich>{title}</Rich></h2>{richKids(children)}</div>);
 
-// 原著小节卡片，点击展开概述 + 相关概念
+// Source-book section card; click to expand the summary + related concepts
 // sections: [{id,no,title_zh,title_en,gist,summary,concept_ids}]
 export function SectionCards({ sections }) {
   const [open, setOpen] = useState(null);
@@ -29,14 +29,14 @@ export function SectionCards({ sections }) {
   </>;
 }
 
-// 论证主线：竖向时间线，滚动逐步点亮。steps: [{claim, detail}]
+// Line of argument: vertical timeline that lights up step by step on scroll. steps: [{claim, detail}]
 function Step({ n, s }) {
   const [ref, vis] = useReveal(.6);
   return <div ref={ref} className={"step" + (vis ? " vis" : "")}><div className="dot">{n}</div><b><Rich>{s.claim}</Rich></b>{s.detail && <p><Rich>{s.detail}</Rich></p>}</div>;
 }
 export const ArgumentFlow = ({ steps }) => <div className="flow">{steps.map((s, i) => <Step key={i} n={i + 1} s={s} />)}</div>;
 
-// 概念卡片网格（读取 ChapterPage 的 concepts/groups），带分组筛选
+// Concept card grid (reads ChapterPage's concepts/groups), with group filters
 export function ConceptGrid() {
   const { concepts, groups, open, color, groupLabel } = useChapter();
   const [g, setG] = useState("*");
@@ -54,9 +54,9 @@ export function ConceptGrid() {
   </>;
 }
 
-// 例子压缩器：一串原著例子 → 一句话。items: [{examples:[...], says}]
-// examples 每项可以是字符串（仅标签），或 {tag, detail}：detail 用 2-4 句讲清这个例子在原著里是什么、怎么回事；
-// 有 detail 的标签可点击展开，另有「全部展开」。
+// Example compressor: a series of source-book examples → one sentence. items: [{examples:[...], says}]
+// Each examples item can be a string (label only) or {tag, detail}: detail explains in 2-4 sentences what the example is in the source book and what happens in it;
+// tags with a detail can be clicked to expand, and there is an "expand all" control.
 const exTag = e => typeof e === "string" ? e : e.tag;
 const exDetail = e => typeof e === "string" ? null : e.detail;
 function CompGroup({ g }) {
@@ -90,14 +90,14 @@ function CompGroup({ g }) {
 }
 export const ExampleCompression = ({ items }) => <div className="comp">{items.map((g, i) => <CompGroup key={i} g={g} />)}</div>;
 
-// 两栏对照表。rows: [{aspect, left, right}]
+// Two-column comparison table. rows: [{aspect, left, right}]
 export const CompareTable = ({ left, right, rows }) => (
   <div className="ctable">
     <div className="crow head"><div /><div>{left}</div><div>{right}</div></div>
     {rows.map((r, i) => <div className="crow" key={i}><div className="asp"><Rich>{r.aspect}</Rich></div><div className="l"><Rich>{r.left}</Rich></div><div className="r"><Rich>{r.right}</Rich></div></div>)}
   </div>);
 
-// 原文金句轮播。quotes: [{en, zh, meaning}]（每条 en ≤25 词，最多 4 条）
+// Carousel of source quotes. quotes: [{en, zh, meaning}] (each en ≤ 25 words, at most 4 items)
 export function QuoteCarousel({ quotes }) {
   const [i, setI] = useState(0), q = quotes[i], n = quotes.length;
   const go = d => setI((i + d + n) % n);
@@ -114,7 +114,7 @@ export function QuoteCarousel({ quotes }) {
   </>;
 }
 
-// 理解自测。questions: [{q, options, answer(index), why}]
+// Comprehension quiz. questions: [{q, options, answer(index), why}]
 export function Quiz({ questions }) {
   const [picked, setPicked] = useState({});
   const answered = Object.keys(picked).length;
@@ -138,11 +138,11 @@ export function Quiz({ questions }) {
 
 export const Takeaways = ({ items }) => <div className="takeaways">{items.map((t, i) => <div className="tk" key={i}><Rich>{t}</Rich></div>)}</div>;
 
-// 下一章衔接
+// Transition to the next chapter
 export const Bridge = ({ title = t("blk.bridge"), children }) => (
   <div className="bridge"><b>{title}</b>{richKids(children)}</div>);
 
-// 术语表（可搜索）。terms: [{term, zh, def}]
+// Glossary (searchable). terms: [{term, zh, def}]
 export function Glossary({ terms }) {
   const [q, setQ] = useState("");
   const list = terms.filter(g => !q || (g.term + (g.zh || "") + g.def).toLowerCase().includes(q.toLowerCase()));

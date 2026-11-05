@@ -1,24 +1,24 @@
-// 声音引擎：Web Audio 合成（无采样文件）。AudioContext 在第一次播放（用户点击）时才创建，符合浏览器自动播放策略。
-// 全站共享一个实例；设置（音量/静音/音色/律制）存 localStorage。
+// Sound engine: Web Audio synthesis (no sample files). The AudioContext is created only on first playback (a user click), as browser autoplay policy requires.
+// One instance shared across the site; settings (volume/mute/timbre/tuning) are stored in localStorage.
 import { useEffect, useState } from "react";
 import { freq } from "./theory.js";
 
 const KEY = "book-audio";
-const DEFAULTS = { volume: 0.7, muted: false, timbre: "piano", tuning: "equal", view: "staff" };   // view：谱例显示为五线谱 staff / 卷帘 roll
+const DEFAULTS = { volume: 0.7, muted: false, timbre: "piano", tuning: "equal", view: "staff" };   // view: show scores as staff notation (staff) or piano roll (roll)
 const load = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return { ...DEFAULTS }; } };
 
 let ctx = null, master = null, waves = {};
 let settings = typeof localStorage === "undefined" ? { ...DEFAULTS } : load();
-const voices = new Set();          // 正在发声的节点
-const timers = new Set();          // 已排程的 UI 回调
-const active = new Map();          // midi → 同时发声计数（供高亮）
-const subs = new Set();            // 订阅者：active / settings 变化
-const stopSubs = new Set();        // stop() 时通知各播放组件复位 UI
+const voices = new Set();          // nodes currently sounding
+const timers = new Set();          // scheduled UI callbacks
+const active = new Map();          // midi → count of simultaneous voices (for highlighting)
+const subs = new Set();            // subscribers: active / settings changes
+const stopSubs = new Set();        // notifies playback components on stop() so they can reset their UI
 const emit = () => subs.forEach(f => f());
 
-// 音色：谐波振幅表 → PeriodicWave
+// Timbres: harmonic amplitude table → PeriodicWave
 const TIMBRES = {
-  // bright / brightEnd：低通截止频率相对基频的倍数（随音高跟踪，高音不会更刺耳），上限 maxHz
+  // bright / brightEnd: low-pass cutoff as a multiple of the fundamental (tracks pitch, so high notes aren't harsher), capped at maxHz
   piano: { harm: [1, 0.42, 0.2, 0.1, 0.05, 0.025, 0.012], attack: 0.008, decay: 1.6, sustain: 0, release: 0.28, bright: 7, brightEnd: 2.2, maxHz: 4200 },
   organ: { harm: [1, 0.6, 0.35, 0.15, 0.18, 0, 0.08, 0.06], attack: 0.02, decay: 0.1, sustain: 0.75, release: 0.12, bright: 8, brightEnd: 8, maxHz: 4000 },
   sine: { harm: [1], attack: 0.015, decay: 0.2, sustain: 0.8, release: 0.15, bright: 60, brightEnd: 60, maxHz: 20000 },
@@ -43,11 +43,11 @@ function ensure() {
   return ctx;
 }
 
-// 排程一个 UI 回调（随 stop() 一起取消）
+// Schedule a UI callback (cancelled together with stop())
 export function later(fn, ms) { const t = setTimeout(() => { timers.delete(t); fn(); }, Math.max(0, ms)); timers.add(t); }
 const mark = (midi, d) => { const n = (active.get(midi) || 0) + d; n > 0 ? active.set(midi, n) : active.delete(midi); emit(); };
 
-// 播放一个音。at：相对现在的秒数；dur：时值（秒）；ref：纯律参照音
+// Play one note. at: seconds from now; dur: duration (seconds); ref: reference note for just intonation
 function voice(midi, at, dur, { velocity = 0.8, ref = 60, tuning = settings.tuning, timbre = settings.timbre, gain } = {}) {
   const T = TIMBRES[timbre] || TIMBRES.piano, t0 = ctx.currentTime + at;
   const osc = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
@@ -69,15 +69,15 @@ function voice(midi, at, dur, { velocity = 0.8, ref = 60, tuning = settings.tuni
   later(() => mark(midi, -1), (at + dur) * 1000);
 }
 
-// 播放一组音。arp：琶音间隔（秒，0 为同时）
-// 同时发声的音越多，每个音越轻（÷√n），和弦整体响度接近单音，不会挤爆压缩器
+// Play a group of notes. arp: arpeggio interval (seconds, 0 = simultaneous)
+// The more notes sound together, the quieter each one (÷√n), so a chord is about as loud as a single note and doesn't overload the compressor
 export function play(notes, { dur = 1.4, arp = 0, at = 0, ...o } = {}) {
   ensure();
   const ns = [].concat(notes), gain = o.gain ?? 1 / Math.sqrt(Math.max(1, ns.length) / 1.5 > 1 ? ns.length / 1.5 : 1);
   ns.forEach((m, i) => voice(m, at + i * arp, dur - i * arp > 0.3 ? dur - i * arp : 0.3, { ...o, gain }));
 }
 
-// 依次播放若干步：steps = [{ notes:[midi], dur?, arp? }]；onStep(i) 在每步开始时回调（i = -1 表示结束）
+// Play several steps in sequence: steps = [{ notes:[midi], dur?, arp? }]; onStep(i) is called at the start of each step (i = -1 means finished)
 export function sequence(steps, { gap = 0.75, onStep, ...o } = {}) {
   ensure();
   let t = 0;
@@ -91,25 +91,25 @@ export function sequence(steps, { gap = 0.75, onStep, ...o } = {}) {
   return t;
 }
 
-// 停止一切声音与排程
+// Stop all sound and scheduled callbacks
 export function stop() {
   timers.forEach(clearTimeout); timers.clear();
-  voices.forEach(v => { try { v.stop(); } catch { /* 已停止 */ } }); voices.clear();
+  voices.forEach(v => { try { v.stop(); } catch { /* already stopped */ } }); voices.clear();
   active.clear(); emit();
   stopSubs.forEach(f => f());
 }
-// 订阅「全部停止」（如 SoundBar 的 ■），返回取消订阅函数；组件用它复位自己的播放状态
+// Subscribe to "stop all" (e.g. SoundBar's ■); returns an unsubscribe function; components use it to reset their playback state
 export const onStop = f => (stopSubs.add(f), () => stopSubs.delete(f));
 
 export const getSettings = () => settings;
 export function setSettings(patch) {
   settings = { ...settings, ...patch };
-  try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* 隐私模式 */ }
+  try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* private browsing */ }
   if (master) master.gain.value = settings.muted ? 0 : settings.volume;
   emit();
 }
 
-// React：订阅当前发声的音（Set<midi>）与设置
+// React: subscribe to the currently sounding notes (Set<midi>) and settings
 export function useAudioState() {
   const [, force] = useState(0);
   useEffect(() => { const f = () => force(x => x + 1); subs.add(f); return () => subs.delete(f); }, []);

@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# 单章构建 + 截图自检。用法: check.sh <chapterId> [BOOK_DIR]
-# 产出: /tmp/check-<书目录名>-<id>/ 下的 shot.png（整页长图）, shot-modal.png（概念弹窗）, 以及 JSON 报告（区块列表、控制台错误）
+# Single-chapter build + screenshot self-check. Usage: check.sh <chapterId> [BOOK_DIR]
+# Outputs under /tmp/check-<book-dir-name>-<id>/: shot.png (full page), shot-modal.png (concept modal), and a JSON report (block list, console errors)
 set -euo pipefail
-ID=${1:?用法: check.sh <章节id> <书目录>}; BOOK=$(cd "${2:?用法: check.sh <章节id> <书目录>}" && pwd)
+ID=${1:?usage: check.sh <chapter-id> <book-dir>}; BOOK=$(cd "${2:?usage: check.sh <chapter-id> <book-dir>}" && pwd)
 FW=$(cd "$(dirname "$0")/.." && pwd)
 OUT=/tmp/check-$(basename "$BOOK")-$ID
 rm -rf "$OUT"
-# book.js 直接导入的数据文件（如各章陈述登记表 chapters/_*_stmts.js）有语法错误会让整本书无法构建：先给出明确提示
+# A syntax error in a data file imported directly by book.js (e.g. the per-chapter statement registries chapters/_*_stmts.js) stops the whole book from building: report it clearly first
 for f in "$BOOK"/chapters/_*_stmts.js; do
   [ -f "$f" ] || continue
-  node --check "$f" 2>/tmp/stmts-check.err || { echo "✗ 语法错误：$f（book.js 导入的文件出错会让整本书都无法构建）"; head -5 /tmp/stmts-check.err; exit 3; }
+  node --check "$f" 2>/tmp/stmts-check.err || { echo "✗ Syntax error: $f (an error in a file imported by book.js stops the whole book from building)"; head -5 /tmp/stmts-check.err; exit 3; }
 done
 cd "$FW/app"
-# 构建与截图都经 heavy.sh 串行执行（全局锁 + 内存检查），多个 agent 并行自检也不会同时占用大量内存
+# Builds and screenshots both go through heavy.sh serially (global lock + memory check), so agents self-checking in parallel don't use a lot of memory at once
 ONLY=$ID BOOK=$BOOK OUT=$OUT/site "$FW/tools/heavy.sh" npx vite build --logLevel error
 PORT=$(python3 -c 'import socket;s=socket.socket();s.bind(("",0));print(s.getsockname()[1])')
 python3 -m http.server "$PORT" -d "$OUT/site" >/dev/null 2>&1 & SRV=$!

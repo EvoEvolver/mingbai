@@ -3,28 +3,28 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { renderTex, TxI, Tx } from "../math/tex.jsx";
 import { drawInk } from "./ink.js";
 
-// 公式树图（FormulaMap）：公式的结构树画成 treemap。嵌套 = 结构，叶子面积 ∝ 重要性。
-// 公式由树生成，树是唯一数据源，所以公式里的每个记号都必然属于某个节点。
+// FormulaMap: draws a formula's structure tree as a treemap. Nesting = structure, leaf area ∝ importance.
+// The formula is generated from the tree, and the tree is the single source of truth, so every symbol in the formula necessarily belongs to some node.
 //
 // tree: { id, tex, kids?, w?, name, label, note?, role?, glyph? }
-//   tex   本节点的 TeX，用 #子节点id 占位，如 "#lhs = #rhs"、"\sqrt{#S/#N}"；不属于任何子节点的记号（=、√、∑）就归本节点。
-//   kids  子节点；与 tex 里的占位符必须一一对应，否则报错。根节点通常是关系符（= 或 ≈），两个子节点是左右两边。
-//   w     叶子的重要性，面积与它成正比；父节点的面积由子节点决定（再加上标题条），不用写。
-//   glyph 父节点标题里显示的记号，缺省为 tex（子节点显示成 □）；隐式乘法这类没有可见记号的节点要写，如 "\times"。
-// 悬停、高亮都直接改 class，不触发 React 重新渲染。
+//   tex   this node's TeX, with #childId placeholders, e.g. "#lhs = #rhs", "\sqrt{#S/#N}"; symbols not belonging to any child (=, √, ∑) belong to this node.
+//   kids  child nodes; must match the placeholders in tex one to one, otherwise an error is thrown. The root is usually a relation (= or ≈), with the two sides as children.
+//   w     leaf importance, proportional to its area; a parent's area follows from its children (plus the title bar) and isn't specified.
+//   glyph symbol shown in the parent's title, defaults to tex (children shown as □); needed for nodes with no visible symbol such as implicit multiplication, e.g. "\times".
+// Hover and highlight change classes directly, without React re-renders.
 
-const SLOT = /(?<!\\)#([A-Za-z][A-Za-z0-9]*)/g;   // id 只含字母数字，这样 #lam_{…}、#a-#b 不会读错
+const SLOT = /(?<!\\)#([A-Za-z][A-Za-z0-9]*)/g;   // ids are alphanumeric only, so #lam_{…} and #a-#b aren't misread
 const HEAD = 26, PAD = 3, MIN_W = 52, MIN_H = 36;
-const glyph = t => renderTex(`\\nosym{${t || ""}}`);   // 格子里只是展示，不做符号标注
+const glyph = t => renderTex(`\\nosym{${t || ""}}`);   // cells are display only, so no symbol annotation
 
-// 校验树并展开：plain 为完整 TeX，marked 带 \htmlClass（原式联动用），anc/desc 为祖先与后代
+// Validate the tree and expand it: plain is the full TeX, marked has \htmlClass (for linking to the source formula), anc/desc are ancestors and descendants
 function compile(tree) {
   const nodes = {};
   const walk = (n, parent) => {
-    if (nodes[n.id]) throw new Error(`FormulaMap: 节点 id 重复：${n.id}`);
+    if (nodes[n.id]) throw new Error(`FormulaMap: duplicate node id: ${n.id}`);
     const kids = n.kids || [], slots = [...n.tex.matchAll(SLOT)].map(m => m[1]), ids = kids.map(k => k.id);
     const bad = [...slots.filter(s => !ids.includes(s)), ...ids.filter(i => slots.filter(s => s === i).length !== 1)];
-    if (bad.length) throw new Error(`FormulaMap: 节点 ${n.id} 的 tex 占位符与 kids 不一致：${bad.join(", ")}`);
+    if (bad.length) throw new Error(`FormulaMap: tex placeholders of node ${n.id} don't match kids: ${bad.join(", ")}`);
     const c = nodes[n.id] = { ...n, kids, parent, anc: parent ? [parent, ...nodes[parent].anc] : [], desc: [] };
     kids.forEach(k => { walk(k, n.id); c.desc.push(k.id, ...nodes[k.id].desc); });
     const fill = f => n.tex.replace(SLOT, (_, id) => `{${nodes[id][f]}}`);
@@ -37,7 +37,7 @@ function compile(tree) {
   return nodes;
 }
 
-// squarified treemap：把 items（含 value）排进矩形 r，返回 [{id, x, y, w, h}]
+// Squarified treemap: lays items (with value) out in rectangle r, returns [{id, x, y, w, h}]
 function squarify(items, r) {
   const out = [], total = items.reduce((s, i) => s + i.value, 0);
   if (!items.length || total <= 0) return out;
@@ -57,7 +57,7 @@ function squarify(items, r) {
 
 const inner = r => ({ x: r.x + PAD, y: r.y + HEAD, w: Math.max(0, r.w - 2 * PAD), h: Math.max(0, r.h - HEAD - PAD) });
 
-// 给定总尺寸排一次版。标题条和边距也要占面积：把这部分折算成权重迭代几次，叶子的面积才真正与 w 成正比。
+// One layout pass for a given total size. Title bars and margins also take up area: convert them to weight and iterate a few times, so leaf area is truly proportional to w.
 function layoutAt(nodes, rootId, W, H) {
   const root = nodes[rootId], over = {};
   let rects = {};
@@ -78,7 +78,7 @@ function layoutAt(nodes, rootId, W, H) {
   return rects;
 }
 
-// 高度不够放下所有叶子时自动增高：任何节点都不会被丢掉
+// Grow taller automatically when the height can't fit all leaves: no node is ever dropped
 function layoutTree(nodes, rootId, W, minH) {
   const leaves = Object.keys(nodes).filter(id => !nodes[id].kids.length);
   let H = minH, rects;
@@ -89,7 +89,7 @@ function layoutTree(nodes, rootId, W, minH) {
   return { rects, H };
 }
 
-// 把公式缩放到格子里放得下（直接改样式，不触发重新渲染）
+// Scale the formula to fit its cell (changes styles directly, without a re-render)
 function FitGlyph({ tex, fs, maxW, maxH }) {
   const ref = useRef(null);
   const html = useMemo(() => glyph(tex), [tex]);
@@ -145,7 +145,7 @@ export function FormulaMap({ n, title, tree, height = 460, start }) {
   }, []);
   const { rects, H } = useMemo(() => layoutTree(nodes, tree.id, W, height), [nodes, tree.id, W, height]);
 
-  // 把当前状态画到 DOM 上。lit：悬停项优先，否则为选中项；只有悬停时才淡化无关块，静止时画面保持干净。
+  // Paint the current state to the DOM. lit: the hovered item if any, otherwise the selected one; unrelated blocks fade only on hover, so the view stays clean at rest.
   const paint = useCallback(() => {
     const lit = hover.current ?? sel.current, h = hover.current, on = lit && nodes[lit];
     const rel = h ? new Set([h, ...nodes[h].anc, ...nodes[h].desc]) : null;
@@ -169,7 +169,7 @@ export function FormulaMap({ n, title, tree, height = 460, start }) {
     detail.current?.querySelectorAll(".fm-card").forEach(el => el.classList.toggle("show", el.dataset.id === (lit || "")));
   }, [nodes]);
   useLayoutEffect(paint);
-  useLayoutEffect(() => { let live = true; document.fonts?.ready.then(() => live && paint()); return () => { live = false; }; }, [paint]);   // KaTeX 字体加载后字形位置会变
+  useLayoutEffect(() => { let live = true; document.fonts?.ready.then(() => live && paint()); return () => { live = false; }; }, [paint]);   // glyph positions change once the KaTeX fonts load
 
   const setHover = id => { if (hover.current !== id) { hover.current = id; paint(); } };
   const select = id => { sel.current = sel.current === id ? null : id; paint(); };
@@ -182,7 +182,7 @@ export function FormulaMap({ n, title, tree, height = 460, start }) {
       <div className="fm-eq" ref={eqRef} dangerouslySetInnerHTML={{ __html: html }}
         onMouseOver={e => { const id = flmOf(e); if (id && nodes[id]) setHover(id); }} onMouseLeave={() => setHover(null)}
         onClick={e => { const id = flmOf(e); if (id && nodes[id]) select(id); }} />
-      {/* 只有叶子和父块标题条响应悬停：鼠标经过块与块之间的缝隙时保持原状，不会闪动 */}
+      {/* Only leaves and parent title bars respond to hover: moving across gaps between blocks changes nothing, so there's no flicker */}
       <div className="fm-map" ref={el => { box.current = el; root.current = el; }} style={{ height: H }}
         onMouseOver={e => { const id = hitOf(e); if (id) setHover(id); }} onMouseLeave={() => setHover(null)}
         onFocus={e => { const id = hitOf(e); if (id) setHover(id); }} onBlur={() => setHover(null)}
@@ -190,7 +190,7 @@ export function FormulaMap({ n, title, tree, height = 460, start }) {
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { const id = hitOf(e); if (id) { e.preventDefault(); select(id); } } }}>
         <Cell id={tree.id} nodes={nodes} rects={rects} origin={{ x: 0, y: 0 }} />
       </div>
-      {/* 所有说明叠放在同一格，高度取最长的一条：切换时下方内容不跳动 */}
+      {/* All notes stack in one grid cell, with height set by the longest: content below doesn't jump on switching */}
       <div className="fm-detail" ref={detail} onClick={e => { const id = e.target.closest?.("[data-crumb]")?.dataset.crumb; if (id) select(id); }}>
         <div className="fm-card fm-empty" data-id="">{t("fm.empty")}</div>
         {Object.values(nodes).map(x => (

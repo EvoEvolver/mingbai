@@ -1,4 +1,4 @@
-// 视口截图（含固定顶栏）。用法: node vp.mjs URL SELECTOR OUT.png
+// Viewport screenshot (including the fixed top bar). Usage: node vp.mjs URL SELECTOR OUT.png
 import { chromium } from "playwright";
 const [url, sel, out] = process.argv.slice(2);
 const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 900 } });

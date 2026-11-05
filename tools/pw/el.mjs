@@ -1,4 +1,4 @@
-// 元素截图。用法: node el.mjs URL SELECTOR OUT.png
+// Element screenshot. Usage: node el.mjs URL SELECTOR OUT.png
 import { chromium } from "playwright";
 const [url, sel, out] = process.argv.slice(2);
 const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 900 } });

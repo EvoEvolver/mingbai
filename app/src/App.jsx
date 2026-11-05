@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import Shelf from "./Shelf.jsx";
 
-// 页内锚点（#eq-2.23、#sec-2.1 …）：渲染后滚动到位并闪烁高亮。公式/插图渲染过程中页面会持续变高，
-// 因此在约 2.5 秒内多次校正位置；用户一旦自己滚动（滚轮/触摸/按键）就停止校正。
+// In-page anchors (#eq-2.23, #sec-2.1 …): scroll into place after rendering and flash a highlight. The page keeps growing while equations and figures render,
+// so correct the position several times over about 2.5 seconds; stop as soon as the user scrolls (wheel/touch/key).
 function useAnchor() {
   useEffect(() => {
     let stop = false, timers = [];

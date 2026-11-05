@@ -4,17 +4,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { MESSAGES, langOf } from "./src/kit/i18n/messages.js";
 
-// 多页静态站点（GitHub Pages 友好）：
-//   <outDir>/index.html            书架
-//   <outDir>/<章节id>/index.html   每章一个真实页面（只加载本章代码；公共依赖自动拆成共享块）
-// 所有链接与资源都用相对路径，可部署在任意子路径（如 user.github.io/repo/）。
+// Multi-page static site (GitHub Pages friendly):
+//   <outDir>/index.html            shelf
+//   <outDir>/<chapterId>/index.html   one real page per chapter (loads only that chapter's code; shared dependencies are split into common chunks automatically)
+// All links and assets use relative paths, so the site can be deployed under any subpath (e.g. user.github.io/repo/).
 //
-// 环境变量：BOOK=<书目录>（必填）；ONLY=ch03 或 ch01,ch02 只构建这些章；OUT=<输出目录>（默认 <书>/dist）。
+// Env vars: BOOK=<book dir> (required); ONLY=ch03 or ch01,ch02 builds only those chapters; OUT=<output dir> (default <book>/dist).
 //
-// 跨章数据（各章 meta / notation / concepts / groups / relations / links）在构建时用 SSR 加载章节模块提取，
-// 作为 virtual:book 的 data 注入每个页面——书架、跨章联系、跨章符号、全书脉络页都由它提供，无需加载其他章节代码。
+// Cross-chapter data (each chapter's meta / notation / concepts / groups / relations / links) is extracted at build time by loading chapter modules with SSR,
+// and injected into every page as the data of virtual:book. The shelf, cross-chapter connections, cross-chapter symbols, and whole-book overview page all rely on it, with no need to load other chapters' code.
 const APP = import.meta.dirname;
-if (!process.env.BOOK) throw new Error("请用环境变量 BOOK 指定书目录，例如 BOOK=/path/to/my-book npx vite build");
+if (!process.env.BOOK) throw new Error("Set the book directory with the BOOK env var, e.g. BOOK=/path/to/my-book npx vite build");
 const BOOK = path.resolve(process.env.BOOK);
 const ONLY = process.env.ONLY;
 const CHAPTERS = path.join(BOOK, "chapters");
@@ -23,19 +23,19 @@ const DATA_KEYS = ["meta", "notation", "groups", "concepts", "relations", "links
 
 const alias = [
   { find: "@kit", replacement: path.join(APP, "src/kit") },
-  // 章节文件位于书目录（框架之外），统一从框架的 node_modules 解析 react
+  // Chapter files live in the book directory (outside the framework), so always resolve react from the framework's node_modules
   { find: /^(react|react-dom)(\/.*)?$/, replacement: path.join(APP, "node_modules/$1$2") },
 ];
 
 const chapterIds = () => fs.readdirSync(CHAPTERS).filter(f => /\.jsx$/.test(f) && !f.startsWith("_"))
   .map(f => f.replace(/\.jsx$/, "")).filter(id => !ONLY || ONLY.split(",").includes(id));
 
-// 只保留可 JSON 序列化的数据（函数、React 元素等丢弃）
+// Keep only JSON-serializable data (functions, React elements, etc. are dropped)
 const plain = v => JSON.parse(JSON.stringify(v ?? null, (k, x) => (typeof x === "function" || (x && x.$$typeof) ? undefined : x)));
 
-// 构建时提取各章数据
-// 书目录下放一个指向框架 node_modules 的软链接（已被 .gitignore 忽略），使章节文件里的 react 等裸导入
-// 能按 Node 规则解析——SSR 提取数据时由 Node 直接加载这些（CommonJS）依赖。
+// Extract each chapter's data at build time
+// Put a symlink to the framework's node_modules in the book directory (ignored via .gitignore), so bare imports like react in chapter files
+// resolve by Node's rules: during SSR data extraction, Node loads these (CommonJS) dependencies directly.
 function linkNodeModules() {
   const link = path.join(BOOK, "node_modules");
   try { fs.lstatSync(link); } catch { fs.symlinkSync(path.join(APP, "node_modules"), link, "dir"); }
@@ -56,7 +56,7 @@ async function extractData(ids) {
       const m = await server.ssrLoadModule(path.join(CHAPTERS, id + ".jsx"));
       data[id] = Object.fromEntries(DATA_KEYS.filter(k => m[k] !== undefined).map(k => [k, plain(m[k])]));
     } catch (e) {
-      console.warn(`[book] 提取 ${id} 的数据失败（页面仍会构建）：${e.message.split("\n")[0]}`);
+      console.warn(`[book] Failed to extract data for ${id} (the page will still be built): ${e.message.split("\n")[0]}`);
       data[id] = {};
     }
   }
@@ -64,8 +64,8 @@ async function extractData(ids) {
   return { book: plain(book), data, anchors: anchorMap(book, ids) };
 }
 
-// 拆分章节（如 ch07 / ch07b 同属第 7 章）时，按编号推断章节会出错：扫描各章源码中的 <Eq n> <Figure n> <Sec n> <Sub n>，
-// 记录"实际所在章节 ≠ 按章号推断的章节"的编号，供 chapterOfNum(n, kind) 优先使用。
+// With split chapters (e.g. ch07 / ch07b both belong to chapter 7), inferring the chapter from a number goes wrong: scan each chapter's source for <Eq n> <Figure n> <Sec n> <Sub n>,
+// and record the numbers whose "actual chapter ≠ chapter inferred from the number", for chapterOfNum(n, kind) to use first.
 function anchorMap(book, ids) {
   const KIND = { Eq: "eq", Figure: "fig", Sec: "sec", Sub: "sec" }, out = {};
   const guess = n => { const h = String(n).split(".")[0]; return /^\d+$/.test(h) ? book.chapters.find(c => String(c.no) === h)?.id : book.chapters.find(c => c.id === "app" + h)?.id; };
@@ -89,7 +89,7 @@ function html({ title, desc, page, lang }) {
 `;
 }
 
-// virtual:book —— { book, available, data }；virtual:page/<id> —— 该页入口（书架为 virtual:page/）
+// virtual:book — { book, available, data }; virtual:page/<id> — that page's entry (the shelf is virtual:page/)
 function bookPlugin(ctx) {
   return {
     name: "book",
@@ -110,10 +110,10 @@ function bookPlugin(ctx) {
   };
 }
 
-// GitHub Pages：禁用 Jekyll（否则以下划线开头的文件会被忽略）
+// GitHub Pages: disable Jekyll (otherwise files starting with an underscore are ignored)
 const nojekyll = () => ({ name: "nojekyll", generateBundle() { this.emitFile({ type: "asset", fileName: ".nojekyll", source: "" }); } });
 
-// book.json：书的基本信息与章节清单（供书库首页等外部页面读取）
+// book.json: basic book info and chapter list (read by external pages such as the library home page)
 const bookJson = (book, data, ids) => ({
   name: "book-json",
   generateBundle() {
@@ -133,7 +133,7 @@ const bookJson = (book, data, ids) => ({
 export default defineConfig(async () => {
   const ids = chapterIds();
   const { book, data, anchors } = await extractData(ids);
-  // 生成各页 HTML（Vite 多页入口）
+  // Generate each page's HTML (Vite multi-page entries)
   fs.rmSync(GEN, { recursive: true, force: true });
   fs.mkdirSync(GEN, { recursive: true });
   const input = {};
@@ -150,7 +150,7 @@ export default defineConfig(async () => {
   return {
     root: GEN,
     base: "./",
-    publicDir: fs.existsSync(path.join(BOOK, "public")) ? path.join(BOOK, "public") : false,   // 书的静态资源（如 figures/）
+    publicDir: fs.existsSync(path.join(BOOK, "public")) ? path.join(BOOK, "public") : false,   // the book's static assets (e.g. figures/)
     plugins: [react(), bookPlugin({ book, data, ids, anchors }), nojekyll(), bookJson(book, data, ids)],
     resolve: { alias },
     server: { fs: { allow: [BOOK, APP] } },

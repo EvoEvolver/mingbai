@@ -7,8 +7,8 @@ import { TextbookProvider, Tx, TxI, Rich } from "../math/tex.jsx";
 import { KeyEquations, Notation } from "../math/env.jsx";
 import { Weighted } from "./weighted.jsx";
 
-// 论文导读组件。论文的叙事骨架与教科书不同：缺口（Gap）→ 动机（Motivation）→ 方案（Solution）→ 结果（Result），
-// 再加局限与编者评注。公式、符号词典、交互图沿用 math/ 下的组件（Eq、Plot、Derivation…）。见 spec/PAPER.md。
+// Paper guide components. A paper's narrative skeleton differs from a textbook's: Gap → Motivation → Solution → Result,
+// plus limits and editor's commentary. Equations, the symbol dictionary, and interactive figures reuse the components under math/ (Eq, Plot, Derivation…). See spec/PAPER.md.
 
 export const ROLES = {
   gap: { zh: "缺口", en: "Gap", icon: "🕳️" },
@@ -19,16 +19,16 @@ export const ROLES = {
   background: { zh: "背景", en: "Background", icon: "📚" },
   editor: { zh: "编者评注", en: "Editor", icon: "🧐" },
 };
-// 角色名：英文界面只显示一种名称，中文界面附英文副标
+// Role names: the English UI shows one name; the Chinese UI adds an English subtitle
 const roleName = r => (lang() === "zh" ? r.zh : r.en);
 const rich = x => (typeof x === "string" ? <TxI>{x}</TxI> : x);
-// 块级内容：字符串（或字符串与 JSX 混排的子节点）中的字符串部分按 Tx 渲染（支持 $…$、段落）
+// Block-level content: string parts of a string (or of children mixing strings and JSX) render with Tx (supports $…$ and paragraphs)
 const block = c => (typeof c === "string" ? <Tx>{c}</Tx> : Array.isArray(c) ? c.map((x, i) => (typeof x === "string" ? (x.trim() ? <Tx key={i}>{x}</Tx> : null) : x)) : c);
 
-// 论文页外壳。meta 除 TextbookPage 的字段外，另有 paper: { title, authors, venue, year, arxiv, doi, code, license }、
-// tldr（一句话说清这篇论文）、gmsr: { gap, motivation, solution, result }（四格速读，各 1–2 句）。
+// Paper page shell. Besides TextbookPage's fields, meta has paper: { title, authors, venue, year, arxiv, doi, code, license },
+// tldr (the paper in one sentence), gmsr: { gap, motivation, solution, result } (four-box quick read, 1–2 sentences each).
 export function PaperPage({ meta: m, notation = [], groups, concepts, relations, children, keyEquations = true, weighted = false }) {
-  const W = weighted ? Weighted : ({ children }) => children;   // weighted：按重要性分配面积（扫读/精读、重要性地图）
+  const W = weighted ? Weighted : ({ children }) => children;   // weighted: allocate area by importance (skim/deep read, importance map)
   useEffect(() => { document.title = `${m.title_zh || m.title_en} · ${book.title}`; }, [m]);
   const p = m.paper || book.paper || {};
   return (
@@ -77,7 +77,7 @@ export function PaperCite({ p }) {
     </div>);
 }
 
-// 四格速读：Gap / Motivation / Solution / Result。点击跳到对应 <PaperSec role>。
+// Four-box quick read: Gap / Motivation / Solution / Result. Click to jump to the matching <PaperSec role>.
 export function GMSR({ gap, motivation, solution, result }) {
   const items = [["gap", gap], ["motivation", motivation], ["solution", solution], ["result", result]].filter(([, v]) => v);
   return (
@@ -90,9 +90,9 @@ export function GMSR({ gap, motivation, solution, result }) {
     </div>);
 }
 
-// 按论证角色着色的大节。role ∈ gap | motivation | solution | result | limits | background | editor。
-// 每种 role 的第一节获得锚点 role-<role>（供 GMSR 跳转）。
-const seenRoles = new Map();   // 本页各角色已出现次数（每个页面是独立的静态页，模块级计数即可）
+// Major section colored by argument role. role ∈ gap | motivation | solution | result | limits | background | editor.
+// The first section of each role gets the anchor role-<role> (for GMSR jumps).
+const seenRoles = new Map();   // occurrences of each role so far on this page (each page is a separate static page, so a module-level count is enough)
 export function PaperSec({ role, id, title, lead, children }) {
   const r = ROLES[role] || ROLES.background;
   const [autoId] = useState(() => { const k = (seenRoles.get(role) || 0) + 1; seenRoles.set(role, k); return k === 1 ? "role-" + role : `role-${role}-${k}`; });
@@ -105,8 +105,8 @@ export function PaperSec({ role, id, title, lead, children }) {
     </section>);
 }
 
-// 缺口图：已有方法各自能做到 / 做不到什么，最后一行是本文。
-// rows: [{ name, does, misses, ours? }]；criteria（可选）: ["可扩展", "刻画相关噪声", …] 与 rows[i].marks: [true,false,"partial"]
+// Gap map: what existing methods can / can't do, with this paper in the last row.
+// rows: [{ name, does, misses, ours? }]; criteria (optional): ["scalable", "models correlated noise", …] with rows[i].marks: [true,false,"partial"]
 export function GapMap({ rows, criteria, gap }) {
   return (
     <div className="pp-gap">
@@ -131,7 +131,7 @@ export function GapMap({ rows, criteria, gap }) {
     </div>);
 }
 
-// 动机的因果链：如果 … → 就 …。chain: [{ if, then }] 或字符串数组（依次以箭头相连）。
+// Causal chain of the motivation: if … → then …. chain: [{ if, then }] or an array of strings (joined in order with arrows).
 export function Stakes({ chain, payoff }) {
   return (
     <div className="pp-stakes">
@@ -145,7 +145,7 @@ export function Stakes({ chain, payoff }) {
     </div>);
 }
 
-// 一句话核心想法（全文最该记住的那一招），可附类比。
+// The core idea in one sentence (the one trick most worth remembering), optionally with an analogy.
 export const KeyIdea = ({ title = t("pp.keyIdea"), children, analogy }) => (
   <div className="pp-key">
     <div className="pp-key-h">💡 {title}</div>
@@ -153,7 +153,7 @@ export const KeyIdea = ({ title = t("pp.keyIdea"), children, analogy }) => (
     {analogy && <div className="pp-key-an"><small>{t("pp.analogy")}</small>{rich(analogy)}</div>}
   </div>);
 
-// 方法流程：steps [{ title, what, why, out, detail? }]；点一步展开 detail（任意 JSX，可放 Eq / 交互图）。
+// Method flow: steps [{ title, what, why, out, detail? }]; click a step to expand detail (any JSX, can hold Eq / interactive figures).
 export function Pipeline({ steps, open: open0 = -1, layout = "wrap" }) {
   const [open, setOpen] = useState(open0);
   return (
@@ -177,13 +177,13 @@ export function Pipeline({ steps, open: open0 = -1, layout = "wrap" }) {
     </div>);
 }
 
-// 关键数字。items: [{ value, label, note? }]
+// Key numbers. items: [{ value, label, note? }]
 export const Headline = ({ items }) => (
   <div className="pp-head">{items.map((x, i) => (
     x.href ? <a key={i} className="pp-num" href={x.href}><b>{rich(x.value)}</b><span>{rich(x.label)}</span>{x.note && <small>{rich(x.note)}</small>}</a>
       : <div key={i} className="pp-num"><b>{rich(x.value)}</b><span>{rich(x.label)}</span>{x.note && <small>{rich(x.note)}</small>}</div>))}</div>);
 
-// 主张 ↔ 证据。strength: "strong" | "moderate" | "weak"（编者对证据强度的判断）；caveat: 限定条件。
+// Claim ↔ evidence. strength: "strong" | "moderate" | "weak" (the editor's judgment of the evidence); caveat: qualifying condition.
 const STRENGTH_CLASS = { strong: "s", moderate: "m", weak: "w" };
 const strengthOf = s => { const k = STRENGTH_CLASS[s] ? s : "moderate"; return [t("pp.strength")[k], STRENGTH_CLASS[k]]; };
 export function Claim({ id, claim, strength = "moderate", caveat, where, children }) {
@@ -196,21 +196,21 @@ export function Claim({ id, claim, strength = "moderate", caveat, where, childre
     </div>);
 }
 
-// 主张总览：claims [{ id, claim, strength }]，点击跳到对应 <Claim id>。
+// Claims overview: claims [{ id, claim, strength }]; click to jump to the matching <Claim id>.
 export const ClaimBoard = ({ claims }) => (
   <div className="pp-board">{claims.map(c => {
     const [lab, cls] = strengthOf(c.strength);
     return <a key={c.id} href={"#claim-" + c.id} className={"pp-bd pp-c-" + cls}><span className="pp-claim-tag">{c.id}</span><span>{rich(c.claim)}</span><span className={"pp-badge " + cls}>{lab}</span></a>;
   })}</div>);
 
-// 局限与开放问题。
+// Limits and open questions.
 export const Limits = ({ limits = [], open = [] }) => (
   <div className="pp-limits">
     <div><h4>{t("pp.limits")}</h4><ul>{limits.map((x, i) => <li key={i}>{rich(x)}</li>)}</ul></div>
     {open.length > 0 && <div><h4>{t("pp.open")}</h4><ul>{open.map((x, i) => <li key={i}>{rich(x)}</li>)}</ul></div>}
   </div>);
 
-// 编者评注（明确标注为本站观点）：strengths / concerns / questions。
+// Editor's commentary (clearly labeled as this site's view): strengths / concerns / questions.
 export const EditorView = ({ strengths = [], concerns = [], questions = [] }) => (
   <div className="pp-editor">
     <div className="pp-ed-note">{t("pp.editorNote")}</div>
@@ -221,7 +221,7 @@ export const EditorView = ({ strengths = [], concerns = [], questions = [] }) =>
     </div>
   </div>);
 
-// 原文导航：本页各部分对应原文哪些节，以及不同目的该读哪里。rows: [{ goal, read, skip? }]
+// Guide to the original: which sections of the paper each part of this page covers, and where to read for different goals. rows: [{ goal, read, skip? }]
 export const ReadingGuide = ({ rows }) => (
   <div className="pp-guide"><table><thead><tr><th>{t("pp.goal")}</th><th>{t("pp.read")}</th><th>{t("pp.skip")}</th></tr></thead>
     <tbody>{rows.map((r, i) => <tr key={i}><td>{rich(r.goal)}</td><td>{rich(r.read)}</td><td>{rich(r.skip || "—")}</td></tr>)}</tbody></table></div>);

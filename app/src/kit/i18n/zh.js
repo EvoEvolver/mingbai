@@ -1,23 +1,23 @@
-// 界面文字（中文，默认语言）。只放组件自身的文字；书的内容不在这里。
-// 值可以是字符串、函数（带参数的句子）或对象（一组标签）。新增语言：照此文件写一份，再在 messages.js 登记。
+// UI text (Chinese, the default language). Holds only the components' own text; book content doesn't go here.
+// A value can be a string, a function (sentence with parameters), or an object (a set of labels). To add a language: write a copy of this file, then register it in messages.js.
 export default {
   "html.lang": "zh-CN",
   "speech.lang": "zh-CN",
   "p.colon": "：",
   "p.paren": s => `（${s}）`,
 
-  // 站点与书架
+  // Site and shelf
   "site.brand": "图书讲明白",
   "shelf.footer": "图书讲明白 · 把晦涩原著拆成核心概念 + 类比 + 互动",
   "shelf.wip": "制作中",
   "shelf.preface": "序",
   "shelf.connections": "🧭 全书脉络：章节之间如何连接 →",
 
-  // 章节称呼
+  // Chapter labels
   "ch.no": n => `第 ${n} 章`,
   "ch.appendix": n => `附录 ${n}`,
 
-  // 页面外壳
+  // Page shell
   "hero.words": "原著英文词数",
   "hero.concepts": "个核心概念",
   "hero.minutes": n => `${n} 分钟`,
@@ -53,7 +53,7 @@ export default {
   "xlinks.lead": "点击概念查看解释；带 📖 的可跳到对应章节。",
   "xlinks.more": "🧭 查看全书脉络 →",
 
-  // 通用
+  // General
   "ui.close": "关闭",
   "ui.prevStep": "← 上一步",
   "ui.nextStep": "下一步 →",
@@ -64,7 +64,7 @@ export default {
   "ui.clickExpand": " · 点击展开",
   "ui.steps": n => `${n} 步`,
 
-  // 标准区块
+  // Standard blocks
   "blk.all": "全部",
   "blk.more": "展开 →",
   "blk.exLabel": n => `原著例子 ×${n}`,
@@ -86,13 +86,13 @@ export default {
   "blk.bridge": "→ 下一章预告",
   "blk.searchTerm": "搜索术语…",
 
-  // 分类拖放
+  // Drag-to-sort
   "sort.wrong": label => `不太对——再想想它和「${label}」的区别`,
   "sort.done": "全部归位 🎉",
   "sort.score": (ok, n, tries) => `已归位 ${ok}/${n} · 尝试 ${tries} 次`,
   "sort.allRight": " · 全部正确 🎉",
 
-  // 概念图与概念卡
+  // Concept map and concept cards
   "map.zoomIn": "放大",
   "map.zoomOut": "缩小",
   "map.fitTitle": "适应窗口",
@@ -108,7 +108,7 @@ export default {
   "cc.misconception": "⚠ 常见误解：",
   "cc.related": "关联：",
 
-  // 读者反馈
+  // Reader feedback
   "fb.truncated": "…（已截断）",
   "fb.page": "页面：",
   "fb.pageTitle": "标题：",
@@ -130,7 +130,7 @@ export default {
   "fb.copy": "复制内容",
   "fb.note": to => `点击"用邮件发送"会打开你的邮件程序，内容已填好，确认后发送即可；没有邮件程序时可复制内容，发送到 ${to}。页面地址会一并附上。`,
 
-  // 教科书
+  // Textbooks
   "tb.pages": p => ` · 原书 pp. ${p}`,
   "tb.objectives": "学完本章你应当能够",
   "tb.prereq": "前置知识",
@@ -169,7 +169,7 @@ export default {
   "not.first": "首见",
   "eqmap.hint": "箭头上的文字说明这一步用了什么 · 悬停节点高亮上下游 · 点击节点放大公式 · 图较宽时可横向滚动",
 
-  // 公式与符号弹卡
+  // Equations and symbol popover
   "eq.n": n => `式 (${n})`,
   "eq.formula": "公式",
   "eq.symbols": "式中符号（点击公式中的符号也可查看）",
@@ -183,7 +183,7 @@ export default {
   "sym.uses": "本章出现",
   "sym.more": n => ` 等 ${n} 处`,
 
-  // 定理–证明
+  // Theorem-proof
   "stmt.kind": { definition: "定义", lemma: "引理", proposition: "命题", theorem: "定理", fact: "论断", cited: "引用", corollary: "推论", claim: "断言", conjecture: "猜想", example: "例" },
   "stmt.status": { checked: "✔ 已逐步核对", filled: "✚ 原文略写，本站已补全", note: "✎ 有注记" },
   "stmt.unknown": "未登记的陈述",
@@ -215,7 +215,7 @@ export default {
   "study.deps": "依赖",
   "study.status": "状态",
 
-  // 论文导读
+  // Paper guides
   "pp.kicker": "论文导读",
   "pp.tldr": "一句话",
   "pp.prereq": "读之前最好知道",
@@ -251,7 +251,7 @@ export default {
   "pp.read": "读原文",
   "pp.skip": "可以先跳过",
 
-  // 音频与和声
+  // Audio and harmony
   "au.timbre": { piano: "钢琴", organ: "风琴", sine: "正弦" },
   "au.tryIt": "点击试听",
   "au.unmute": "取消静音",
@@ -325,7 +325,7 @@ export default {
   "au.staffHint": "点任意音符或和弦可单独试听",
   "au.compound": name => `复音程（${name} + 八度）`,
 
-  // 加权阅读、公式树图
+  // Weighted reading, formula tree map
   "w.claim": "核心论断",
   "w.keyEq": "关键公式",
   "w.skippable": "可跳过",

@@ -2,11 +2,11 @@ import { t } from "../i18n/index.js";
 import { useId, useMemo, useRef, useState } from "react";
 import { renderTex, Rich } from "./tex.jsx";
 
-// ================= 数值工具 =================
+// ================= Numeric utilities =================
 export const num = {
   linspace: (a, b, n) => Array.from({ length: n }, (_, i) => a + (b - a) * i / (n - 1)),
-  logspace: (a, b, n) => Array.from({ length: n }, (_, i) => a * Math.pow(b / a, i / (n - 1))),   // a,b 为端点本身（非指数）
-  // Simpson 积分（n 为偶数段数）；对数坐标下积分可设 log=true（对 ln x 积分，a,b>0）
+  logspace: (a, b, n) => Array.from({ length: n }, (_, i) => a * Math.pow(b / a, i / (n - 1))),   // a, b are the endpoints themselves (not exponents)
+  // Simpson integration (n is an even segment count); on log axes set log=true (integrates over ln x, a,b>0)
   integrate(f, a, b, n = 400, log = false) {
     if (a === b) return 0;
     if (n % 2) n++;
@@ -15,9 +15,9 @@ export const num = {
     for (let i = 1; i < n; i++) s += f(a + i * h) * (i % 2 ? 4 : 2);
     return s * h / 3;
   },
-  // 累积积分：返回在 xs 各点上的 ∫_{xs[0]}^{x} f（梯形）
+  // Cumulative integral: returns ∫_{xs[0]}^{x} f at each point of xs (trapezoid)
   cumtrapz(f, xs) { const out = [0]; for (let i = 1; i < xs.length; i++) out.push(out[i - 1] + (f(xs[i]) + f(xs[i - 1])) / 2 * (xs[i] - xs[i - 1])); return out; },
-  // RK4 求解 y' = f(t, y)（y 可为数组）。返回 {t:[...], y:[...]}，共 n 步
+  // RK4 solver for y' = f(t, y) (y can be an array). Returns {t:[...], y:[...]}, n steps in total
   rk4(f, y0, t0, t1, n = 500) {
     const vec = Array.isArray(y0), add = (a, b, k) => vec ? a.map((v, i) => v + b[i] * k) : a + b * k;
     const h = (t1 - t0) / n; let t = t0, y = y0; const T = [t], Y = [y];
@@ -28,17 +28,17 @@ export const num = {
     }
     return { t: T, y: Y };
   },
-  // 二分求根
+  // Bisection root finding
   bisect(f, a, b, tol = 1e-10, it = 200) { let fa = f(a); for (let i = 0; i < it; i++) { const m = (a + b) / 2, fm = f(m); if (Math.abs(b - a) < tol) return m; if ((fm < 0) === (fa < 0)) { a = m; fa = fm; } else b = m; } return (a + b) / 2; },
-  // 线性插值（xs 单调递增）
+  // Linear interpolation (xs monotonically increasing)
   interp(xs, ys, x) { let lo = 0, hi = xs.length - 1; if (x <= xs[0]) return ys[0]; if (x >= xs[hi]) return ys[hi]; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (xs[m] > x) hi = m; else lo = m; } const t = (x - xs[lo]) / (xs[hi] - xs[lo]); return ys[lo] + t * (ys[hi] - ys[lo]); },
 };
 
-// ================= 刻度 =================
+// ================= Ticks =================
 function niceTicks(lo, hi, n = 6) {
   const span = hi - lo, step0 = Math.pow(10, Math.floor(Math.log10(span / n)));
   const err = span / n / step0, step = step0 * (err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1);
-  const out = []; for (let k = Math.ceil(lo / step); k * step <= hi + step * 1e-9; k++) { const v = k * step; out.push(Math.abs(v) < step * 1e-9 ? 0 : +v.toPrecision(12)); }   // 用整数倍生成，避免跨 0 时的浮点累积
+  const out = []; for (let k = Math.ceil(lo / step); k * step <= hi + step * 1e-9; k++) { const v = k * step; out.push(Math.abs(v) < step * 1e-9 ? 0 : +v.toPrecision(12)); }   // generated as integer multiples, to avoid floating-point accumulation across 0
   return out;
 }
 function logTicks(lo, hi) {
@@ -54,14 +54,14 @@ const fmt = (v, log) => {
 const COLORS = ["#1f1b16", "#c0392b", "#2c6e49", "#2c4a6e", "#b8862b", "#7d3c98", "#16808a"];
 const DASH = { solid: "", dash: "7 5", dot: "2 4", dashdot: "8 4 2 4" };
 
-// ================= 交互绘图 =================
+// ================= Interactive plots =================
 // <Plot
 //   x={{ label: String.raw`z`, log: true, domain: [0.01, 10] }}
 //   y={{ label: String.raw`d\ [h^{-1}\,\mathrm{Mpc}]`, log: true, domain?: [lo, hi] }}
 //   params={[{ id: "Om", label: String.raw`\Omega_m`, min: 0.05, max: 1, step: 0.01, value: 0.3 }]}
 //   series={p => [{ label: String.raw`\chi`, f: z => ..., color?, dash?: "dash" }, { label, data: [[x,y],...], points: true, err?: [[x,y,dy],...] }]}
 //   vlines={p => [{ x: 1, label: "z=1" }]} samples={300} height={380} />
-// 公式标签（label）按 LaTeX 渲染。series 函数只在参数变化时重算。
+// Formula labels (label) render as LaTeX. series functions recompute only when parameters change.
 export function Plot({ x, y, params = [], series, vlines, samples = 300, height = 380, caption }) {
   const [pv, setPv] = useState(() => Object.fromEntries(params.map(p => [p.id, p.value])));
   const [hx, setHx] = useState(null);
@@ -125,7 +125,7 @@ export function Plot({ x, y, params = [], series, vlines, samples = 300, height 
         <rect x={m.l} y={m.t} width={iw} height={ih} className="plot-frame" />
         {vl.map((v, i) => v.x >= Math.min(...x.domain) && v.x <= Math.max(...x.domain) && <g key={"v" + i}>
           <line x1={sx(v.x)} x2={sx(v.x)} y1={m.t} y2={m.t + ih} className="plot-vline" />
-          {v.label && (sx(v.x) > m.l + iw - 110   // 贴近右边框时标签放到竖线左侧
+          {v.label && (sx(v.x) > m.l + iw - 110   // near the right border, the label moves to the left of the vertical line
             ? <T tex={v.label} x={sx(v.x) - 123} y={m.t + 2} width={120} height={22} className="plot-vlab-r" />
             : <T tex={v.label} x={sx(v.x) + 3} y={m.t + 2} width={120} height={22} className="plot-vlab" />)}</g>)}
         <g clipPath={`url(#${cid})`}>{data.map((s, i) => <g key={i}>

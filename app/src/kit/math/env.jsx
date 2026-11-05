@@ -3,9 +3,9 @@ import { assetUrl } from "../book.jsx";
 import { useState, useEffect, Children } from "react";
 import { renderTex, EqLine, FitTex, Tx, TxI, Rich, plainText, anchor, useTextbook } from "./tex.jsx";
 
-// ---------- 章节标题 ----------
-// <Sec n="2.1" title="Expanding space" zh="膨胀的空间" gist="一句话：本节做成了什么" why="为什么需要这一步" gives={["2.12","2.28"]}>
-// gist/why/gives 会在节首渲染成「本节要点」卡（gives 为本节产出的关键方程编号，可点击放大）。
+// ---------- Section heading ----------
+// <Sec n="2.1" title="Expanding space" zh="Chinese title" gist="in one line: what this section achieves" why="why this step is needed" gives={["2.12","2.28"]}>
+// gist/why/gives render as a "section key points" card at the start of the section (gives lists the key equation numbers the section produces, clickable to zoom).
 export function Sec({ n, title, zh, gist, why, gives, children }) {
   return (
     <section className="tb-sec" id={anchor("sec", n)} data-toc={`${n} ${plainText(zh || title)}`}>
@@ -23,7 +23,7 @@ function SecCard({ gist, why, gives }) {
       {gives?.length > 0 && <div className="tb-sc-gives"><span className="tb-sc-lab">{t("sec.gives")}</span>{gives.map(n => <EqChip key={n} n={n} tb={tb} />)}</div>}
     </div>);
 }
-// 小号公式卡（读取登记表；点击放大）
+// Small equation card (reads the registry; click to zoom)
 export function EqChip({ n, tb: tb0, label }) {
   const tb = useTextbook() || tb0;
   const info = tb?.eqs.current.get(String(n));
@@ -41,10 +41,10 @@ export function Sub({ n, title, zh, children }) {
     </section>);
 }
 
-// ---------- 环境框 ----------
+// ---------- Environment boxes ----------
 const KIND_ICONS = { definition: "📐", result: "✅", note: "📝", example: "🔎", physics: "💡", warning: "⚠️", aside: "📎", key: "🔑", data: "🔭" };
-// <Box kind="physics" title="为什么光子能量随 1/a 衰减">{String.raw`...含 $公式$ 的正文...`}</Box>（children 也可为 JSX）
-// n：可选编号（如原书的 "Example 5.12" → <Box kind="example" n="5.12">），显示为「例 5.12」并生成锚点 example-5.12，可用 \\exref 之外的 pageUrl(…, "example-5.12") 链接
+// <Box kind="physics" title="Why photon energy falls as 1/a">{String.raw`...body text with $formulas$...`}</Box> (children can also be JSX)
+// n: optional number (e.g. the source book's "Example 5.12" → <Box kind="example" n="5.12">), shown as "Example 5.12" and creating the anchor example-5.12, which can be linked with pageUrl(…, "example-5.12") rather than \\exref
 export function Box({ kind = "note", title, n, children }) {
   const k = KIND_ICONS[kind] ? kind : "note", icon = KIND_ICONS[k], label = t("box." + k);
   return (
@@ -54,9 +54,9 @@ export function Box({ kind = "note", title, n, children }) {
     </div>);
 }
 
-// ---------- 推导 ----------
-// 每一步：一行公式 + 理由。steps=[{tex, why}]；why 支持 $...$ 与引用。
-// mode：默认全部展开；stepwise 时逐步揭示。collapsed 时默认折叠（长推导）。
+// ---------- Derivations ----------
+// Each step: one line of formula + a reason. steps=[{tex, why}]; why supports $...$ and references.
+// mode: fully expanded by default; stepwise reveals step by step. collapsed starts folded (long derivations).
 export function Derivation({ title = t("der.title"), steps, collapsed = false, result }) {
   const [open, setOpen] = useState(!collapsed);
   const [stepwise, setStepwise] = useState(false);
@@ -89,8 +89,8 @@ export function Derivation({ title = t("der.title"), steps, collapsed = false, r
     </div>);
 }
 
-// ---------- 图 ----------
-// illustration 为自绘图（不请求原书图片）；可选 interactive，以标签切换。
+// ---------- Figures ----------
+// illustration is a hand-drawn figure (no source-book image requested); optional interactive, switched with tabs.
 export function Figure({ n, caption, children, illustration, interactive, width = "100%", src }) {
   const [zoom, setZoom] = useState(false);
   const [tab, setTab] = useState(interactive ? 1 : 0);
@@ -116,9 +116,9 @@ export function Figure({ n, caption, children, illustration, interactive, width 
     </figure>);
 }
 
-// ---------- 习题 ----------
-// <Exercise n="2.3" title="…" level="★★">{String.raw`题目`}</Exercise>，hint / solution 为字符串或 JSX；
-// fromBook：解答依据原书附录 A（标注出处）。
+// ---------- Exercises ----------
+// <Exercise n="2.3" title="…" level="★★">{String.raw`problem text`}</Exercise>; hint / solution are strings or JSX;
+// fromBook: the solution follows Appendix A of the source book (with attribution).
 export function Exercise({ n, title, level, children, hint, solution, fromBook }) {
   const [h, setH] = useState(false), [s, setS] = useState(false);
   const body = x => (typeof x === "string" ? <Tx>{x}</Tx> : x);
@@ -135,8 +135,8 @@ export function Exercise({ n, title, level, children, hint, solution, fromBook }
     </div>);
 }
 
-// ---------- 符号表 ----------
-// rows: [{sym: "\\eta", name: "共形时间", def: "…（可含 $…$）", eq: "2.36"}]
+// ---------- Symbol table ----------
+// rows: [{sym: "\\eta", name: "conformal time", def: "… (may contain $…$)", eq: "2.36"}]
 export function Notation({ rows }) {
   const [q, setQ] = useState("");
   const list = rows.filter(r => !q || (r.sym + r.name + (r.def || "")).toLowerCase().includes(q.toLowerCase()));
@@ -150,7 +150,7 @@ export function Notation({ rows }) {
   </>;
 }
 
-// 通用表格（单元格支持 $…$）。head: [..]，rows: [[..],..]
+// General table (cells support $…$). head: [..], rows: [[..],..]
 export const Table = ({ head, rows, caption }) => (
   <div className="tb-table-wrap">
     <table className="tb-table">
@@ -160,7 +160,7 @@ export const Table = ({ head, rows, caption }) => (
     {caption && <div className="tb-table-cap"><TxI>{caption}</TxI></div>}
   </div>);
 
-// 本章关键方程汇总（自动收集带 k 的 Eq）
+// Summary of this chapter's key equations (automatically collects Eq with k)
 export function KeyEquations() {
   const tb = useTextbook();
   const [list, setList] = useState([]);
@@ -177,7 +177,7 @@ export function KeyEquations() {
     </div>);
 }
 
-// 可折叠的细节（如冗长代数、补充材料）
+// Collapsible details (e.g. lengthy algebra, supplementary material)
 export function Details({ summary, children }) {
   const [o, setO] = useState(false);
   return <div className={"tb-details" + (o ? " open" : "")}>

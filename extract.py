@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""epub 章节 xhtml -> 纯文本（保留段落与小节标题）。用法: extract.py in.xhtml out.txt"""
+"""epub chapter xhtml -> plain text (keeps paragraphs and section headings). Usage: extract.py in.xhtml out.txt"""
 import sys, re, html
 src = open(sys.argv[1], encoding="utf-8").read()
 src = re.sub(r"(?s)<head.*?</head>", "", src)

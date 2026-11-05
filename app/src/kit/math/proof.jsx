@@ -1,16 +1,16 @@
 import { t } from "../i18n/index.js";
-// 定理–证明类文本的组件（源自 ETH 论文书，已通用化）：定理环境、陈述引用、分步证明、证明依赖图、
-// 矩阵热图、勘误/注记框、可运行示例外壳、学习笔记总表。说明见 spec/PROOF.md。
+// Components for theorem-proof texts (originally from the ETH paper book, since generalized): theorem environments, statement references, step-by-step proofs, proof dependency graphs,
+// matrix heatmaps, erratum/note boxes, runnable example shells, study notes tables. See spec/PROOF.md.
 //
-// 数据来源：书的 book.js 提供 `statements`（陈述登记表，全书唯一数据源，跨页悬停预览因此可用）：
+// Data source: `statements` in the book's book.js (the statement registry, the single source of truth for the whole book, which is what makes cross-page hover previews possible):
 //   statements: { "L2.1": { kind, n, ch, en, zh, page, stmt, deps, role, key, pitfall, status, statusNote, eq? }, … }
-// 可选：statementKinds（覆盖类型名称）、statementStatus（覆盖核对状态文字）。
-// 依赖边由各陈述的 deps 自动推出。
+// Optional: statementKinds (overrides kind names), statementStatus (overrides verification status text).
+// Dependency edges are derived from each statement's deps.
 import { useMemo, useRef, useState } from "react";
 import { TxI, Tx, EqRef, Rich, EqLine, HoverPop, extendInline } from "./tex.jsx";
 import { book, pageUrl, currentPage } from "../book.jsx";
 
-// 登记表在使用时读取（避免与 virtual:book 的循环导入在模块初始化时触发）
+// The registry is read at use time (to avoid triggering the circular import with virtual:book during module initialization)
 let _cache = null;
 function reg() {
   if (_cache && _cache.src === book?.statements) return _cache;
@@ -20,7 +20,7 @@ function reg() {
   const STATUS_LABEL = { ...t("stmt.status"), ...(book?.statementStatus || {}) };
   return (_cache = { src: book?.statements, STMTS, DEP_EDGES, KIND_LABEL, STATUS_LABEL });
 }
-// 陈述的主显示名：中文书写 zh（en 作副标题）；英文书只写 en。
+// Primary display name of a statement: Chinese books write zh (with en as subtitle); English books write only en.
 const nm = s => s.zh || s.en || "";
 export const statements = () => reg().STMTS;
 export const stmtLabel = id => {
@@ -43,8 +43,8 @@ function go(id, e) {
 }
 const hrefOf = id => pageUrl(reg().STMTS[id]?.ch, anchorOf(id));
 
-// ---------- 陈述引用：<SRef id="L2.1"/> 或 <SRef id="L2.1">文字</SRef> ----------
-// 悬停预览陈述全文；点击跳转（跨页亦可）。
+// ---------- Statement references: <SRef id="L2.1"/> or <SRef id="L2.1">text</SRef> ----------
+// Hover previews the full statement; click jumps to it (across pages too).
 export function SRef({ id, children }) {
   const [show, setShow] = useState(false);
   const wrap = useRef(null);
@@ -61,16 +61,16 @@ export function SRef({ id, children }) {
     </span>);
 }
 
-// ---------- \sref{ID}：注册为框架的行内记号 ----------
-// 注册后框架里所有支持公式的文本（Tx/TxI、Sec 的 gist/why、Box、Derivation、Table、Hook、概念卡、Quiz……）都认识 \sref。
+// ---------- \sref{ID}: registered as a framework inline notation ----------
+// Once registered, all text in the framework that supports formulas (Tx/TxI, Sec's gist/why, Box, Derivation, Table, Hook, concept cards, Quiz…) understands \sref.
 extendInline("sref", (id, k) => <SRef key={k} id={id} />);
 
-// 依赖芯片：陈述 id（含字母前缀）或公式编号
+// Dependency chip: statement id (with letter prefix) or equation number
 const Dep = ({ d }) => (reg().STMTS[d] ? <SRef id={d} /> : <EqRef n={d} />);
 const usedBy = id => reg().DEP_EDGES.filter(e => e.from === id).map(e => e.to);
 
-// ---------- 定理环境：<Stmt id="L2.1">…证明（JSX）…</Stmt> ----------
-// 渲染：编号标题 + 中文陈述 + 学习笔记（作用 / 依赖 / 被谁使用 / 关键一步 / 易卡点 / 核对状态）+ children（证明）。
+// ---------- Theorem environment: <Stmt id="L2.1">…proof (JSX)…</Stmt> ----------
+// Renders: numbered title + statement + study notes (role / depends on / used by / key step / pitfalls / verification status) + children (the proof).
 export function Stmt({ id, children, notes = true, toc = true }) {
   const s = reg().STMTS[id];
   const [open, setOpen] = useState(true);
@@ -104,8 +104,8 @@ export function Stmt({ id, children, notes = true, toc = true }) {
     </div>);
 }
 
-// ---------- 分步证明 ----------
-// steps=[{ claim: "这一步断言了什么（可含 $…$ 与 \sref{}）", tex?: "可选的行间公式", why: "理由", uses?: ["L2.1","2.2"], fill?: true（原文略写、本站补全）}]
+// ---------- Step-by-step proofs ----------
+// steps=[{ claim: "what this step asserts (may contain $…$ and \sref{})", tex?: "optional display equation", why: "reason", uses?: ["L2.1","2.2"], fill?: true (skipped in the original, filled in by this site)}]
 export function Proof({ title = t("proof.title"), steps, collapsed = false, qed = true, source }) {
   const [open, setOpen] = useState(!collapsed);
   const [stepwise, setStepwise] = useState(false);
@@ -140,12 +140,12 @@ export function Proof({ title = t("proof.title"), steps, collapsed = false, qed 
       </>}
     </div>);
 }
-// 证明步骤中的行间公式（复用 KaTeX；可点击放大）
+// Display equation inside a proof step (reuses KaTeX; click to zoom)
 const TexLine = ({ tex }) => <EqLine tex={tex} />;
 
-// ---------- 勘误 / 注记框 ----------
-// <Erratum loc="p.8 引理 4.1 证明" title="…">{String.raw`说明与推导（Tx 语法 + \sref{}）`}</Erratum>
-// kind: "erratum"（疑似笔误：给出位置与正确写法）| "note"（注记：原文无误，补充说明）
+// ---------- Erratum / note box ----------
+// <Erratum loc="p.8, proof of Lemma 4.1" title="…">{String.raw`explanation and derivation (Tx syntax + \sref{})`}</Erratum>
+// kind: "erratum" (likely typo: gives the location and the correct form) | "note" (note: the original is correct, this adds an explanation)
 export function Erratum({ loc, title, kind = "note", children }) {
   return (
     <div className={"tb-box erratum er-" + kind}>
@@ -154,7 +154,7 @@ export function Erratum({ loc, title, kind = "note", children }) {
     </div>);
 }
 
-// ---------- 可运行示例外壳 ----------
+// ---------- Runnable example shell ----------
 export function RunCard({ title, lead, children }) {
   return (
     <div className="runcard card">
@@ -163,13 +163,13 @@ export function RunCard({ title, lead, children }) {
       {children}
     </div>);
 }
-// 校验徽章：<Check ok label="Ryser = 定义式"/>
+// Check badge: <Check ok label="Ryser = definition"/>
 export const Check = ({ ok, label, detail }) => (
   <span className={"chk " + (ok ? "ok" : "bad")} title={detail}>{ok ? "✔" : "✘"} <TxI>{label}</TxI></span>);
 
-// ---------- 矩阵热图 ----------
-// M: 二维数组（有理数 {n,d} 或 number）；rowGroups/colGroups: 每行/列的组号（画分隔线、着色）；
-// cell: 尺寸；show: 是否在格子里写数值；title；highlight(i,j) → 是否高亮。
+// ---------- Matrix heatmap ----------
+// M: 2D array (rationals {n,d} or numbers); rowGroups/colGroups: group number of each row/column (draws separators, colors);
+// cell: size; show: whether to write values in cells; title; highlight(i,j) → whether to highlight.
 export function MatrixView({ M: A, rowGroups, colGroups, cell = 22, show = true, title, highlight, rowLabels, colLabels, maxPx = 520 }) {
   const m = A.length, n = A[0]?.length ?? 0;
   const val = x => (typeof x === "number" ? x : Number(x.n) / Number(x.d));
@@ -199,10 +199,10 @@ export function MatrixView({ M: A, rowGroups, colGroups, cell = 22, show = true,
     </figure>);
 }
 
-// ---------- 证明依赖图 ----------
+// ---------- Proof dependency graph ----------
 // <DepGraph ids?={[…]} highlight?="ch04" focus?="T6.1" />
-// 默认画全部登记陈述；ids 给定时只画这些节点及其间的边。自上而下按最长路径分层（被依赖者在上），层内用重心法减少交叉。
-// 悬停：高亮全部上游（它依赖的）与下游（依赖它的）；点击：右侧面板显示陈述与学习笔记，可跳转。
+// Draws all registered statements by default; when ids is given, only those nodes and the edges among them. Layered top-down by longest path (dependencies on top), with the barycenter method reducing crossings within layers.
+// Hover: highlights everything upstream (what it depends on) and downstream (what depends on it); click: the right panel shows the statement and study notes, with a jump link.
 const KCOL = { definition: "#3c6b4a", lemma: "#2c4a6e", proposition: "#5b3f7a", theorem: "#9b2c1f", fact: "#8a7e6a", cited: "#a0a0a0", corollary: "#b8862b" };
 export function DepGraph({ ids, highlight, focus, nodeW = 150, nodeH = 50, gapX = 14, gapY = 40 }) {
   const g = useMemo(() => {
@@ -213,12 +213,12 @@ export function DepGraph({ ids, highlight, focus, nodeW = 150, nodeH = 50, gapX 
     const lvl = {};
     const L = i => (lvl[i] ??= preds[i].length ? 1 + Math.max(...preds[i].map(L)) : 0);
     nodes.forEach(L);
-    // 把只被一个下游使用的源节点下移到紧邻下游的上一层（缩短长边）
+    // Move source nodes used by only one downstream node to the layer just above it (shortens long edges)
     for (const i of nodes) if (!preds[i].length) { const outs = edges.filter(e => e.from === i).map(e => lvl[e.to]); if (outs.length) lvl[i] = Math.max(0, Math.min(...outs) - 1); }
     const rows = {}; nodes.forEach(i => (rows[lvl[i]] ??= []).push(i));
     const keys = Object.keys(rows).map(Number).sort((a, b) => a - b);
     const ord = {}; keys.forEach(k => rows[k].sort((a, b) => (reg().STMTS[a].ch + a).localeCompare(reg().STMTS[b].ch + b, undefined, { numeric: true })).forEach((id, j) => (ord[id] = j)));
-    for (let sweep = 0; sweep < 6; sweep++) {      // 重心法
+    for (let sweep = 0; sweep < 6; sweep++) {      // barycenter method
       const ks = sweep % 2 ? [...keys].reverse() : keys;
       for (const k of ks) {
         const bc = id => { const nb = edges.filter(e => e.to === id).map(e => e.from).concat(edges.filter(e => e.from === id).map(e => e.to)); return nb.length ? nb.reduce((s, x) => s + ord[x] / Math.max(1, rows[lvl[x]].length), 0) / nb.length : ord[id] / rows[k].length; };
@@ -277,7 +277,7 @@ export function DepGraph({ ids, highlight, focus, nodeW = 150, nodeH = 50, gapX 
     </div>);
 }
 
-// ---------- 本页学习笔记总表 ----------
+// ---------- Study notes table for this page ----------
 export function StudyTable({ ids }) {
   return (
     <div className="tb-table-wrap"><table className="tb-table study">
@@ -290,17 +290,17 @@ export function StudyTable({ ids }) {
     </table></div>);
 }
 
-// 小工具：带标签的滑块
+// Small utility: labeled slider
 export function Slider({ label, value, min, max, step = 1, onChange, fmt = v => v }) {
   return <label className="pslider"><span className="pslider-l"><TxI>{label}</TxI> = <b>{fmt(value)}</b></span>
     <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(+e.target.value)} /></label>;
 }
-// 小工具：分段按钮
+// Small utility: segmented buttons
 export function Seg({ options, value, onChange }) {
   return <div className="seg">{options.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return <button key={v} className={v === value ? "on" : ""} onClick={() => onChange(v)}><TxI>{String(l)}</TxI></button>; })}</div>;
 }
 
-// 某页的陈述 + 它们的直接依赖与直接使用者（用于本页的 <DepGraph ids={pageIds("ch04")} highlight="ch04" />）
+// A page's statements + their direct dependencies and direct users (for this page's <DepGraph ids={pageIds("ch04")} highlight="ch04" />)
 export function pageIds(ch) {
   const own = Object.keys(reg().STMTS).filter(k => reg().STMTS[k].ch === ch);
   const s = new Set(own);

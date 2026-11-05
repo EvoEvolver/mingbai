@@ -1,4 +1,4 @@
-/* 可听组件（kit/audio）。配色沿用框架变量；大三和弦红、小三和弦蓝（同《图解和声》） */
+/* Audio components (kit/audio). Colors reuse the framework variables; major triads red, minor triads blue (as in Illustrated Harmony) */
 .au-play{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:0 10px 0 4px;font:inherit;font-size:.92em;cursor:pointer;color:var(--ink);vertical-align:baseline;line-height:1.7;transition:all .15s}
 .au-play i{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px}
 .au-play:hover{border-color:var(--accent);color:var(--accent)}
@@ -90,7 +90,7 @@
 .au-stop.cur text{fill:#fff;font-size:11px}
 .au-chordpoly{fill:#e8b54a55;stroke:var(--gold);stroke-width:2}
 
-/* 五线谱（Score） */
+/* Staff notation (Score) */
 .au-score{margin:16px 0}
 .au-abc{width:100%;overflow-x:auto}
 .au-abc svg{max-width:100%}
@@ -99,7 +99,7 @@
 .au-score figcaption{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:14px;color:var(--muted);margin-top:4px}
 .au-score figcaption .au-go:disabled{opacity:.5}
 
-/* 和弦进行播放器（Progression） */
+/* Chord progression player (Progression) */
 .au-progtitle{font-family:var(--serif);font-weight:700;font-size:17px;margin-bottom:8px}
 .au-chords{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
 .au-chord{min-width:64px;border:2px solid #e3c9c4;background:#fcf3f1;border-radius:12px;padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;transition:all .15s}
@@ -115,12 +115,12 @@
 .au-seventh.min7{stroke:#2c4a8e;fill:#2c4a8e1a}.au-seventh.hdim7{stroke:#6b3f9a;fill:#6b3f9a1a}.au-seventh.other{stroke:var(--gold)}
 .au-tlabel.dark{fill:#6b4a10}
 
-/* 卷帘（Piano Roll）视图 */
+/* Piano Roll view */
 .au-abc.hide{display:none !important}
 .au-view{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:5px 12px;font:inherit;font-size:14px;cursor:pointer}
 .au-view:hover{border-color:var(--accent);color:var(--accent)}
 .au-roll{display:flex;border:1px solid var(--line);border-radius:10px;background:#fbf8f2;margin:4px 0 6px;overflow:hidden}
-.au-rkbsvg{flex:none;box-sizing:content-box;border-right:1px solid #cdbfa8;background:#fffdf8}   /* content-box：边框不得挤占 viewBox，否则键盘会被缩放、与音条行错位 */
+.au-rkbsvg{flex:none;box-sizing:content-box;border-right:1px solid #cdbfa8;background:#fffdf8}   /* content-box: the border must not eat into the viewBox, or the keyboard gets scaled and misaligned with the note rows */
 .au-rscroll{flex:1;overflow-x:auto}
 .au-roll svg{display:block}
 .au-rrow{fill:#fbf8f2}.au-rrow.b{fill:#efe8dc}

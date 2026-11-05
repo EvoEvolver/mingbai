@@ -1,10 +1,12 @@
 # 做一本新书
 
+[English](../NEW_BOOK.md)
+
 框架：本仓库（React + Vite，组件库在 `app/src/kit`）。完整样例：福柯《词与物》，见 mingbai-notes 仓库的 [`oot/`](https://github.com/EvoEvolver/mingbai-notes/blob/main/oot)。
 
 ## 规则
 - **书的代码放在书目录里，不要修改框架。** 书需要的特殊组件放在自己书目录的 `chapters/_<id>_*.jsx`。
-- 版权约束同 `spec/KIT.md`：不大段转写原文；每章原文引用 ≤4 条、每条英文 ≤25 词。
+- 版权约束同 `spec/zh/KIT.md`：不大段转写原文；每章原文引用 ≤4 条、每条英文 ≤25 词。
 
 ## 步骤
 1. **建书目录** `<书目录>/`，内含：
@@ -12,7 +14,7 @@
    - `text/`：每章一个纯文本文件。epub 用 `python3 -I extract.py <xhtml> <out.txt>`（先 unzip 到 `<slug>/src/`）；PDF 用 `pdftotext -layout -f <起页> -l <止页>`，先用目录页确定每章页码范围。抽出后抽查确认章节边界正确。
    - `chapters/`：章节 JSX。
 2. **每章一个独立 subagent**（并行），给每个 subagent 的说明要包括：
-   - 先完整阅读 `spec/KIT.md` 和范例 [`oot/chapters/ch02.jsx`](https://github.com/EvoEvolver/mingbai-notes/blob/main/oot/chapters/ch02.jsx)、`_ch02_similitudes.jsx`；
+   - 先完整阅读 `spec/zh/KIT.md` 和范例 [`oot/chapters/ch02.jsx`](https://github.com/EvoEvolver/mingbai-notes/blob/main/oot/chapters/ch02.jsx)、`_ch02_similitudes.jsx`；
    - 自检命令要带书目录：`spec/check.sh <id> <书目录>`，截图位于 `/tmp/check-<slug>-<id>/`；
    - 章节 id、标题、原文文件、小节结构，以及你对本章"专属互动图解"的建议（挑本章最核心、最适合可视化的结构）；
    - KIT.md 里"知识型"等说法是福柯语境的举例，按本书的思想脉络改写（CompareTable 选本书真正的对立面）。
@@ -30,4 +32,4 @@
 
 
 ## 路由与部署
-站点为多页静态站点（每章 `<id>/index.html`），可直接部署到 GitHub Pages；见 `spec/DEPLOY.md`。
+站点为多页静态站点（每章 `<id>/index.html`），可直接部署到 GitHub Pages；见 `spec/zh/DEPLOY.md`。

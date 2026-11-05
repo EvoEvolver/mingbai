@@ -5,12 +5,12 @@ import { forceSimulation, forceManyBody, forceLink, forceCollide, forceX, forceY
 import { useChapter } from "./core.jsx";
 import { Rich, needsRich, plainText } from "./math/tex.jsx";
 
-// 概念关系图：d3-force 实时力导向布局。
-// - 节点半径随连接数增大；碰撞半径把下方标签宽度算进去，避免文字重叠
-// - 布局稳定后自动缩放到可视区域；拖节点会重新加热布局
-// - 拖空白处平移，按钮或 Ctrl/⌘+滚轮缩放；悬停高亮邻居，点击打开概念卡
-// - 节点多时连线标签只在悬停时显示
-// 默认读取 ChapterPage 的 concepts/relations；可选 nodes（id 子集）与 edges（自定义关系，可跨章）。
+// Concept relationship map: live d3-force layout.
+// - Node radius grows with connection count; the collision radius includes the width of the label below, to avoid overlapping text
+// - Zooms to fit the viewport once the layout settles; dragging a node reheats the layout
+// - Drag empty space to pan; zoom with buttons or Ctrl/⌘+wheel; hover highlights neighbors; click opens the concept card
+// - With many nodes, edge labels show only on hover
+// Reads concepts/relations from ChapterPage by default; optional nodes (subset of ids) and edges (custom relations, may cross chapters).
 const labelW = s => [...plainText(String(s)) || String(s)].reduce((w, ch) => w + (ch.charCodeAt(0) > 255 ? 14 : 7.5), 0);
 
 function bounds(nodes) {
@@ -24,7 +24,7 @@ function bounds(nodes) {
   return nodes.length ? { x: x0 - pad, y: y0 - pad, w: x1 - x0 + 2 * pad, h: y1 - y0 + 2 * pad } : { x: 0, y: 0, w: 900, h: 600 };
 }
 
-// SVG 中的文字标签：含 $…$ 时用 foreignObject + Rich 渲染 KaTeX，否则用普通 <text>
+// Text label in SVG: uses foreignObject + Rich to render KaTeX when it contains $…$, otherwise plain <text>
 function SvgLabel({ x = 0, y, text, w = 220, cls = "" }) {
   if (!needsRich(text)) return <text textAnchor="middle" x={x} y={y} className={cls}>{text}</text>;
   return <foreignObject x={x - w / 2} y={y - 15} width={w} height={22} className={"svgrich " + cls}><div><Rich>{text}</Rich></div></foreignObject>;
@@ -39,11 +39,11 @@ export function ConceptMap({ height = 600, nodes: only, edges: customEdges }) {
   }, [only, customEdges, ctx]);
   const big = concepts.length > 24;
 
-  // 图数据（模拟会原地改写 x/y）
+  // Graph data (the simulation rewrites x/y in place)
   const graph = useMemo(() => {
     const nodes = concepts.map(c => ({ id: c.id, c, lw: labelW(nameOf(c)) }));
     const N = Object.fromEntries(nodes.map(n => [n.id, n]));
-    // 连线直接引用节点对象，节点给出初始位置，保证模拟启动前的首帧也能画
+    // Edges reference node objects directly and nodes get initial positions, so the first frame can be drawn before the simulation starts
     nodes.forEach((n, i) => { const a = i / nodes.length * 2 * Math.PI; n.x = 300 * Math.cos(a); n.y = 300 * Math.sin(a); });
     const links = relations.filter(r => N[r.from] && N[r.to] && r.from !== r.to).map(r => ({ ...r, source: N[r.from], target: N[r.to] }));
     const deg = {}; links.forEach(l => { deg[l.from] = (deg[l.from] || 0) + 1; deg[l.to] = (deg[l.to] || 0) + 1; });
@@ -52,7 +52,7 @@ export function ConceptMap({ height = 600, nodes: only, edges: customEdges }) {
   }, [concepts, relations]);
 
   const [, setFrame] = useState(0);
-  const [view, setView] = useState(null);       // 当前 viewBox
+  const [view, setView] = useState(null);       // current viewBox
   const [hover, setHover] = useState(null);
   const [panning, setPanning] = useState(false);
   const svg = useRef(null), sim = useRef(null), drag = useRef(null), raf = useRef(0);
@@ -75,7 +75,7 @@ export function ConceptMap({ height = 600, nodes: only, edges: customEdges }) {
       .force("collide", forceCollide(d => Math.max(d.r + 14, d.lw / 2 + 14)).strength(1).iterations(4))
       .force("x", forceX(0).strength(.04)).force("y", forceY(0).strength(.06))
       .stop();
-    // 先离线跑到基本稳定，首屏直接呈现成品布局
+    // Run offline until roughly stable first, so the first paint shows the finished layout
     s.tick(Math.ceil(Math.log(s.alphaMin()) / Math.log(1 - s.alphaDecay())));
     sim.current = s;
     setView(bounds(graph.nodes));
@@ -90,7 +90,7 @@ export function ConceptMap({ height = 600, nodes: only, edges: customEdges }) {
     return { x: cx - (cx - v.x) * k, y: cy - (cy - v.y) * k, w: v.w * k, h: v.h * k };
   });
 
-  // Ctrl/⌘ + 滚轮缩放（普通滚轮仍滚动页面）
+  // Ctrl/⌘ + wheel zooms (a plain wheel still scrolls the page)
   useEffect(() => {
     const el = svg.current; if (!el) return;
     const f = e => { if (!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); const p = toSvg(e); zoom(e.deltaY > 0 ? 1.12 : 1 / 1.12, p.x, p.y); };

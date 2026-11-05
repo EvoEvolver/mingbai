@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""从（矢量排版的）PDF 教科书中自动裁出插图。
+"""Automatically crop figures out of a (vector-typeset) PDF textbook.
 
-原理：找到以 "FIGURE n.m" 开头的图注文字块，取图注上方的矢量绘图/位图，
-按竖直间距把它们聚成一簇（离图注最近的那簇就是该图），再并入落在簇内或紧邻的
-文字（坐标轴标签、图例），最后按该区域高分辨率渲染成 PNG。
+How it works: find caption text blocks starting with "FIGURE n.m", take the vector drawings/bitmaps above the caption,
+cluster them by vertical gap (the cluster closest to the caption is the figure), merge in text that falls inside or right next to
+the cluster (axis labels, legends), and finally render that region to a high-resolution PNG.
 
-用法: pdf_figures.py BOOK.pdf OUT_DIR [--zoom 3] [--pages 1-497]
-输出: OUT_DIR/fig-<n>.<m>.png 与 OUT_DIR/figures.json（编号、页码、图注、裁剪框）
-无法自动处理的图可用 --manual "2.3:45:x0,y0,x1,y1"（PDF 坐标，pt）覆盖，可重复。
+Usage: pdf_figures.py BOOK.pdf OUT_DIR [--zoom 3] [--pages 1-497]
+Output: OUT_DIR/fig-<n>.<m>.png and OUT_DIR/figures.json (number, page, caption, crop box)
+Figures that can't be handled automatically can be overridden with --manual "2.3:45:x0,y0,x1,y1" (PDF coordinates, pt); repeatable.
 """
 import argparse, json, os, re
 import pymupdf
 
 HEADER = re.compile(r"^\s*\d+\s+\S|Chapter\s+\d+\s*•|Modern Cosmology")
-CAP = re.compile(r"^\s*(?:FIGURE\s+(\d+|[A-Z])\.(\d+)\b|Figure\s+(\d+|[A-Z])\.(\d+)\.)")   # 两种图注：FIGURE 2.3 …（Dodelson）/ Figure 3.4. …（Nakahara；正文中的 "Figure 3.4 shows" 无句点，不算）
+CAP = re.compile(r"^\s*(?:FIGURE\s+(\d+|[A-Z])\.(\d+)\b|Figure\s+(\d+|[A-Z])\.(\d+)\.)")   # two caption styles: FIGURE 2.3 … (Dodelson) / Figure 3.4. … (Nakahara; "Figure 3.4 shows" in the body has no period and doesn't count)
 
 
 def rects_on_page(page):
@@ -25,10 +25,10 @@ def rects_on_page(page):
 def figure_box(page, cap):
     W = page.rect.width
     above = [r for r in rects_on_page(page) if r.y1 <= cap.y0 + 4 and r.width < W * 0.98
-             and not (r.y1 > cap.y0 - 14 and r.height < 14)]   # 图注里公式的根号/分数线等细小矢量线
+             and not (r.y1 > cap.y0 - 14 and r.height < 14)]   # thin vector lines in caption equations, such as radical signs and fraction bars
     if not above:
         return None
-    # 从最靠近图注的绘图开始，向上合并竖直间距 < 28pt 的绘图
+    # Starting from the drawing closest to the caption, merge upward any drawings with a vertical gap < 28pt
     above.sort(key=lambda r: -r.y1)
     box = pymupdf.Rect(above[0])
     changed = True
@@ -42,17 +42,17 @@ def figure_box(page, cap):
                 nb = box | r
                 if nb != box:
                     box = nb; changed = True
-    if cap.y0 - box.y1 > 60:          # 离图注太远，多半不是这张图
+    if cap.y0 - box.y1 > 60:          # too far from the caption, probably not this figure
         return None
-    # 并入落在框内或贴边的短文字块（轴标签/图例），排除正文段落
+    # Merge short text blocks (axis labels/legends) inside or touching the box; exclude body paragraphs
     for b in page.get_text("blocks"):
         r = pymupdf.Rect(b[:4]); txt = b[4].strip()
         if CAP.match(txt) or r.y0 >= cap.y0 - 1:
             continue
-        if r.y1 < page.rect.y0 + 50 and HEADER.search(txt):   # 页眉（页码 + 书名/章名）
+        if r.y1 < page.rect.y0 + 50 and HEADER.search(txt):   # page header (page number + book/chapter title)
             continue
         near = r.intersects(box + (-14, -14, 14, 14))
-        body = r.width > W * 0.45      # 正文段落或图注碎片都很宽；轴标签、图例较窄
+        body = r.width > W * 0.45      # body paragraphs and caption fragments are wide; axis labels and legends are narrower
         if near and not body:
             box |= r
     box = box + (-4, -4, 4, 4)

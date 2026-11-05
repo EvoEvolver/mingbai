@@ -2,7 +2,7 @@ import { t } from "./i18n/index.js";
 import { useEffect, useMemo, useState } from "react";
 import { shuffle } from "./core.jsx";
 
-// 拖拽分类游戏（也支持先点卡片再点格子）。
+// Drag-to-sort game (also supports clicking a card, then a slot).
 // categories: [{id,label}]；items: [{text, answer(category id), why}]
 export function DragSort({ categories, items }) {
   const order = useMemo(() => shuffle(items.map((_, i) => i)), [items]);

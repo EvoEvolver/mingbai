@@ -6,15 +6,15 @@ import { ChapterProvider } from "../core.jsx";
 import { TextbookProvider, Tx, TxI, Rich } from "./tex.jsx";
 import { KeyEquations, Notation } from "./env.jsx";
 
-// 教科书章节外壳。
+// Textbook chapter shell.
 // meta: { id, no, title_en, title_zh, pages:"21–56",
-//         one_liner（一句话说清本章）, big_question（本章真正要回答的问题）, why_it_matters,
-//         overview（可含 $…$）, objectives:[...], prereq:[{ch, what}] }
-// notation: 本章符号词典（公式中的符号据此可点击；也渲染为章末符号表）
-// groups / concepts / relations: 核心物理概念（与人文版同一格式，可用 <ConceptGrid/>、<ConceptMap/>、<C id>）
+//         one_liner (the chapter in one sentence), big_question (the question the chapter really answers), why_it_matters,
+//         overview (may contain $…$), objectives:[...], prereq:[{ch, what}] }
+// notation: this chapter's symbol dictionary (symbols in equations become clickable from it; also rendered as the end-of-chapter symbol table)
+// groups / concepts / relations: core physics concepts (same format as the humanities version; usable with <ConceptGrid/>, <ConceptMap/>, <C id>)
 export function TextbookPage({ meta: m, notation = [], groups, concepts, relations, children, keyEquations = true }) {
   useEffect(() => { document.title = `${m.no ? m.no + " " : ""}${m.title_zh || m.title_en} · ${book.title}`; }, [m]);
-  const label = chapterNo({ no: m.no, label: m.label ?? book.chapters?.find(c => c.id === m.id)?.label });   // label 可覆盖（如“第 I 章补充”）
+  const label = chapterNo({ no: m.no, label: m.label ?? book.chapters?.find(c => c.id === m.id)?.label });   // label can override this (e.g. "Chapter I supplement")
   return (
     <ChapterProvider meta={m} groups={groups} concepts={concepts} relations={relations}>
       <TextbookProvider chapterId={m.id} notation={notation}>

@@ -1,5 +1,5 @@
 import { t } from "../i18n/index.js";
-// 和弦进行播放器：和弦卡片 + 播放头 + 速度/织体/连接方式/循环；可同步在 Tonnetz 上画出路线、在键盘上显示按键。
+// Chord progression player: chord cards + playhead + speed/texture/voicing/loop; can also draw the route on a Tonnetz and show the keys on a keyboard.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { play, stop, later, onStop, useAudioState } from "./engine.js";
 import { parseChord, parseNotes, romanOf, voiceChord, mod12, prettyChord } from "./theory.js";
@@ -7,19 +7,19 @@ import { Tonnetz, Keyboard } from "./components.jsx";
 
 
 // <Progression chords={["C","Am","F","G"]} keyName="C" tonnetz keyboard />
-// 属性：chords（和弦符号数组，可用 "C/E" 指定低音）· keyName（调，如 "C"、"Am"：自动标级数）· roman（自定义级数标签数组，优先于 keyName）
-//       bpm（默认 84）· beats（每个和弦几拍，默认 4；也可传数组逐个指定）· texture（"block"|"arp"|"pop"）· voicing（"smooth"|"close"）
-//       loop · tonnetz（true 或 Tonnetz 属性对象，如 {cols:10, rows:5, center:"C"}）· keyboard（true 显示键盘）· title · caption
+// Props: chords (array of chord symbols; "C/E" sets the bass) · keyName (key, e.g. "C", "Am": labels numerals automatically) · roman (custom numeral labels array, takes priority over keyName)
+//       bpm (default 84) · beats (beats per chord, default 4; or an array, one per chord) · texture ("block"|"arp"|"pop") · voicing ("smooth"|"close")
+//       loop · tonnetz (true or a Tonnetz props object, e.g. {cols:10, rows:5, center:"C"}) · keyboard (true shows the keyboard) · title · caption
 export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4, texture: tex0 = "block", voicing: voi0 = "smooth", loop: loop0 = false, tonnetz, keyboard, title, caption }) {
   const [bpm, setBpm] = useState(bpm0), [texture, setTexture] = useState(tex0), [voicing, setVoicing] = useState(voi0), [loop, setLoop] = useState(loop0);
   const [cur, setCur] = useState(-1), playing = useRef(false), [on, setOn] = useState(false);
   useAudioState();
-  // 任何 stop()（SoundBar 的 ■、其他组件开始播放）都把本播放器复位；start() 内部先 stop() 再置 on，不受影响
+  // Any stop() (SoundBar's ■, or another component starting playback) resets this player; start() itself calls stop() and then sets on, so it isn't affected
   useEffect(() => onStop(() => { playing.current = false; setOn(false); setCur(-1); }), []);
   const items = useMemo(() => {
     let prev;
     return chords.map((entry, k) => {
-      // 和弦可写成符号 "G7"、"C/E"，或 { name:"Cm♭6", notes:"C3 Eb4 G4 Ab4", roman? }（直接给出音高，按原样弹奏）
+      // A chord can be a symbol "G7", "C/E", or { name:"Cm♭6", notes:"C3 Eb4 G4 Ab4", roman? } (explicit pitches, played as given)
       if (typeof entry === "object") {
         const notes = parseNotes(entry.notes); prev = notes.slice(1);
         return { full: entry.name, sym: null, upper: notes.slice(1), bass: notes[0], notes, beats: Array.isArray(beats) ? beats[k] ?? 4 : beats,
@@ -29,13 +29,13 @@ export function Progression({ chords, keyName, roman, bpm: bpm0 = 84, beats = 4,
       const [sym, bassName] = full.split("/"), c = parseChord(sym);
       const upper = voiceChord(sym, { prev, style: voicing }); prev = upper;
       const bassPc = bassName ? mod12(parseChord(bassName).root) : mod12(c.root);
-      const bass = 40 + mod12(bassPc - 40);   // 低音落在 E2–D♯3
+      const bass = 40 + mod12(bassPc - 40);   // bass falls in E2–D♯3
       return { full, sym, upper, bass, beats: Array.isArray(beats) ? beats[k] ?? 4 : beats,
         roman: roman ? roman[k] : keyName ? romanOf(sym, keyName) + (bassName ? "/" + bassName : "") : "" };
     });
   }, [JSON.stringify(chords), voicing, keyName, roman && roman.join(" "), Array.isArray(beats) ? beats.join(" ") : beats]); // eslint-disable-line
 
-  // 按织体安排一个和弦的发声；at 为起点秒数，len 为时长秒数
+  // Schedule one chord's notes by texture; at is the start in seconds, len the duration in seconds
   const render = (it, at, len) => {
     const beat = len / it.beats;
     if (texture === "block") { play([it.bass], { at, dur: len * 0.98, velocity: 0.7 }); play(it.upper, { at, dur: len * 0.98, velocity: 0.62 }); }

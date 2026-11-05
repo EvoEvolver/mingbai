@@ -16,7 +16,7 @@ export default function Shelf() {
         {hasChapter("connections") && <p><a className="cta" href={pageUrl("connections")}>{t("shelf.connections")}</a></p>}
       </header>
       <div className="shelf">
-        {(book.parts?.length ? book.parts : [{ no: null, label: null }]).map(p => [   // 未分部（如论文）时列成一组
+        {(book.parts?.length ? book.parts : [{ no: null, label: null }]).map(p => [   // books without parts (e.g. papers) are listed as one group
           p.label && <div className="part" key={"p" + p.no}>{p.label}</div>,
           ...book.chapters.filter(c => p.no === null || c.part === p.no).map(c => {
             const meta = modules[c.id]?.meta, ready = hasChapter(c.id);

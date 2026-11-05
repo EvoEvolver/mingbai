@@ -3,9 +3,9 @@ import { useMemo, useState } from "react";
 import { TxI, Rich, FitTex, plainText, useTextbook, anchor } from "./tex.jsx";
 import { EqChip } from "./env.jsx";
 
-// ---------- 章节路线图 ----------
-// steps: [{ sec:"2.1", title:"膨胀的空间", gist:"一句话（可含 $…$）", gives:["2.12","2.28"], next?:"→ 下一步为什么需要（过渡语）" }]
-// 竖向链条：每节一张卡（点击标题跳转到该节），卡内列出该节产出的关键方程（点击放大）。
+// ---------- Chapter roadmap ----------
+// steps: [{ sec:"2.1", title:"Expanding space", gist:"one line (may contain $…$)", gives:["2.12","2.28"], next?:"→ why the next step is needed (transition)" }]
+// Vertical chain: one card per section (click the title to jump to it), listing the key equations the section produces (click to zoom).
 export function Roadmap({ steps }) {
   const go = n => e => { e.preventDefault(); document.getElementById(anchor("sec", n))?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   return (
@@ -21,20 +21,20 @@ export function Roadmap({ steps }) {
     </div>);
 }
 
-// ---------- 推导路线图 ----------
-// edges: [{ from:"2.20", to:"2.28", label:"代入 FLRW 度规" }]；labels: { "2.20": "测地线方程" }（可选，默认取 Eq 的 title）
-// 按最长路径分层，从左到右排列；点击节点放大公式；悬停高亮其上下游。
+// ---------- Derivation roadmap ----------
+// edges: [{ from:"2.20", to:"2.28", label:"substitute the FLRW metric" }]; labels: { "2.20": "geodesic equation" } (optional, defaults to the Eq's title)
+// Layered by longest path, arranged left to right; click a node to zoom its equation; hover highlights upstream and downstream.
 export function EqMap({ edges, labels = {}, colW = 420, rowH = 124 }) {
   const tb = useTextbook();
   const [hover, setHover] = useState(null);
-  const NW = 270, NH = 104, GAP = colW - NW, LW = GAP - 14, LH = 34;   // 列间空隙与标签尺寸
+  const NW = 270, NH = 104, GAP = colW - NW, LW = GAP - 14, LH = 34;   // gap between columns and label size
   const g = useMemo(() => {
     const ids = [...new Set(edges.flatMap(e => [e.from, e.to]))];
     const preds = Object.fromEntries(ids.map(i => [i, edges.filter(e => e.to === i).map(e => e.from)]));
     const lvl = {}, visiting = new Set();
     const L = i => {
       if (lvl[i] != null) return lvl[i];
-      if (visiting.has(i)) return 0;                       // 防环
+      if (visiting.has(i)) return 0;                       // cycle guard
       visiting.add(i);
       const v = preds[i].length ? 1 + Math.max(...preds[i].map(L)) : 0;
       visiting.delete(i); return (lvl[i] = v);
@@ -46,7 +46,7 @@ export function EqMap({ edges, labels = {}, colW = 420, rowH = 124 }) {
     const pos = {};
     Object.entries(cols).forEach(([l, c]) => c.forEach((id, r) => { pos[id] = { x: 20 + l * colW, y: 20 + (r + (maxRows - c.length) / 2) * rowH }; }));
     const H = 40 + maxRows * rowH - (rowH - NH);
-    // 连线几何：三次贝塞尔；标签放在「目标节点前的列间空隙」中心，纵坐标取曲线在该处的高度
+    // Edge geometry: cubic Bézier; the label sits at the center of the gap before the target node, at the curve's height there
     const geo = edges.map((e, i) => {
       const a = pos[e.from], b = pos[e.to]; if (!a || !b) return null;
       const x1 = a.x + NW, y1 = a.y + NH / 2, x2 = b.x - 4, y2 = b.y + NH / 2, mx = (x1 + x2) / 2;
@@ -55,17 +55,17 @@ export function EqMap({ edges, labels = {}, colW = 420, rowH = 124 }) {
       let lo = 0, hi = 1; for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; if (bez(m)[0] < lx) lo = m; else hi = m; }
       return { i, e, d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`, lx, ly: bez(lo)[1], gap: lvl[e.to] };
     }).filter(Boolean);
-    // 同一空隙内的标签按纵坐标排开，避免互相重叠
+    // Spread labels in the same gap by y coordinate, to avoid overlap
     const byGap = {}; geo.filter(x => x.e.label).forEach(x => (byGap[x.gap] ??= []).push(x));
     Object.values(byGap).forEach(list => {
       list.sort((a, b) => a.ly - b.ly);
       for (let k = 1; k < list.length; k++) if (list[k].ly - list[k - 1].ly < LH + 4) list[k].ly = list[k - 1].ly + LH + 4;
-      const over = list.length ? list[list.length - 1].ly + LH / 2 - (H - 6) : 0;   // 底部溢出则整体上移
+      const over = list.length ? list[list.length - 1].ly + LH / 2 - (H - 6) : 0;   // if overflowing at the bottom, shift everything up
       if (over > 0) list.forEach(x => { x.ly = Math.max(LH / 2 + 4, x.ly - over); });
     });
     return { ids, pos, geo, W: 40 + (Object.keys(cols).length - 1) * colW + NW, H };
   }, [edges, colW, rowH, GAP, LH]);
-  // 悬停时高亮上下游
+  // Highlight upstream and downstream on hover
   const related = useMemo(() => {
     if (!hover) return null;
     const s = new Set([hover]);
@@ -90,7 +90,7 @@ export function EqMap({ edges, labels = {}, colW = 420, rowH = 124 }) {
             </div>
           </foreignObject>;
         })}
-        {/* 连线标签画在最上层 */}
+        {/* Edge labels are drawn on top */}
         {g.geo.filter(x => x.e.label).map(x =>
           <foreignObject key={"l" + x.i} x={x.lx - LW / 2} y={x.ly - LH / 2} width={LW} height={LH} className={"eqm-lfo" + (isDim(x.e) ? " dim" : "")}>
             <div className={"eqm-elab" + (related && !isDim(x.e) ? " on" : "")} title={plainText(x.e.label)}><span className="eqm-elab-t"><TxI>{x.e.label}</TxI></span></div>

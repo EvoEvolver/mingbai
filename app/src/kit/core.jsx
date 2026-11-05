@@ -3,13 +3,13 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { Rich, RichParas, plainText } from "./math/tex.jsx";
 import { pageUrl, nameOf } from "./book.jsx";
 
-// ---------- 小工具 ----------
-// 分段文本；含 $…$ / \eqref 等记号时自动按公式渲染（见 math/tex.jsx 的 RichParas），否则与原来完全相同
+// ---------- Small utilities ----------
+// Paragraph-split text; with notation like $…$ / \eqref it renders as formulas automatically (see RichParas in math/tex.jsx), otherwise exactly as before
 export const Paras = props => RichParas(props);
 export const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0;[a[i], a[j]] = [a[j], a[i]]; } return a; };
 export const PALETTE = ["#9b2c1f", "#b8862b", "#2c4a6e", "#3c6b4a", "#5b3f7a", "#8a5a2b", "#2f6f73", "#c0567a", "#6b7d2a", "#4a5fa8", "#a0522d", "#3d3d3d"];
 
-// 进入视口一次后返回 true
+// Returns true once the element has entered the viewport
 export function useReveal(threshold = .5) {
   const ref = useRef(null), [vis, setVis] = useState(false);
   useEffect(() => {
@@ -26,11 +26,11 @@ export function useToast(ms = 3200) {
   return [msg && <div className="toast">{msg}</div>, setMsg];
 }
 
-// ---------- 章节上下文：概念表、分组配色、概念弹窗 ----------
+// ---------- Chapter context: concept table, group colors, concept modal ----------
 const Ctx = createContext({ byId: {}, concepts: [], relations: [], groups: [], color: () => PALETTE[0], open: () => { } });
 export const useChapter = () => useContext(Ctx);
 
-// extra：额外可查找（可弹窗）但不参与网格/地图的概念，如跨章概念 "ch03:mathesis"
+// extra: concepts that can also be looked up (and shown in a modal) but aren't in the grid/map, such as the cross-chapter concept "ch03:mathesis"
 export function ChapterProvider({ meta, groups = [], concepts = [], relations = [], extra = [], children }) {
   const [openId, setOpenId] = useState(null);
   const value = useMemo(() => {
@@ -50,7 +50,7 @@ export function ChapterProvider({ meta, groups = [], concepts = [], relations = 
     </Ctx.Provider>);
 }
 
-// 概念胶囊（点击打开概念弹窗）
+// Concept pill (click opens the concept modal)
 export function ConceptChip({ id, prefix }) {
   const { byId, open } = useChapter();
   const c = byId[id];
@@ -58,7 +58,7 @@ export function ConceptChip({ id, prefix }) {
   return <span className="chip" onClick={() => open(id)}>{prefix != null ? <Rich>{prefix}</Rich> : c.icon} <Rich>{nameOf(c)}</Rich>{c.chapter && <small className="chip-ch"> · {c.chapter.label.split(" · ")[0]}</small>}</span>;
 }
 
-// 正文中的行内概念链接：<C id="mathesis">数理</C>
+// Inline concept link in body text: <C id="mathesis">mathesis</C>
 export function C({ id, children }) {
   const { byId, open, color } = useChapter();
   const c = byId[id];

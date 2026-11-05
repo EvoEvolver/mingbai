@@ -1,5 +1,7 @@
 # 章节编写指南
 
+[English](../KIT.md)
+
 ## 目标
 把原著的**一章**写成一个生动、好懂的 React 页面。目标读者：聪明但没读过原著的中文读者。
 原著常见问题是**举例过多、概念晦涩**，你的任务：
@@ -66,7 +68,7 @@ export default function Chapter() { return <ChapterPage meta={meta} groups={grou
 ## 链接与路由
 站点是多页静态站点：每章一个页面 `<id>/`，页内锚点用普通 hash（如 `ch02/#eq-2.23`）。站内链接**不要手写 `#/…`**，
 用 `pageUrl(id, anchor)`（from "@kit"；`pageUrl(null)` 为书架）。章节导出的 `meta / concepts / groups / relations / notation / links`
-会在构建时被提取为全书索引，**必须是纯数据**（不要放函数或 JSX）。详见 `spec/DEPLOY.md`。
+会在构建时被提取为全书索引，**必须是纯数据**（不要放函数或 JSX）。详见 `spec/zh/DEPLOY.md`。
 
 ## 自检（必须做）
 ```bash
@@ -85,7 +87,7 @@ spec/check.sh <id> <书目录>
 `kit/Feedback.jsx`：读者选中任意文字后出现"✎ 反馈"悬浮按钮，点开面板填写反馈，"用邮件发送"以 `mailto:` 打开读者的邮件程序（正文含页面地址、页面标题、选中的纯文本、反馈与可选联系方式；选中内容最多带 600 字）；另有"复制内容"兜底。收件地址在 `kit/site.js` 的 `FEEDBACK_EMAIL`（为空则不显示），单本书可在 book.js 用 `feedbackEmail` 覆盖。章节作者无需做任何事。
 
 ## 界面语言
-一本书只有一种界面语言，由 `book.js` 的 `lang` 决定：`"zh"`（缺省）或 `"en"`。它控制所有组件自带的文字（按钮、提示、页脚、“第 N 章”等）、`<html lang>`、西文字体和朗读语音。书的内容不做多语言：内容用什么语言写，页面就显示什么。
+一本书只有一种界面语言，由 `book.js` 的 `lang` 决定：缺省为 `"en"`，中文书写 `lang: "zh"` 启用中文。它控制所有组件自带的文字（按钮、提示、页脚、“第 N 章”等）、`<html lang>`、西文字体和朗读语音。书的内容不做多语言：内容用什么语言写，页面就显示什么。
 
 - **写英文书**：`book.js` 加 `lang: "en"`；标题和名称只写 `title_en` / `name_en`（statements 只写 `en`），不写 `*_zh`。组件优先显示 `*_zh`，没有时显示 `*_en`；两者都有时 `*_en` 作副标题。`quotes` 的 `zh`、`Sec` 的 `zh` 同理可省略。
 - **加新的界面文字**：不要在组件里写死，在 `kit/i18n/zh.js` 和 `en.js` 各加一个键，用 `t("键名")` 取（`from "./i18n/index.js"`，章节文件 `from "@kit"`）。带参数的句子写成函数，如 `"ch.no": n => \`Chapter ${n}\``。默认参数里可以用 `t()`，但不要在模块顶层调用。

@@ -1,4 +1,4 @@
-// 回归对比：逐章导出 main 的 innerText 与 KaTeX 节点数。用法: node dumptext.mjs BASEURL id1,id2,... OUT.json
+// Regression comparison: dump main's innerText and KaTeX node count per chapter. Usage: node dumptext.mjs BASEURL id1,id2,... OUT.json
 import { chromium } from "playwright";
 import fs from "node:fs";
 const [base, ids, out] = process.argv.slice(2);

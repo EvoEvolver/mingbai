@@ -1,5 +1,7 @@
 # 定理–证明类文本组件（论文、数学书）
 
+[English](../PROOF.md)
+
 源自 ETH 论文书（[完整范例](https://github.com/EvoEvolver/mingbai-notes/blob/main/eth)），现已并入框架 `kit/math/proof.jsx`，从 `@kit` 导入。
 数理通用组件（`TextbookPage / Sec / Sub / Eq / Tx / Box / Derivation / Roadmap / EqMap / Plot / ConceptGrid / Quiz …`）见 `TEXTBOOK.md`，照常使用。
 

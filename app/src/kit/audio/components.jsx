@@ -1,29 +1,29 @@
 import { t, lang } from "../i18n/index.js";
-// 可听、可互动的音乐组件。说明见 spec/AUDIO.md
+// Audible, interactive music components. See spec/AUDIO.md
 import { useEffect, useMemo, useRef, useState } from "react";
 import { play, sequence, stop, onStop, setSettings, useAudioState } from "./engine.js";
 import { parseNote, parseNotes, parseChord, triadCore, pcName, isBlack, mod12, cycle, cycleCount, intervalName, tonnetzPc, triadName } from "./theory.js";
 import "./audio.css";
 
-// 统一把 notes / chord / seq 转成播放步骤
-// 带八度的音名，如 C4、Bb3、F#5。只认第 0–5 八度：G7、C6、G9、G13 等一律按和弦处理（这些写法在和声书里几乎总是和弦）
+// Normalize notes / chord / seq into playback steps
+// Note name with octave, e.g. C4, Bb3, F#5. Accepts only octaves 0–5: G7, C6, G9, G13, etc. are always treated as chords (in harmony books they almost always are)
 const NOTE_RE = /^[A-G][#♯b♭x]*-?[0-5]$/;
-// 和弦默认音区：根音落在 F3–E4（MIDI 53–64），接近钢琴伴奏的常用音区；显式给了 octave 则按 octave
+// Default chord register: root in F3–E4 (MIDI 53–64), close to the usual piano accompaniment register; an explicit octave is used as given
 const chordNotes = (sym, octave) => {
   const c = parseChord(sym, octave ?? 4), shift = octave != null ? 0 : 53 + mod12(c.root - 53) - c.root;
   const ns = c.notes.map(n => n + shift); return c.bass != null ? [c.bass + shift, ...ns] : ns;
 };
 function toSteps({ notes, chord, seq, octave }) {
-  // seq 的每一项：全由「带八度音名」组成的视为一组音（"C4 E4"），否则视为和弦符号（"Am"、"Bm7b5"、"C/E"）
+  // Each seq item: if made up entirely of "note names with octave", it's a group of notes ("C4 E4"), otherwise a chord symbol ("Am", "Bm7b5", "C/E")
   if (seq) return [].concat(seq).map(s => ({ notes: String(s).trim().split(/\s+/).every(t => NOTE_RE.test(t)) ? parseNotes(s) : chordNotes(s, octave) }));
   if (chord) return [{ notes: chordNotes(chord, octave) }];
   return [{ notes: parseNotes(notes) }];
 }
-// 复位钩子：任何 stop()（包括 SoundBar 的 ■）都会调用 fn
+// Reset hook: any stop() (including SoundBar's ■) calls fn
 function useOnStop(fn) { const r = useRef(fn); r.current = fn; useEffect(() => onStop(() => r.current()), []); }
 
-// ▶ 行内播放钮。<Play chord="C">C 和弦</Play>、<Play notes="C4 G4">纯五度</Play>、<Play seq={["C","Am","F","G"]} gap={0.9}/>
-// arp：琶音间隔秒数（单个和弦时有效）；melodic：把 notes 逐个弹出
+// ▶ Inline play button. <Play chord="C">C chord</Play>, <Play notes="C4 G4">perfect fifth</Play>, <Play seq={["C","Am","F","G"]} gap={0.9}/>
+// arp: arpeggio interval in seconds (for a single chord); melodic: plays notes one at a time
 export function Play({ notes, chord, seq, arp = 0, melodic, gap = 0.6, octave, children, title }) {
   const [on, setOn] = useState(false);
   useOnStop(() => setOn(false));
@@ -38,7 +38,7 @@ export function Play({ notes, chord, seq, arp = 0, melodic, gap = 0.6, octave, c
   return <button className={"au-play" + (on ? " on" : "")} onClick={go} title={title || t("au.tryIt")}><i>{on ? "♪" : "▶"}</i>{children}</button>;
 }
 
-// 右下角固定的声音控制条（每章放一次）。tuning=true 时显示律制切换
+// Sound control bar fixed at the bottom right (place once per chapter). tuning=true shows the tuning switch
 export function SoundBar({ tuning = false }) {
   const { settings: s, active } = useAudioState();
   return <div className="au-bar">
@@ -53,7 +53,7 @@ export function SoundBar({ tuning = false }) {
   </div>;
 }
 
-// 钢琴键盘。highlight：要标出的音（"C4 E4 G4" / MIDI 数组）；marks：{midi: 标签}；onNote(midi)：点击回调
+// Piano keyboard. highlight: notes to mark ("C4 E4 G4" / MIDI array); marks: {midi: label}; onNote(midi): click callback
 export function Keyboard({ from = "C4", to = "B5", highlight = [], marks = {}, onNote, names = "white", height = 110, sound = true }) {
   const { active } = useAudioState();
   const lo = parseNote(from), hi = parseNote(to);
@@ -80,8 +80,8 @@ export function Keyboard({ from = "C4", to = "B5", highlight = [], marks = {}, o
 
 const CYCLE_COLORS = ["#9b2c1f", "#2c4a6e", "#3c6b4a", "#b8862b", "#5b3f7a", "#7a5b3f"];
 
-// 十二音循环圈：选步长 → 画出所有循环并可播放；可在「半音阶排列」与「五度圈排列」间切换（带动画）
-// steps：可选的步长；arrange："chromatic" | "fifths"；lockArrange：隐藏排列切换
+// Twelve-tone cycle circle: pick a step → draws all cycles, which can be played; switches between "chromatic" and "circle of fifths" arrangements (animated)
+// steps: optional step sizes; arrange: "chromatic" | "fifths"; lockArrange: hides the arrangement switch
 export function PitchCircle({ step: step0 = 1, steps = [1, 2, 3, 4, 5, 6, 7], start: start0 = 0, arrange = "chromatic", lockArrange = false, size = 340 }) {
   const [step, setStep] = useState(step0), [start, setStart] = useState(start0);
   const [target, setTarget] = useState(arrange === "fifths" ? 1 : 0), [mix, setMix] = useState(target);
@@ -89,14 +89,14 @@ export function PitchCircle({ step: step0 = 1, steps = [1, 2, 3, 4, 5, 6, 7], st
   useOnStop(() => setCur(-1));
   const { active } = useAudioState();
   const raf = useRef();
-  useEffect(() => {   // 排列切换动画
+  useEffect(() => {   // Arrangement switch animation
     const from = mix, t0 = performance.now();
     const tick = t => { const k = Math.min(1, (t - t0) / 800), e = k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
       setMix(from + (target - from) * e); if (k < 1) raf.current = requestAnimationFrame(tick); };
     raf.current = requestAnimationFrame(tick); return () => cancelAnimationFrame(raf.current);
   }, [target]); // eslint-disable-line
   const R = size / 2 - 34, C = size / 2;
-  const pos = pc => {   // 两种排列的位置线性插值
+  const pos = pc => {   // Linear interpolation between the positions of the two arrangements
     const a = i => (-90 + i * 30) * Math.PI / 180, p0 = a(pc), p1 = a(mod12(pc * 7));
     return [C + R * ((1 - mix) * Math.cos(p0) + mix * Math.cos(p1)), C + R * ((1 - mix) * Math.sin(p0) + mix * Math.sin(p1))];
   };
@@ -105,7 +105,7 @@ export function PitchCircle({ step: step0 = 1, steps = [1, 2, 3, 4, 5, 6, 7], st
   const activePc = new Set([...active].map(mod12));
   const playCycle = () => {
     stop();
-    // 音高单调上行：每步 +step 半音，超出 C6 时回落一个八度
+    // Monotonically rising pitch: +step semitones each step, dropping an octave when above C6
     let m = 60 + mod12(start); const seq = [m]; for (let k = 1; k <= mine.length; k++) { m += step; if (m > 84) m -= 12; seq.push(m); }
     sequence(seq.map(n => ({ notes: [n] })), { gap: 0.42, onStep: i => setCur(i) });
   };
@@ -148,7 +148,7 @@ export function PitchCircle({ step: step0 = 1, steps = [1, 2, 3, 4, 5, 6, 7], st
   </div>;
 }
 
-// 音程实验台：在键盘上点两个音（依次设为根音、冠音），显示半音数与音程名，可试听、转位
+// Interval workbench: click two notes on the keyboard (set in turn as lower and upper note); shows semitone count and interval name, with audition and inversion
 export function IntervalLab({ from = "C4", to = "B5", lo: lo0 = "C4", hi: hi0 = "E4" }) {
   const [lo, setLo] = useState(parseNote(lo0)), [hi, setHi] = useState(parseNote(hi0)), [next, setNext] = useState(0);
   const st = hi - lo;
@@ -171,10 +171,10 @@ export function IntervalLab({ from = "C4", to = "B5", lo: lo0 = "C4", hi: hi0 = 
   </div>;
 }
 
-// Tonnetz 网格图（方向与配色同《图解和声》：横向纯五度，右上大三度，左上小三度；朝上三角 = 大三和弦（红），朝下 = 小三和弦（蓝））
-// highlight：["C","Em"] 预先标出的和弦；notes：要标出的音级集合（如全音阶 [0,2,4,6,8,10]）
-// axes：显示哪些轴上的循环线 ["fifths","M3","m3"]；center：中心音；select：初始选中的和弦
-// path：和弦进行（如 ["C","Am","F","G"]），在网格上画出移动路线；current：当前播放到第几个（由 Progression 驱动）；compact：不显示下方说明栏
+// Tonnetz grid (orientation and colors as in Illustrated Harmony: horizontal perfect fifths, upper right major thirds, upper left minor thirds; upward triangle = major triad (red), downward = minor triad (blue))
+// highlight: ["C","Em"] chords to mark in advance; notes: set of pitch classes to mark (e.g. whole-tone scale [0,2,4,6,8,10])
+// axes: which axis cycle lines to show ["fifths","M3","m3"]; center: center note; select: initially selected chord
+// path: chord progression (e.g. ["C","Am","F","G"]), drawn as a route on the grid; current: which item is playing (driven by Progression); compact: hides the info bar below
 export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], notes, axes = [], showAxesToggle = false, select, spell = "flat", unit = 62, caption, onChord, path, current = -1, compact = false }) {
   const { active } = useAudioState();
   const [ax, setAx] = useState(axes), [sel, setSel] = useState(select || null);
@@ -197,16 +197,16 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
   const hlParsed = highlight.map(sym => ({ sym, c: parseChord(sym) }));
   const hlSet = new Set(hlParsed.filter(h => triadCore(h.c)).map(h => (triadCore(h.c).minor ? "m" : "M") + mod12(h.c.root)));
   const hlName = Object.fromEntries(hlParsed.filter(h => triadCore(h.c)).map(h => [(triadCore(h.c).minor ? "m" : "M") + mod12(h.c.root), h.sym]));
-  // 每个高亮和弦只标出离网格中心最近的那一处（同一和弦在网格上会周期性重复）
+  // Mark each highlighted chord only at the position closest to the grid center (a chord repeats periodically on the grid)
   const cx0 = (Math.min(...xs) + Math.max(...xs)) / 2, cy0 = (Math.min(...ys) + Math.max(...ys)) / 2;
   const dist = t => ((t.pts[0].x + t.pts[1].x + t.pts[2].x) / 3 - cx0) ** 2 + ((t.pts[0].y + t.pts[1].y + t.pts[2].y) / 3 - cy0) ** 2;
   const hlKeys = new Set([...hlSet].map(k => tris.filter(t => (t.minor ? "m" : "M") + t.root === k).sort((a, b) => dist(a) - dist(b))[0]?.key));
   const activePc = new Set([...active].map(mod12)), notesSet = notes ? new Set(notes.map(mod12)) : null;
-  const voicing = t => { const r = 53 + mod12(t.root - 53); return [r, r + (t.minor ? 3 : 4), r + 7]; };   // 根音落在 F3–E4
+  const voicing = t => { const r = 53 + mod12(t.root - 53); return [r, r + (t.minor ? 3 : 4), r + 7]; };   // root in F3–E4
   const clickTri = t => { play(voicing(t), { arp: 0.04, dur: 1.6 }); setSel(t.key); onChord && onChord(triadName(t.root, t.minor, spell)); };
   const selT = tris.find(t => t.key === sel) || (select && tris.filter(t => (t.minor ? "m" : "M") + t.root === select).sort((a, b) => dist(a) - dist(b))[0]);
-  // 一组音级在网格上的「最紧凑」位置：以根音的每个出现处为起点，其余各音依次取离当前重心最近的交点；
-  // 代价 = 组内离散度 + 重心到参照点 (rx, ry) 的距离 × w。减七、增三等对称和弦因此画成一条线或紧凑的形状，而不是散开的大多边形
+  // "Most compact" position of a set of pitch classes on the grid: start from each occurrence of the root, then each other note takes the intersection closest to the current centroid;
+  // cost = spread within the set + distance from centroid to reference point (rx, ry) × w. So symmetric chords like diminished sevenths and augmented triads draw as a line or compact shape, not a sprawling polygon
   const cluster = (pcs, rx, ry, w = 0.6) => {
     let best = null, bestCost = Infinity;
     for (const start of nodes.filter(n => n.pc === pcs[0])) {
@@ -223,27 +223,27 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
     }
     return best || { nodes: [], x: rx, y: ry };
   };
-  // 七和弦等：三和弦之外的音，取离三角形中心最近的交点（与三角形一起画成四音形状）
+  // Seventh chords, etc.: notes outside the triad take the intersection closest to the triangle's center (drawn with the triangle as a four-note shape)
   const extraNodes = (c, pts, x, y) => c.notes.slice(3).map(m => nodes.filter(n => n.pc === mod12(m) && !pts.includes(n))
     .sort((a, b) => (a.x - x) ** 2 + (a.y - y) ** 2 - (b.x - x) ** 2 - (b.y - y) ** 2)[0]).filter(Boolean);
-  // 七和弦配色（同原书）：属七绿、大七红、小七蓝、半减七紫；其他非三和弦金色
+  // Seventh chord colors (as in the source book): dominant 7th green, major 7th red, minor 7th blue, half-diminished 7th purple; other non-triads gold
   const kindOf = c => { const iv = c.notes.map(n => n - c.root).join(",");
     return { "0,4,7,10": "dom7", "0,4,7,11": "maj7", "0,3,7,10": "min7", "0,3,6,10": "hdim7" }[iv] || "other"; };
-  // 非大小三和弦的高亮（减、增、挂留等）：取离中心最近的各音交点
+  // Highlights other than major/minor triads (diminished, augmented, suspended, etc.): take each note's intersection closest to the center
   const hlOther = hlParsed.filter(h => !triadCore(h.c)).map(h => ({ sym: h.sym, ...cluster([...new Set(h.c.notes.map(mod12))], cx0, cy0) }));
   const hull = pts => { const p = [...pts].sort((a, b) => a.x - b.x || a.y - b.y); if (p.length < 3) return p;
     const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x), lo = [], up = [];
     for (const q of p) { while (lo.length > 1 && cross(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
     for (const q of p.slice().reverse()) { while (up.length > 1 && cross(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
     return lo.slice(0, -1).concat(up.slice(0, -1)); };
-  // 和弦路径：大/小三和弦（含以其为核心的七和弦）取离上一站最近的三角形；其他和弦（减、增等）取离上一站最近的各音交点
+  // Chord path: major/minor triads (including seventh chords built on them) take the triangle closest to the previous stop; other chords (diminished, augmented, etc.) take each note's intersection closest to the previous stop
   const route = useMemo(() => {
     if (!path) return [];
-    // 代价 = 离上一站的距离 + 离起点（通常是主和弦）的距离 × 0.8：路线既连贯，又围绕主和弦展开
+    // Cost = distance from previous stop + distance from the start (usually the tonic) × 0.8: the route stays connected and centers on the tonic
     let px = cx0, py = cy0, ax = null, ay = null; const out = [];
     const cost = (x, y) => Math.hypot(x - px, y - py) + (ax === null ? 0 : 0.8 * Math.hypot(x - ax, y - ay));
     for (const entry of path) {
-      // 路线中的一站：和弦符号，或 { name, notes:[midi…] }（无法用符号表示的和弦）
+      // A stop on the route: a chord symbol, or { name, notes:[midi…] } (a chord that can't be written as a symbol)
       const sym = typeof entry === "string" ? entry : entry.name;
       const c = typeof entry === "string" ? parseChord(sym) : { root: entry.notes[0], notes: entry.notes };
       const root = mod12(c.root), core = typeof entry === "string" ? triadCore(c) : null;
@@ -294,7 +294,7 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
         <polygon points={hull(h.nodes).map(n => n.x + "," + n.y).join(" ")} className="au-chordpoly" />
       </g>)}
       {route.length > 1 && <polyline points={route.map(r => r.x + "," + r.y).join(" ")} className="au-route" />}
-      {route.map((r, k) => {   // 同一位置的多站合并为一个标记（如 1·4）；当前站显示和弦名
+      {route.map((r, k) => {   // Stops at the same position merge into one marker (e.g. 1·4); the current stop shows the chord name
         const same = route.map((q, m) => (q.x === r.x && q.y === r.y ? m : -1)).filter(m => m >= 0);
         if (k !== current && (same[0] !== k || same.includes(current))) return null;
         const label = k === current ? r.sym : same.map(m => m + 1).join("·");
@@ -311,7 +311,7 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
           {inSel && <text x={n.x} y={n.y - 17} className="au-role">{roleOf(selT, n.pc)}</text>}
         </g>;
       })}
-      {hlOther.map((h, k) => { const top = h.nodes.slice().sort((a, b) => a.y - b.y)[0] || h;   // 标签放在最上端交点的右上方，避免盖住三角形标签
+      {hlOther.map((h, k) => { const top = h.nodes.slice().sort((a, b) => a.y - b.y)[0] || h;   // put the label to the upper right of the topmost intersection, to avoid covering triangle labels
         return <text key={"ol" + k} x={top.x + 22} y={top.y - 12} className="au-tlabel dark halo" textAnchor="start">{h.sym}</text>; })}
     </svg>
     {compact ? null : selT ? <div className="au-info">
@@ -324,7 +324,7 @@ export function Tonnetz({ cols = 11, rows = 6, center = "C", highlight = [], not
   </div>;
 }
 
-// 听音练习。items: [{ q, play:{chord|notes|seq, arp, melodic}, options:[...], answer:索引, why }]
+// Ear training. items: [{ q, play:{chord|notes|seq, arp, melodic}, options:[...], answer:index, why }]
 export function EarQuiz({ items, title = t("au.earTitle") }) {
   const [k, setK] = useState(0), [pick, setPick] = useState(null), [score, setScore] = useState(0), [heard, setHeard] = useState(false);
   const it = items[k], done = k >= items.length;
@@ -348,7 +348,7 @@ export function EarQuiz({ items, title = t("au.earTitle") }) {
   </div>;
 }
 
-// 朗读本区块：用浏览器语音合成（speechSynthesis）读出所在 Block 的文字。浏览器不支持时不显示。
+// Read this block aloud: reads the text of the enclosing Block with the browser's speech synthesis (speechSynthesis). Hidden when the browser doesn't support it.
 export function Narrate({ label = t("au.narrate"), rate = 1 }) {
   const [on, setOn] = useState(false), ref = useRef();
   const ok = typeof window !== "undefined" && "speechSynthesis" in window;

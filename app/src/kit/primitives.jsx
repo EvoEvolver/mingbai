@@ -2,27 +2,27 @@ import { t } from "./i18n/index.js";
 import { useState } from "react";
 import { useReveal } from "./core.jsx";
 
-// 构建自定义可视化用的基础件。
+// Building blocks for custom visualizations.
 
-// 提示框。tone: info | warn | key | quote
+// Callout. tone: info | warn | key | quote
 export const Callout = ({ tone = "info", title, children }) => (
   <div className={"callout " + tone}>{title && <b>{title}</b>}<div>{children}</div></div>);
 
-// 白底卡片
+// White card
 export const Card = ({ children, style, className = "", onClick }) => (
   <div className={"card " + className} style={style} onClick={onClick}>{children}</div>);
 
-// 自适应网格
+// Responsive grid
 export const Grid = ({ min = 240, gap = 16, children }) => (
   <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill,minmax(${min}px,1fr))`, gap }}>{children}</div>);
 
-// 进入视口时淡入上移
+// Fade in and rise on entering the viewport
 export function Reveal({ children, delay = 0 }) {
   const [ref, vis] = useReveal(.3);
   return <div ref={ref} className={"reveal" + (vis ? " vis" : "")} style={{ transitionDelay: delay + "ms" }}>{children}</div>;
 }
 
-// 标签页。tabs: [{label, content}]
+// Tabs. tabs: [{label, content}]
 export function Tabs({ tabs }) {
   const [i, setI] = useState(0);
   return <div className="card">
@@ -31,8 +31,8 @@ export function Tabs({ tabs }) {
   </div>;
 }
 
-// 分步讲解器：上一步/下一步走过一个过程。steps: [{label, content}]
-// render(i) 可选：在步骤内容上方渲染随步骤变化的图（如 SVG），i 为当前步。
+// Stepper: walk through a process with previous/next. steps: [{label, content}]
+// render(i) is optional: renders a step-dependent figure (e.g. SVG) above the step content; i is the current step.
 export function StepThrough({ steps, render }) {
   const [i, setI] = useState(0);
   return <div className="card stepthrough">
@@ -47,7 +47,7 @@ export function StepThrough({ steps, render }) {
   </div>;
 }
 
-// 两态切换（如 古典 ⇄ 现代），children(state) 渲染内容
+// Two-state toggle (e.g. classical ⇄ modern); children(state) renders the content
 export function Toggle({ options, children }) {
   const [v, setV] = useState(0);
   return <div className="card">
@@ -56,7 +56,7 @@ export function Toggle({ options, children }) {
   </div>;
 }
 
-// 横向时间轴。events: [{year, label, note}]；点击查看说明
+// Horizontal timeline. events: [{year, label, note}]; click to see the note
 export function Timeline({ events }) {
   const [i, setI] = useState(null);
   return <div className="card">

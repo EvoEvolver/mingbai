@@ -1,14 +1,14 @@
 import { t } from "../i18n/index.js";
-// 谱例：ABC 记谱 → 两种视图一键切换（全站共享偏好）：
-//   五线谱（abcjs 渲染）⇄ 卷帘 Piano Roll（像 Logic Pro：横轴时间、纵轴音高、左侧键盘，音符是长条）。
-// 声音走本站引擎（engine.js），播放时音符同步高亮、卷帘有播放头；点任意音符/音条单独试听。
-// abcjs 只在浏览器里按需加载（构建期 SSR 提取数据时不会触碰它）。说明见 spec/AUDIO.md
+// Score example: ABC notation → two views, toggled with one click (preference shared across the site):
+//   staff notation (rendered by abcjs) ⇄ Piano Roll (like Logic Pro: time on the x axis, pitch on the y axis, keyboard on the left, notes as bars).
+// Sound goes through this site's engine (engine.js); notes highlight in sync during playback, the piano roll has a playhead, and clicking any note/bar auditions it.
+// abcjs is loaded on demand only in the browser (SSR data extraction at build time never touches it). See spec/AUDIO.md
 import { useEffect, useRef, useState } from "react";
 import { play, stop, later, onStop, setSettings, useAudioState } from "./engine.js";
 import { voiceChord, parseChord, pcName, isBlack, mod12 } from "./theory.js";
 
-// 由简写属性拼出完整 ABC。
-//   abc 含 "K:" 时视为完整 ABC，原样使用；否则把它当作（高音谱表）正文，配合 bass（低音谱表正文）生成大谱表。
+// Build full ABC from shorthand props.
+//   If abc contains "K:", it's treated as full ABC and used as is; otherwise it's taken as the (treble staff) body and, with bass (bass staff body), generates a grand staff.
 function buildAbc({ abc, bass, meter = "4/4", unit = "1/4", keySig = "C", tempo, title }) {
   if (/^\s*K:/m.test(abc)) return abc;
   const head = [`X:1`, title ? `T:${title}` : null, `M:${meter}`, `L:${unit}`, tempo ? `Q:1/4=${tempo}` : null].filter(Boolean);
@@ -18,16 +18,16 @@ function buildAbc({ abc, bass, meter = "4/4", unit = "1/4", keySig = "C", tempo,
 
 // <Score abc="&quot;C&quot;[CEG]4 | &quot;G&quot;[B,DG]4 |]" />
 // <Score abc="[EGc]4 | [DGB]4 |]" bass="C,4 | G,,4 |]" keySig="C" meter="4/4" tempo={72} caption="…"/>
-// 属性：abc（高音谱表正文或完整 ABC）· bass（低音谱表正文 → 大谱表）· keySig · meter · unit（默认 1/4）· tempo（每分钟四分音符数）
-//       caption · scale（缩放，默认 1）· width（谱表宽度 px，默认自适应）· playable（默认 true）
-// accomp：播放时按谱上的和弦记号（"C" "Am7" "G/B"）自动弹柱式和弦伴奏（适合只有旋律的谱例）
+// Props: abc (treble staff body or full ABC) · bass (bass staff body → grand staff) · keySig · meter · unit (default 1/4) · tempo (quarter notes per minute)
+//       caption · scale (zoom, default 1) · width (staff width in px, responsive by default) · playable (default true)
+// accomp: during playback, automatically plays block-chord accompaniment from the chord symbols in the score ("C" "Am7" "G/B") (suits melody-only examples)
 export function Score({ abc, bass, keySig, meter, unit, tempo = 80, title, caption, scale = 1, width, playable = true, accomp = false }) {
   const box = useRef(), tune = useRef(null), [ready, setReady] = useState(false), [on, setOn] = useState(false), [err, setErr] = useState(null);
   const [pos, setPos] = useState(-1), t0 = useRef(0), [view0, setView0] = useState(null);
   const { settings, active } = useAudioState();
   const view = view0 || settings.view || "staff";
   useEffect(() => onStop(() => { setOn(false); setPos(-1); }), []);
-  useEffect(() => {   // 播放头：按真实时间推进
+  useEffect(() => {   // Playhead: advances in real time
     if (!on) return; let raf;
     const tick = () => { setPos(performance.now() - t0.current); raf = requestAnimationFrame(tick); };
     raf = requestAnimationFrame(tick); return () => cancelAnimationFrame(raf);
@@ -44,9 +44,9 @@ export function Score({ abc, bass, keySig, meter, unit, tempo = 80, title, capti
           clickListener: el => el.midiPitches && play(el.midiPitches.map(p => p.pitch), { dur: 1.2, arp: el.midiPitches.length > 1 ? 0.03 : 0 }),
         });
         const qpm = v.getBpm ? v.getBpm() || tempo : tempo;
-        v.setUpAudio({ qpm });   // 填充每个音符的 midiPitches（音高与时值），供播放与点击试听
+        v.setUpAudio({ qpm });   // fills each note's midiPitches (pitch and duration) for playback and click-to-audition
         const tc = new abcjs.TimingCallbacks(v, { qpm });
-        // 和弦记号及其时间（setUpAudio 后每个音符元素带 currentTrackMilliseconds）
+        // Chord symbols and their times (after setUpAudio each note element has currentTrackMilliseconds)
         const chords = [];
         for (const line of v.lines || []) for (const st of line.staff || []) for (const voice of (st.voices || []).slice(0, 1)) for (const el of voice) {
           const name = (el.chord || []).find(ch => !ch.position || ch.position === "default" || ch.position === "above")?.name;
@@ -54,7 +54,7 @@ export function Score({ abc, bass, keySig, meter, unit, tempo = 80, title, capti
         }
         const total = tc.noteTimings.length ? tc.noteTimings[tc.noteTimings.length - 1].milliseconds : 0;
         const events = tc.noteTimings.filter(e => e.type === "event"), msPerWhole = 4 * 60000 / qpm;
-        // 卷帘数据：每个音一根条（同一时刻、同一音高去重）
+        // Piano roll data: one bar per note (deduplicated by time and pitch)
         const seen = new Set(), notes = [];
         for (const e of events) for (const p of e.midiPitches || []) {
           if (p.pitch == null) continue; const k = e.milliseconds + ":" + p.pitch; if (seen.has(k)) continue; seen.add(k);
@@ -84,7 +84,7 @@ export function Score({ abc, bass, keySig, meter, unit, tempo = 80, title, capti
       later(() => mark(e.elements, "au-hl", false), e.milliseconds + len * 0.95);
       end = Math.max(end, e.milliseconds + len);
     }
-    if (accomp) for (const a of accompNotes(t.chords, Math.max(t.total, end)))   // 和弦记号伴奏：持续到下一个记号（或乐曲结束）
+    if (accomp) for (const a of accompNotes(t.chords, Math.max(t.total, end)))   // chord symbol accompaniment: sustains until the next symbol (or the end of the piece)
       play(a.notes, { at: a.start / 1000, dur: a.dur / 1000 * 0.97, velocity: 0.45 });
     later(() => { setOn(false); setPos(-1); }, end + 200);
   };
@@ -103,7 +103,7 @@ export function Score({ abc, bass, keySig, meter, unit, tempo = 80, title, capti
   </figure>;
 }
 
-// 由和弦记号生成伴奏：[{ notes, start, dur }]。斜线和弦（"D/A"）额外在下方弹低音
+// Generate accompaniment from chord symbols: [{ notes, start, dur }]. Slash chords ("D/A") also play the bass note below
 function accompNotes(chords, end) {
   const out = []; let prev;
   chords.forEach((c, i) => {
@@ -111,25 +111,25 @@ function accompNotes(chords, end) {
     try { ns = voiceChord(sym, { prev, lo: 48, style: "smooth" }); } catch { return; }
     prev = ns; const until = i + 1 < chords.length ? chords[i + 1].ms : end;
     const notes = [...ns];
-    if (bassName) { try { const b = mod12(parseChord(bassName.trim()).root); notes.unshift(40 + mod12(b - 40)); } catch { /* 低音写法无法解析时忽略 */ } }
+    if (bassName) { try { const b = mod12(parseChord(bassName.trim()).root); notes.unshift(40 + mod12(b - 40)); } catch { /* ignore a bass spelling that can't be parsed */ } }
     out.push({ notes, start: c.ms, dur: Math.max(300, until - c.ms) });
   });
   return out;
 }
 
-// 卷帘（Piano Roll）：横轴时间（每四分音符 PXQ 像素），纵轴音高（每半音一行）；左侧固定键盘，黑键行加深；顶部和弦记号与小节号
+// Piano Roll: time on the x axis (PXQ pixels per quarter note), pitch on the y axis (one row per semitone); fixed keyboard on the left with darker black-key rows; chord symbols and bar numbers on top
 const PXQ = 46, KB = 40, TOP = 32;
 function PianoRoll({ data, pos, active, accomp }) {
   const scroller = useRef();
   const { notes, bars, chords, end, qpm } = data;
   const msQ = 60000 / qpm, px = ms => 4 + (ms / msQ) * PXQ;
-  // 伴奏音（accomp 时由和弦记号生成）也画出来，颜色较浅
+  // Also draw accompaniment notes (generated from chord symbols when accomp is on), in a lighter color
   const acc = accomp ? accompNotes(chords, end).flatMap(a => a.notes.map(p => ({ pitch: p, start: a.start, dur: a.dur, acc: true }))) : [];
   const all = [...acc, ...notes];
   const lo = all.length ? Math.min(...all.map(n => n.pitch)) - 2 : 58, hi = all.length ? Math.max(...all.map(n => n.pitch)) + 2 : 74;
   const rowH = Math.max(7, Math.min(13, Math.floor(260 / (hi - lo + 1))));
   const y = p => TOP + (hi - p) * rowH, W = px(end) + 16, H = TOP + (hi - lo + 1) * rowH + 4;
-  useEffect(() => {   // 播放头跑出视野时自动滚动
+  useEffect(() => {   // Auto-scroll when the playhead leaves the view
     const el = scroller.current; if (!el || pos < 0) return; const x = px(pos);
     if (x > el.scrollLeft + el.clientWidth - 60 || x < el.scrollLeft) el.scrollLeft = Math.max(0, x - 80);
   }, [pos]); // eslint-disable-line

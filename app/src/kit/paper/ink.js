@@ -1,9 +1,9 @@
-// 公式局部高亮。KaTeX 元素的盒子高度只取决于行高，分式、求和这类内容会伸出盒子，小符号的盒子又偏大，
-// 所以这里按实际字形量出范围，再把高亮块画在公式背后。
+// Partial equation highlight. The box height of a KaTeX element depends only on line height: fractions and sums stick out of their boxes, and small symbols have oversized boxes,
+// so this measures the actual extent of the glyphs and draws the highlight behind the equation.
 
 const INK = "svg, .frac-line, .hline, .overline-line, .underline-line";
 
-// 元素内全部字形的外接矩形（视口坐标）
+// Bounding rectangle of all glyphs in an element (viewport coordinates)
 function inkRect(el) {
   let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
   const add = r => {
@@ -21,12 +21,12 @@ function inkRect(el) {
   return left === Infinity ? el.getBoundingClientRect() : { left, top, right, bottom, width: right - left, height: bottom - top };
 }
 
-// 在 host（公式容器，需 position:relative）里给 els 画高亮；传空数组则全部淡出。
-// 高亮层是 host 的子元素，容器横向滚动时会跟着走；React 重写公式 HTML 后这里会自动重建。
+// Draw highlights for els in host (the equation container, which needs position:relative); an empty array fades them all out.
+// The highlight layer is a child of host, so it moves with horizontal scrolling; it's rebuilt automatically after React rewrites the equation HTML.
 export function drawInk(host, els) {
   let layer = host.querySelector(":scope > .ink-layer");
   if (!layer) { layer = document.createElement("div"); layer.className = "ink-layer"; layer.setAttribute("aria-hidden", "true"); host.prepend(layer); }
-  const outer = els.filter(el => !els.some(o => o !== el && o.contains(el)));   // 嵌套时只画最外层，避免颜色叠深
+  const outer = els.filter(el => !els.some(o => o !== el && o.contains(el)));   // when nested, draw only the outermost, to avoid darkening the color
   const base = host.getBoundingClientRect(), PAD = 3;
   outer.forEach((el, i) => {
     const box = layer.children[i] || layer.appendChild(document.createElement("i")), r = inkRect(el);

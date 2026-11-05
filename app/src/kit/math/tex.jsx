@@ -6,21 +6,21 @@ import "katex/dist/katex.min.css";
 import { book, modules, pageUrl, assetUrl, anchors, chapterNo } from "../book.jsx";
 import { buildTable, annotate, symKey } from "./sym.js";
 
-// ---------- KaTeX 渲染 ----------
-// 书级宏在 book.js 的 katexMacros 中定义（如 "\\H": "\\mathcal{H}"）。宏在首次渲染时读取
-// （避免与 virtual:book 的循环导入在模块初始化时触发）。
+// ---------- KaTeX rendering ----------
+// Book-level macros are defined in katexMacros in book.js (e.g. "\\H": "\\mathcal{H}"). Macros are read on first render
+// (to avoid triggering the circular import with virtual:book during module initialization).
 let MACROS = null, MACRO_RE = null;
 function macros() {
   if (!MACROS) {
-    // \sym{id}{…}/\nosym{…} 在有符号表的章节页由 annotate 处理；其他场合（书架、跨章预览等）按普通内容渲染
+    // \sym{id}{…}/\nosym{…} are handled by annotate on chapter pages with a symbol table; elsewhere (shelf, cross-chapter previews, etc.) they render as plain content
     MACROS = { ...(book?.katexMacros || {}) };
-    // 预展开只针对书级宏（\\sym/\\nosym 必须原样留给 annotate 识别）
+    // Pre-expansion targets only book-level macros (\\sym/\\nosym must stay intact for annotate to recognize)
     const names = Object.keys(book?.katexMacros || {}).map(k => k.replace(/^\\/, "")).sort((a, b) => b.length - a.length);
     MACRO_RE = names.length ? new RegExp(`\\\\(${names.join("|")})(?![a-zA-Z])`, "g") : null;
   }
   return MACROS;
 }
-// 展开书级宏（符号识别需要看到展开后的源码，如 \Om → \Omega_{\mathrm{m}}）
+// Expand book-level macros (symbol recognition needs the expanded source, e.g. \Om → \Omega_{\mathrm{m}})
 export function expandMacros(tex) {
   const M = macros(); if (!MACRO_RE) return tex;
   let s = tex;
@@ -28,7 +28,7 @@ export function expandMacros(tex) {
   return s;
 }
 
-// 当前章节的符号表（TextbookProvider 在渲染时设置；只同时显示一章）
+// Current chapter's symbol table (set by TextbookProvider during render; only one chapter is shown at a time)
 let ACTIVE = { table: null, ver: 0 };
 const cache = new Map(), usedCache = new Map();
 const trust = c => ["\\htmlData", "\\htmlClass"].includes(c.command);
@@ -39,19 +39,19 @@ export function renderTex(tex, display = false) {
   macros();
   let src = tex;
   if (ACTIVE.table) { const r = annotate(expandMacros(tex), ACTIVE.table); src = r.tex; usedCache.set(ACTIVE.ver + tex, r.used); }
-  // 未被 annotate 处理的 \sym{id}{…} / \nosym{…}（无符号表的页面，或嵌在不识别的位置）：剥掉标记，只保留内容
+  // \sym{id}{…} / \nosym{…} not handled by annotate (pages without a symbol table, or in unrecognized positions): strip the markup, keep the content
   src = src.replace(/\\sym\{[^{}]*\}/g, "").replace(/\\nosym(?![a-zA-Z])/g, "");
   let html;
   try {
     html = katex.renderToString(src, { displayMode: display, throwOnError: true, macros: { ...MACROS }, strict: "ignore", trust, output: "html" });
   } catch (e) {
-    // 渲染失败：显示原文并标红，自检脚本会统计 .tex-error
+    // Render failure: show the source in red; the self-check script counts .tex-error
     html = `<span class="tex-error" title="${String(e.message).replace(/"/g, "&quot;")}">${tex.replace(/</g, "&lt;")}</span>`;
   }
   cache.set(key, html);
   return html;
 }
-// 某段公式里用到的符号 id
+// Symbol ids used in a formula
 export function symbolsIn(tex) {
   if (!ACTIVE.table) return [];
   const k = ACTIVE.ver + tex;
@@ -59,16 +59,16 @@ export function symbolsIn(tex) {
   return [...usedCache.get(k)];
 }
 
-// 行内公式：<M>{String.raw`\dot a/a`}</M>
+// Inline equation: <M>{String.raw`\dot a/a`}</M>
 export const M = ({ children }) => <span className="m" dangerouslySetInnerHTML={{ __html: renderTex(String(children)) }} />;
 
-// ---------- 自适应缩放 ----------
-// 让 ref 元素内的 KaTeX 内容缩放到能放进元素本身：KaTeX 以 em 为单位，调 font-size 即等比缩放。
-// both=true 时同时适配高度（用于固定大小的节点）。缩到 min 仍放不下时保留滚动。
+// ---------- Auto-fit scaling ----------
+// Scale the KaTeX content in the ref element to fit the element itself: KaTeX uses em units, so adjusting font-size scales proportionally.
+// both=true also fits the height (for fixed-size nodes). Scrolling remains if it still doesn't fit at min.
 export function useFit(ref, deps = [], { min = 0.7, both = false } = {}) {
   useLayoutEffect(() => {
     const box = ref.current; if (!box) return;
-    // 以 .katex-html 各片段的实际外接框计算尺寸（居中内容会向两侧溢出，scrollWidth 只计右侧，不可靠）
+    // Measure using the actual bounding boxes of .katex-html fragments (centered content overflows both sides; scrollWidth counts only the right, so it's unreliable)
     const measure = () => {
       const h = box.querySelector(".katex-html"); if (!h) return null;
       let l = Infinity, r = -Infinity;
@@ -77,12 +77,12 @@ export function useFit(ref, deps = [], { min = 0.7, both = false } = {}) {
     };
     const fit = () => {
       box.style.fontSize = "";
-      const base = parseFloat(getComputedStyle(box).fontSize);       // 原始像素字号
-      // 可用尺寸也用 getBoundingClientRect：与内容测量处于同一坐标系，动画中的 transform 缩放不会造成比例失真
+      const base = parseFloat(getComputedStyle(box).fontSize);       // original font size in pixels
+      // Available size also uses getBoundingClientRect: same coordinate system as the content measurement, so transform scaling during animations doesn't distort the ratio
       const bb = box.getBoundingClientRect(), sx = box.clientWidth ? bb.width / box.clientWidth : 1;
       const aw = bb.width - 4 * sx, ah = bb.height - 4 * sx;
       let sc = 1;
-      for (let it = 0; it < 3; it++) {                                  // 迭代校准（行高/间距并非严格线性）
+      for (let it = 0; it < 3; it++) {                                  // iterative calibration (line height and spacing aren't strictly linear)
         const m = measure(); if (!m) return;
         let k = m.w > aw && aw > 0 ? aw / m.w : 1;
         if (both && m.h > ah && ah > 0) k = Math.min(k, ah / m.h);
@@ -94,14 +94,14 @@ export function useFit(ref, deps = [], { min = 0.7, both = false } = {}) {
     };
     fit();
     let live = true;
-    document.fonts?.ready.then(() => live && fit());     // KaTeX 字体加载后尺寸会变
+    document.fonts?.ready.then(() => live && fit());     // sizes change once the KaTeX fonts load
     const ro = new ResizeObserver(() => fit()); ro.observe(box);
     return () => { live = false; ro.disconnect(); };
   }, deps);   // eslint-disable-line
 }
 
-// 行间公式排版：公式区 + 编号栏（不用 KaTeX \tag：长公式会与绝对定位的编号重叠）。
-// 公式过宽时自动缩小（最低 min），仍放不下则在公式区内横向滚动；编号永远独占右侧一栏。
+// Display equation layout: equation area + number column (no KaTeX \tag: long equations would overlap the absolutely positioned number).
+// Too-wide equations shrink automatically (down to min), then scroll horizontally in the equation area; the number always has its own column on the right.
 export function EqLine({ tex, n, min = 0.6, className = "" }) {
   const ref = useRef(null);
   const html = renderTex(tex, true);
@@ -113,7 +113,7 @@ export function EqLine({ tex, n, min = 0.6, className = "" }) {
     </div>);
 }
 
-// 行内公式自适应（用于固定宽度的小卡片/节点）
+// Inline equation auto-fit (for fixed-width small cards/nodes)
 export function FitTex({ tex, display = false, min = 0.4, both = false, className = "" }) {
   const ref = useRef(null);
   const html = renderTex(tex, display);
@@ -121,41 +121,41 @@ export function FitTex({ tex, display = false, min = 0.4, both = false, classNam
   return <div className={"fittex " + className} ref={ref} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-// ---------- 教科书上下文：公式登记表 + 符号词典 ----------
+// ---------- Textbook context: equation registry + symbol dictionary ----------
 const TbCtx = createContext(null);
 export const useTextbook = () => useContext(TbCtx);
 
 let tableVer = 0;
-// notation：本章符号表 [{sym, name, def, eq, unit, id?}]；其他章节导出的 notation 也会并入（本章优先）
+// notation: this chapter's symbol table [{sym, name, def, eq, unit, id?}]; notation exported by other chapters is merged too (this chapter takes priority)
 export function TextbookProvider({ chapterId, notation = [], children }) {
   const eqs = useRef(new Map());              // n -> {tex, key, title, say}
   const [ver, setVer] = useState(0);
-  const [pop, setPop] = useState(null);       // 符号弹卡 {id, x, y}
-  const [modal, setModal] = useState(null);   // 公式放大 {tex, n, title, say}
+  const [pop, setPop] = useState(null);       // symbol popover {id, x, y}
+  const [modal, setModal] = useState(null);   // equation zoom {tex, n, title, say}
 
-  // 符号表：本章在前，其余章节在后（全书统一编号 id）
+  // Symbol table: this chapter first, then the others (ids are numbered across the whole book)
   const sym = useMemo(() => {
     const slug = (ch, s) => (ch + "-" + s).replace(/[^A-Za-z0-9]+/g, "_");
     const all = [];
-    // 自动 id 由符号生成；不同符号可能生成相同 slug（如 D_+ 与 D_-），重名时追加序号保证唯一
+    // Automatic ids derive from the symbol; different symbols may produce the same slug (e.g. D_+ and D_-), so duplicates get a numeric suffix to stay unique
     const taken = new Set();
     const uniq = id => { let u = id, k = 2; while (taken.has(u)) u = id + "_" + k++; taken.add(u); return u; };
     const push = (ch, list) => (list || []).filter(Boolean).forEach(e => all.push({ ...e, chapter: ch, id: uniq(e.id ? ch + "-" + e.id : slug(ch, e.sym)) }));
     push(chapterId, notation);
     for (const c of book.chapters) if (c.id !== chapterId) push(c.id, modules[c.id]?.notation);
     const byId = Object.fromEntries(all.map(e => [e.id, e]));
-    // 常见的多义单字母（e 自然常数/电子、d 微分/距离、π）只采用本章词典的条目，避免借用他章含义造成误标
+    // Common ambiguous single letters (e as Euler's number/electron, d as differential/distance, π) use only this chapter's dictionary entries, to avoid mislabeling with another chapter's meaning
     const LOCAL_ONLY = new Set(["e|", "d|", "\\pi|"]);
     const usable = all.filter(e => e.chapter === chapterId || !LOCAL_ONLY.has(symKey(expandMacros(e.sym))));
     return { table: buildTable(usable, expandMacros), byId };
   }, [chapterId, notation]);
-  // 渲染期同步设置当前符号表（子组件随后渲染时即生效）
+  // Set the current symbol table synchronously during render (takes effect as child components render next)
   if (ACTIVE.table !== sym.table) ACTIVE = { table: sym.table, ver: ++tableVer };
 
-  // 子组件的 effect 先于父组件执行：此时登记表已完整，刷新一次依赖登记表的组件（路线图、关键方程等）
+  // Child effects run before the parent's: the registry is complete by now, so refresh the components that depend on it once (roadmap, key equations, etc.)
   useEffect(() => { setVer(v => v + 1); }, []);
 
-  // 点击委托：符号 → 弹卡；公式 → 放大
+  // Click delegation: symbol → popover; equation → zoom
   useEffect(() => {
     const onClick = e => {
       const s = e.target.closest?.("[data-sym]");
@@ -194,9 +194,9 @@ export function TextbookProvider({ chapterId, notation = [], children }) {
     </TbCtx.Provider>);
 }
 
-// 编号 → 章节 id（"2.23" → ch02，"A.3" → appA）
-// 编号里不含章号的书（论文、按节编号的教科书）：在 book.js 的章节上声明 eqs —— 正则字符串（如 "^[A-F]-\\d+"）或 true（兜底：其余编号都在这一页）
-// 拆分章节（ch07 / ch07b）里的编号由构建时扫描得到的 anchors 表决定（kind：eq / fig / sec）
+// Number → chapter id ("2.23" → ch02, "A.3" → appA)
+// Books whose numbers don't contain the chapter (papers, section-numbered textbooks): declare eqs on the chapter in book.js, as a regex string (e.g. "^[A-F]-\\d+") or true (fallback: all remaining numbers are on this page)
+// Numbers in split chapters (ch07 / ch07b) are resolved by the anchors table scanned at build time (kind: eq / fig / sec)
 export function chapterOfNum(n, kind = "eq") {
   const hit = anchors?.[`${kind}:${n}`];
   if (hit) return hit;
@@ -210,10 +210,10 @@ const anchor = (kind, n) => `${kind}-${String(n).replace(/[^\w.-]/g, "_")}`;
 const hrefTo = (kind, n, here) => pageUrl(chapterOfNum(n, kind) || here, anchor(kind, n));
 const chapterName = id => { const c = book.chapters.find(x => x.id === id); return c ? chapterNo(c) : id; };
 
-// ---------- 符号弹卡 ----------
+// ---------- Symbol popover ----------
 function SymbolPop({ id, x, y, top, onClose }) {
   const tb = useTextbook();
-  const e = tb.sym.byId[id] || tb.sym.byId[tb.chapterId + "-" + id];   // \sym{} 可写本章短 id
+  const e = tb.sym.byId[id] || tb.sym.byId[tb.chapterId + "-" + id];   // \sym{} can use this chapter's short id
   const ref = useRef(null);
   const [pos, setPos] = useState({ left: x, top: y + 8 });
   useEffect(() => {
@@ -224,7 +224,7 @@ function SymbolPop({ id, x, y, top, onClose }) {
     setPos({ left, top: t });
   }, [x, y, top, id]);
   if (!e) return null;
-  // 本章用到该符号的公式
+  // Equations in this chapter that use the symbol
   const uses = [...tb.eqs.current.entries()].filter(([, v]) => v.used?.includes(id)).map(([n]) => n)
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   return (
@@ -241,7 +241,7 @@ function SymbolPop({ id, x, y, top, onClose }) {
     </div>);
 }
 
-// ---------- 公式放大 + 逐符号解读 ----------
+// ---------- Equation zoom + symbol-by-symbol reading ----------
 function EqModal({ tex, n, title, say, onClose }) {
   const tb = useTextbook();
   const ids = symbolsIn(tex);
@@ -272,10 +272,10 @@ function EqModal({ tex, n, title, say, onClose }) {
     </div>);
 }
 
-// 行间公式（编号与原书一致）。
-// <Eq n="2.23" keyEq title="Christoffel 符号" say="一句话读法">{String.raw`…`}</Eq>
-// keyEq：关键方程（高亮 + 章末汇总）；say：用中文读出这个式子说了什么（放大窗口里显示）。
-// 不编号的行间公式省略 n。多行用 \begin{aligned}…\end{aligned}。点击公式可放大，点击符号查看定义。
+// Display equation (numbered as in the source book).
+// <Eq n="2.23" keyEq title="Christoffel symbols" say="one-line reading">{String.raw`…`}</Eq>
+// keyEq: key equation (highlighted + in the end-of-chapter summary); say: what the equation says, in words (shown in the zoom window).
+// Omit n for unnumbered display equations. For multiple lines use \begin{aligned}…\end{aligned}. Click an equation to zoom, click a symbol to see its definition.
 export function Eq({ n, children, keyEq = false, title, say }) {
   const tb = useTextbook();
   const tex = String(children).trim();
@@ -289,9 +289,9 @@ export function Eq({ n, children, keyEq = false, title, say }) {
     </div>);
 }
 
-// 引用：公式（悬停预览）、图、节、习题
-// 悬浮预览：渲染到 document.body（portal）并按触发元素的屏幕位置 fixed 定位——
-// 不会被任何 overflow 容器（可横向滚动的表格、卡片等）裁掉；上方空间不足时改为向下弹出，左右不越出视口。
+// References: equations (with hover preview), figures, sections, exercises
+// Hover preview: rendered into document.body (portal) with fixed positioning from the trigger's screen position, so
+// no overflow container (horizontally scrolling tables, cards, etc.) clips it; pops downward when there's too little room above, and stays within the viewport horizontally.
 export function HoverPop({ anchor, className = "", children }) {
   const ref = useRef(null);
   const [pos, setPos] = useState({ left: -9999, top: -9999 });
@@ -334,14 +334,14 @@ export const SecRef = ({ n }) => <Ref kind="sec" n={n} label={`§${n}`} />;
 export const ExRef = ({ n }) => <Ref kind="ex" n={n} label={t("ex.n", n)} />;
 export { anchor };
 
-// ---------- 带公式的正文 ----------
-// <Tx>{String.raw`标度因子 $a(t)$ 满足 \eqref{2.23}，见 \figref{2.3}、\secref{2.1.1}、\exref{2.4}。**粗体** *强调*`}</Tx>
-// 空行分段；$$...$$ 为不编号的行间公式（同样可点击放大）。
-// 行内记号。书可以用 extendInline 注册自己的引用记号（如论文书的 \sref{L2.1}），全站所有支持公式的地方随之生效。
+// ---------- Body text with formulas ----------
+// <Tx>{String.raw`The scale factor $a(t)$ satisfies \eqref{2.23}, see \figref{2.3}, \secref{2.1.1}, \exref{2.4}. **bold** *emphasis*`}</Tx>
+// Blank lines separate paragraphs; $$...$$ is an unnumbered display equation (also clickable to zoom).
+// Inline notation. Books can register their own reference notation with extendInline (e.g. \sref{L2.1} in paper books), which then works everywhere formulas are supported.
 const BASE_TOKENS = [String.raw`\$\$[\s\S]+?\$\$`, String.raw`\$[^$]+?\$`, String.raw`\\eqref\{[^}]+\}`, String.raw`\\figref\{[^}]+\}`, String.raw`\\secref\{[^}]+\}`, String.raw`\\exref\{[^}]+\}`, String.raw`\*\*[^*]+?\*\*`, String.raw`\*[^*\s][^*]*?\*`];
-const EXT = [];       // [{ name, render(arg, key) }]：记号形如 \name{arg}
+const EXT = [];       // [{ name, render(arg, key) }]: notation of the form \name{arg}
 let TOKEN = new RegExp(`(${BASE_TOKENS.join("|")})`, "g");
-let RICH = /\$[^$]+\$|\\(eqref|figref|secref|exref)\{/;      // 含这些记号的字符串才按"富文本"解析（见 Rich）
+let RICH = /\$[^$]+\$|\\(eqref|figref|secref|exref)\{/;      // only strings containing these notations are parsed as "rich text" (see Rich)
 export function extendInline(name, render) {
   if (EXT.some(e => e.name === name)) return;
   EXT.push({ name, render });
@@ -372,24 +372,24 @@ export function Tx({ children, as = "p", className }) {
   if (as !== "p") return <Tag className={className}>{inline(text.trim(), "t")}</Tag>;
   return paras.map((p, i) => <p key={i} className={className}>{inline(p.replace(/\s*\n\s*/g, " "), "p" + i)}</p>);
 }
-// 只解析行内标记、不分段（用于标题、表格单元格、按钮等）
+// Parses only inline markup, without splitting paragraphs (for titles, table cells, buttons, etc.)
 export const TxI = ({ children }) => <>{inline(String(children ?? ""), "i")}</>;
 
-// ---------- 富文本：只在需要时解析公式 ----------
-// 字符串含 $…$ 或 \eqref 类记号时按 TxI/Tx 渲染（KaTeX + 引用），否则原样输出——不含公式的人文书文本完全不受影响。
-// 非字符串（JSX）原样返回。框架中原本只渲染纯文本的地方（Hook、Bridge、概念卡、Takeaways、Quiz、Roadmap、Plot 图注、书架…）都经过它。
+// ---------- Rich text: parse formulas only when needed ----------
+// Strings containing $…$ or \eqref-style notation render via TxI/Tx (KaTeX + references), otherwise as is, so formula-free humanities text is completely unaffected.
+// Non-strings (JSX) are returned as is. Places in the framework that originally rendered only plain text (Hook, Bridge, concept cards, Takeaways, Quiz, Roadmap, Plot captions, shelf…) all go through it.
 export const needsRich = s => typeof s === "string" && RICH.test(s);
 export function Rich({ children }) {
   const s = children;
   if (typeof s !== "string") return s ?? null;
   return needsRich(s) ? <TxI>{s}</TxI> : s;
 }
-// 分段版本（\n\n 分段）：替代 core.jsx 的 Paras
+// Paragraph-split version (split on \n\n): replaces core.jsx's Paras
 export function RichParas({ text }) {
   if (text != null && typeof text !== "string") return text;
   const t = String(text ?? "");
   if (needsRich(t)) return <Tx>{t}</Tx>;
   return t.split(/\n\s*\n/).filter(Boolean).map((p, i) => <p key={i}>{p}</p>);
 }
-// 用于 title 属性等只能放纯文本的地方：去掉 $ 与 \命令
+// For places that accept only plain text, such as title attributes: strips $ and \commands
 export const plainText = s => (typeof s === "string" ? s.replace(/\$([^$]*)\$/g, "$1").replace(/\\[a-zA-Z]+/g, "").replace(/[{}]/g, "") : "");

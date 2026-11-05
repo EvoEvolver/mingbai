@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""把一批图拼成带编号的缩略图总览，便于人工核查裁剪。用法: contact_sheet.py OUT.png img1 img2 ..."""
+"""Combine a batch of images into a numbered thumbnail overview, for checking crops by hand. Usage: contact_sheet.py OUT.png img1 img2 ..."""
 import sys, os
 from PIL import Image, ImageDraw
 out, files = sys.argv[1], sys.argv[2:]

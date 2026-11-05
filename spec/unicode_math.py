@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""扫描章节 JSX 中「用 Unicode 拼写的数学」（应改写为 $…$ KaTeX）。
-用法: unicode_math.py FILE... [--quiet]   → 打印 文件:行: 片段，并以出现处数作为退出码上限 1
-规则：
-- 只检查字符串/模板字符串中的读者可见文字；`$…$`、`$$…$$` 内部与 R`…` 中以反斜杠命令写成的 TeX 不算。
-- 命中字符：希腊字母、上下标数字/字母、数学运算符（∝ ≈ ≤ ≥ ≪ ≫ √ ∫ ∑ ∏ ∂ ∇ · × ± ∓ → ⟶ ⟨ ⟩ ∞ ′ ″ ⁻ ∈ ⊗ ≡ …）、组合附加符（p̂ ä 等）。
-- 中文标点、引号、破折号（— – ·间隔号 在中文语境）不算；度量单位里的 µ 不算。
+"""Scan chapter JSX for "math spelled in Unicode" (should be rewritten as $…$ KaTeX).
+Usage: unicode_math.py FILE... [--quiet]   → prints file:line: snippet; exit code is 1 if there are any hits, otherwise 0
+Rules:
+- Only reader-visible text in strings/template strings is checked; the inside of `$…$` and `$$…$$`, and TeX written with backslash commands in R`…`, don't count.
+- Matched characters: Greek letters, superscript/subscript digits and letters, math operators (∝ ≈ ≤ ≥ ≪ ≫ √ ∫ ∑ ∏ ∂ ∇ · × ± ∓ → ⟶ ⟨ ⟩ ∞ ′ ″ ⁻ ∈ ⊗ ≡ …), combining diacritics (p̂, ä, etc.).
+- Chinese punctuation, quotation marks, and dashes (— – and the · interpunct in Chinese text) don't count; µ in units of measure doesn't count.
 """
 import re, sys, unicodedata
 
@@ -14,7 +14,7 @@ SUPSUB = "⁰¹²³⁴⁵⁶⁷⁸⁹ⁱⁿ₀₁₂₃₄₅₆₇₈₉₊₋�
 PAT = re.compile(f"[{GREEK}{MATHOPS}{SUPSUB}]|[a-zA-Z][\u0300-\u036f]")
 STRINGS = re.compile(r"`(?:\\.|[^`\\])*`|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'")
 MATH = re.compile(r"\$\$[\s\S]*?\$\$|\$[^$]*\$")
-# 只出现在代码/注释里的不算：跳过 import 行与 // 注释
+# Things that appear only in code/comments don't count: skip import lines and // comments
 def scan(path):
     hits = []
     for ln, line in enumerate(open(path, encoding="utf-8"), 1):
@@ -29,7 +29,7 @@ def scan(path):
             for h in PAT.finditer(text):
                 a = max(0, h.start() - 18); b = min(len(text), h.end() + 18)
                 hits.append((ln, text[a:b].replace("\n", " ")))
-                break      # 每个字符串报一次
+                break      # report once per string
     return hits
 
 files = [f for f in sys.argv[1:] if not f.startswith("--")]

@@ -1,4 +1,4 @@
-// 图书讲明白 · 组件库。章节文件统一从 "@kit" 引入。说明见 spec/KIT.md
+// Mingbai.js component kit. Chapter files import everything from "@kit". See spec/KIT.md
 export { Paras, shuffle, PALETTE, useReveal, useToast, useChapter, ConceptChip, C } from "./core.jsx";
 export { ChapterPage, BookPage, Block, Hero } from "./layout.jsx";
 export { book, modules, allConcepts, chapterGroups, chapterLabel, chapterNo, titleOf, nameOf, crossLinks, pageUrl, assetUrl, currentPage, hasChapter, go } from "./book.jsx";
@@ -8,15 +8,15 @@ export { ConceptMap } from "./ConceptMap.jsx";
 export { DragSort } from "./DragSort.jsx";
 export { Callout, Card, Grid, Reveal, Tabs, StepThrough, Toggle, Timeline } from "./primitives.jsx";
 
-// ---- 数理教科书组件（说明见 spec/TEXTBOOK.md）----
+// ---- Math and science textbook components (see spec/TEXTBOOK.md) ----
 export { M, Eq, EqRef, FigRef, SecRef, ExRef, Tx, TxI, Rich, RichParas, EqLine, FitTex, extendInline, plainText, renderTex, symbolsIn, useTextbook } from "./math/tex.jsx";
 export { Sec, Sub, Box, Derivation, Figure, Exercise, Notation, Table, KeyEquations, Details, EqChip } from "./math/env.jsx";
 export { Roadmap, EqMap } from "./math/overview.jsx";
 export { Plot, num } from "./math/plot.jsx";
 export { TextbookPage } from "./math/textbook.jsx";
-// ---- 定理–证明类文本（论文、数学书）：陈述登记表由 book.js 的 statements 提供；说明见 spec/PROOF.md ----
+// ---- Theorem-proof texts (papers, math books): the statement registry comes from statements in book.js; see spec/PROOF.md ----
 export { SRef, Stmt, Proof, Erratum, RunCard, Check, MatrixView, DepGraph, StudyTable, Slider, Seg, pageIds, statements, stmtLabel, anchorOf } from "./math/proof.jsx";
-// ---- 论文导读：缺口 → 动机 → 方案 → 结果；说明见 spec/PAPER.md ----
+// ---- Paper guides: gap → motivation → solution → result; see spec/PAPER.md ----
 export { PaperPage, PaperCite, GMSR, PaperSec, GapMap, Stakes, KeyIdea, Pipeline, Headline, Claim, ClaimBoard, Limits, EditorView, ReadingGuide, ROLES } from "./paper/paper.jsx";
 export { Weighted, Key, P, BigEq, MinorEq, Fold, Number as KeyNumber, Assume, Verdict, AboveFold } from "./paper/weighted.jsx";
 export { FormulaMap } from "./paper/fmap.jsx";

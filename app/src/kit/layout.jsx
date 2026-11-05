@@ -4,8 +4,8 @@ import { book, modules, allConcepts, crossLinks, chapterGroups, chapterLabel, ha
 import { ChapterProvider, ConceptChip } from "./core.jsx";
 import { Rich } from "./math/tex.jsx";
 
-// 整章外壳：上下文 + 进度条 + 侧边目录 + 开篇 Hero + 章节导航。
-// children 里用 <Block> 组织区块，带 toc 的 Block 会自动进入侧边目录。
+// Whole-chapter shell: context + progress bar + side table of contents + opening Hero + chapter navigation.
+// Organize sections in children with <Block>; a Block with toc goes into the side table of contents automatically.
 export function ChapterPage({ meta, groups, concepts, relations, children }) {
   useEffect(() => { document.title = `${titleOf(meta)} · ${book.title}`; }, [meta]);
   const extra = useMemo(() => allConcepts(), []);
@@ -64,8 +64,8 @@ export function Progress() {
   return <div id="progress" style={{ width: w + "%" }} />;
 }
 
-// 扫描 DOM 中带 data-toc 的区块生成目录（层级见 data-toc-level，缺省 1）。
-// 平时是页面右侧的一列横杠，长度表示层级、高亮表示当前位置；悬停或键盘聚焦时展开成标题面板（纯 CSS，见 style.css）。
+// Build the table of contents by scanning the DOM for blocks with data-toc (level from data-toc-level, default 1).
+// Normally a column of dashes on the right of the page, with length showing level and highlight showing current position; expands into a heading panel on hover or keyboard focus (pure CSS, see style.css).
 export function Toc() {
   const [items, setItems] = useState([]), [cur, setCur] = useState(0);
   const panel = useRef(null);
@@ -76,7 +76,7 @@ export function Toc() {
     addEventListener("scroll", f, { passive: true }); f();
     return () => removeEventListener("scroll", f);
   }, []);
-  // 面板较长时，让当前项保持在可见范围内（只滚动面板自身，不影响页面）
+  // When the panel is long, keep the current item visible (scrolls only the panel, not the page)
   useEffect(() => {
     const p = panel.current, a = p?.children[cur];
     if (a && (a.offsetTop < p.scrollTop || a.offsetTop + a.offsetHeight > p.scrollTop + p.clientHeight)) p.scrollTop = a.offsetTop - p.clientHeight / 2;
@@ -94,7 +94,7 @@ export function Toc() {
     </nav>);
 }
 
-// 固定顶栏：返回书架 + 章节跳转下拉 + 上一章/下一章。向下滚动时收起，向上滚动时出现。
+// Fixed top bar: back to shelf + chapter dropdown + previous/next chapter. Hides on scroll down, appears on scroll up.
 export function TopBar({ id }) {
   const i = id ? book.chapters.findIndex(c => c.id === id) : -1;
   const prev = i >= 0 ? book.chapters[i - 1] : null, next = i >= 0 ? book.chapters[i + 1] : null;
@@ -136,7 +136,7 @@ export function ChapterNav({ id }) {
     </nav>);
 }
 
-// 本章与其他章节的联系（数据来自 chapters/connections.jsx 的 links）
+// Connections between this chapter and others (data comes from links in chapters/connections.jsx)
 function CrossLinks({ id }) {
   const links = crossLinks().filter(l => l.from.startsWith(id + ":") || l.to.startsWith(id + ":"));
   if (!links.length) return null;
@@ -152,8 +152,8 @@ function CrossLinks({ id }) {
     </Block>);
 }
 
-// 全书层面的页面外壳（如全书脉络页）：所有章节概念都可用 <C id="ch03:mathesis"> 引用，
-// <ConceptMap edges=[...]> 可画跨章关系图（按章节配色）。
+// Page shell at book level (e.g. the whole-book overview page): all chapters' concepts can be referenced with <C id="ch03:mathesis">,
+// and <ConceptMap edges=[...]> can draw cross-chapter maps (colored by chapter).
 export function BookPage({ title, subtitle, lead, children }) {
   useEffect(() => { document.title = `${title} · ${book.title}`; }, [title]);
   const concepts = useMemo(() => allConcepts(), []);

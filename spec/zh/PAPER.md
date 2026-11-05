@@ -1,5 +1,7 @@
 # 论文导读（PAPER）
 
+[English](../PAPER.md)
+
 论文与教科书的读法不同：读者要的是**这篇论文补上了什么缺口、为什么值得做、怎么做的、做成了没有**。
 论文页沿用数理组件（`Eq`、符号词典、`Plot`、`Derivation`、`Box`…，见 TEXTBOOK.md），叙事骨架换成下面的组件（`@kit` 导出，源码 `kit/paper/paper.jsx`）。
 

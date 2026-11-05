@@ -19,7 +19,7 @@ section.block{margin:88px 0}
 .block>h2{font-size:30px;margin-bottom:10px}
 .lead{color:var(--muted);margin:0 0 28px}
 
-/* TOC：右侧一列横杠（长度 = 层级，高亮 = 当前位置），悬停或键盘聚焦时展开成标题面板 */
+/* TOC: a column of dashes on the right (length = level, highlight = current position); expands into a heading panel on hover or keyboard focus */
 #toc{position:fixed;right:10px;top:50%;transform:translateY(-50%);z-index:30}
 .toc-rail{display:flex;flex-direction:column;width:30px;height:min(calc(var(--n)*11px),72vh);padding:0 3px}
 .toc-bar{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:flex-end}
@@ -268,7 +268,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:80px}
 .xch{display:inline-block;margin-top:10px;font-size:14px;text-decoration:none}
 .chip-ch{color:var(--muted);font-size:12px}
 
-/* ---- 顶栏 ---- */
+/* ---- Top bar ---- */
 .topbar{position:fixed;top:0;left:0;right:0;height:48px;z-index:40;display:flex;align-items:center;gap:14px;padding:0 20px;
   background:rgba(246,241,231,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transition:transform .25s}
 .topbar.hide{transform:translateY(-100%)}
@@ -284,7 +284,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:80px}
 #progress{z-index:60}
 main{padding-top:48px}
 
-/* ---- 金句 ---- */
+/* ---- Quotes ---- */
 .quotewrap{display:flex;align-items:center;gap:10px}
 .quotewrap .quote{flex:1;cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative}
 .quotewrap .quote:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(60,40,10,.1),0 14px 30px rgba(60,40,10,.12)}
@@ -293,13 +293,13 @@ main{padding-top:48px}
 .qhint{margin-top:12px;font-size:13px;color:var(--accent);text-align:right}
 @media(max-width:640px){.qarrow{display:none}}
 
-/* ---- 概念图工具栏 ---- */
+/* ---- Concept map toolbar ---- */
 .mapwrap svg{touch-action:none;user-select:none}
 .map-tools{position:absolute;right:12px;top:12px;display:flex;gap:6px;z-index:2}
 .map-tools button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 10px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
 .map-tools button:hover{border-color:var(--accent);color:var(--accent)}
 
-/* ================= 数理教科书 ================= */
+/* ================= Math and science textbooks ================= */
 .tb{max-width:860px}
 .tb p{margin:0 0 14px;text-align:justify}
 .tb-hero{padding:90px 0 30px;border-bottom:1px solid var(--line);margin-bottom:40px}
@@ -400,7 +400,7 @@ main{padding-top:48px}
 .tb-step-m .katex-display{text-align:left}.tb-step-m .katex-display>.katex{text-align:left;padding-left:4px}
 .tb-sec,.tb-sub,.tb-fig,.tb-ex,.eq{scroll-margin-top:64px}
 
-/* ---- 符号与公式交互 ---- */
+/* ---- Symbol and equation interaction ---- */
 .tb [data-sym],.tb-modal [data-sym]{cursor:pointer;border-radius:3px;transition:background .15s}
 .tb [data-sym]:hover,.tb-modal [data-sym]:hover{background:rgba(184,134,43,.28);color:var(--accent)}
 .eq-click{cursor:zoom-in}
@@ -431,7 +431,7 @@ main{padding-top:48px}
 .tb-tip{margin-top:16px;font-size:14px;color:var(--muted)}
 .tb-hero .one{margin-top:10px}
 .tb-hero .bigq{margin-top:20px}
-/* 节首要点卡 */
+/* Section key-points card */
 .tb-seccard{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 18px;margin:0 0 22px;border-left:4px solid var(--accent);display:grid;gap:6px;font-size:15.5px}
 .tb-sc-lab{display:inline-block;font-size:12px;letter-spacing:.08em;color:#fff;background:var(--accent);border-radius:6px;padding:0 8px;margin-right:10px;vertical-align:2px}
 .tb-sc-why .tb-sc-lab{background:var(--blue)}
@@ -440,7 +440,7 @@ main{padding-top:48px}
 .eq-chip{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:2px 10px;cursor:zoom-in;font-size:14px;max-width:100%;overflow:hidden}
 .eq-chip:hover{border-color:var(--gold)}
 .eq-chip .katex .tag{position:static;margin-left:8px;color:var(--muted)}
-/* 路线图 */
+/* Roadmap */
 .roadmap{display:grid;gap:0;max-width:760px}
 .rm-card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 18px;border-left:4px solid var(--blue)}
 .rm-title{font-family:var(--serif);font-size:18px;text-decoration:none;color:var(--ink)}
@@ -449,7 +449,7 @@ main{padding-top:48px}
 .rm-gives{display:flex;flex-wrap:wrap;gap:6px}
 .rm-arrow{display:flex;align-items:center;gap:10px;padding:4px 0 4px 26px;color:var(--muted);font-size:14px}
 .rm-arrow span{font-size:20px;color:var(--accent)}
-/* 推导路线图 */
+/* Derivation roadmap */
 .eqmap{overflow-x:auto;position:relative;padding:12px;margin:14px 0 8px}
 h3:has(+ .eqmap){margin:32px 0 14px;padding-left:12px;border-left:4px solid var(--gold);font-size:19px;line-height:1.4}
 .eqm-edge path{fill:none;stroke:#b8a888;stroke-width:1.6}
@@ -465,7 +465,7 @@ h3:has(+ .eqmap){margin:32px 0 14px;padding-left:12px;border-left:4px solid var(
 .eqm-m{font-size:14px}
 .eqmap svg{display:block}
 
-/* ---- 行间公式：公式区 + 编号栏（替代 \tag，杜绝重叠）---- */
+/* ---- Display equations: equation area + number column (replaces \tag, which rules out overlap) ---- */
 .eqline{display:flex;align-items:center;gap:14px;width:100%}
 .eqline-m{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;text-align:center}
 .eqline-m .katex-display{margin:.35em 0;overflow:visible}
@@ -479,21 +479,21 @@ h3:has(+ .eqmap){margin:32px 0 14px;padding-left:12px;border-left:4px solid var(
 .tb-modal-eq .eqline-n{font-size:1em}
 .ref-pop .eqline-n{font-size:1em}
 .tb-keyeq .eqline{padding:4px 0}
-/* 小卡片与推导图节点：自适应缩放 */
+/* Small cards and derivation map nodes: auto-scaling */
 .fittex{min-width:0;overflow:hidden}
 .eq-chip .eq-chip-m{max-width:min(420px,72vw);white-space:nowrap}
 .eqm-node{padding:6px 10px}
 .eqm-m{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;font-size:15px;overflow:hidden}
 .eqm-m .katex-display{margin:0}
-/* 深色卡片（开场 Hook、章末 Bridge）中的公式引用链接需提亮 */
+/* Equation reference links in dark cards (opening Hook, end-of-chapter Bridge) need brightening */
 .hook .ref,.bridge .ref,.hook a,.bridge a{color:#f3d48a;border-bottom-color:#f3d48a}
-/* 概念图中的 KaTeX 标签 */
+/* KaTeX labels in the concept map */
 .svgrich{overflow:visible}
 .svgrich>div{text-align:center;font-size:11px;line-height:20px;color:var(--muted);white-space:nowrap}
 .svgrich.nlab>div{font-size:14px;color:var(--ink)}
 .dim .svgrich,.svgrich.dim{opacity:.2}
 .plot-vlab .plot-tex{text-align:left}.plot-vlab-r .plot-tex{text-align:right}
-/* 推导图连线标签（常驻、最上层、可两行） */
+/* Derivation map edge labels (always visible, on top, up to two lines) */
 .eqmap path.eqm-edge{fill:none;stroke:#b8a888;stroke-width:1.6}
 .eqmap path.eqm-edge.hot{stroke:var(--gold);stroke-width:2.2}
 .eqm-lfo{overflow:visible;pointer-events:none}
@@ -502,8 +502,8 @@ h3:has(+ .eqmap){margin:32px 0 14px;padding-left:12px;border-left:4px solid var(
 .eqmap .eqm-elab-t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .eqmap .eqm-elab.on{border-color:var(--gold);background:#fff8e6}
 
-/* ================= 定理–证明类组件（kit/math/proof.jsx，源自 ETH 书）================= */
-/* ---- 陈述引用 ---- */
+/* ================= Theorem-proof components (kit/math/proof.jsx, originally from the ETH book) ================= */
+/* ---- Statement references ---- */
 .sref{text-decoration:none;font-weight:600;border-bottom:1px dotted currentColor;white-space:nowrap;color:var(--blue)}
 .sref-theorem{color:var(--accent)} .sref-proposition{color:var(--violet)} .sref-definition{color:var(--green)}
 .sref-fact,.sref-cited{color:#6b5d45;font-weight:500} .sref-corollary{color:var(--gold)}
@@ -511,7 +511,7 @@ h3:has(+ .eqmap){margin:32px 0 14px;padding-left:12px;border-left:4px solid var(
 .sref-pop{font-size:14.5px;line-height:1.65;text-align:left;min-width:320px;padding:10px 14px}
 .sref-stmt{display:block;margin:6px 0 4px}
 .sref-where{display:block;font-size:12px}
-/* ---- 定理环境 ---- */
+/* ---- Theorem environments ---- */
 .stmt{margin:26px 0;border-radius:16px;background:var(--card);box-shadow:var(--shadow);border-top:4px solid var(--blue);scroll-margin-top:70px;overflow:hidden}
 .stmt-theorem{border-top-color:var(--accent)} .stmt-proposition{border-top-color:var(--violet)} .stmt-definition{border-top-color:var(--green)}
 .stmt-fact,.stmt-cited{border-top-color:#a89b82} .stmt-corollary{border-top-color:var(--gold)}
@@ -530,7 +530,7 @@ h3:has(+ .eqmap){margin:32px 0 14px;padding-left:12px;border-left:4px solid var(
 .sn-lab{font-size:12.5px;color:var(--muted);letter-spacing:.06em;padding-top:2px;white-space:nowrap}
 .stmt-proof{padding:0 18px 8px}
 .stmt-proof > p{margin:10px 0}
-/* ---- 分步证明 ---- */
+/* ---- Step-by-step proofs ---- */
 .proof{border:1px solid var(--line);border-radius:14px;margin:14px 0;background:var(--paper)}
 .proof-h{display:flex;justify-content:space-between;padding:9px 16px;cursor:pointer;font-weight:600;user-select:none;gap:12px}
 .proof-meta{color:var(--muted);font-weight:400;font-size:13.5px;white-space:nowrap}
@@ -546,11 +546,11 @@ h3:has(+ .eqmap){margin:32px 0 14px;padding-left:12px;border-left:4px solid var(
 .ps-why{font-size:14px;color:var(--muted);line-height:1.65}
 .ps-uses{margin-left:8px}
 .proof-qed{text-align:right;padding:0 18px 10px;font-size:18px}
-/* ---- 勘误 / 注记 ---- */
+/* ---- Errata / notes ---- */
 .erratum{border-left-color:var(--gold);background:#fdf7e8}
 .er-erratum{border-left-color:var(--accent);background:#fbeee9}
 .er-loc{float:right;font-family:var(--sans);font-weight:400;font-size:12.5px;color:var(--muted)}
-/* ---- 可运行示例 ---- */
+/* ---- Runnable examples ---- */
 .runcard{margin:22px 0;border-left:4px solid var(--green)}
 .runcard-h{margin-bottom:6px}
 .run-tag{display:inline-block;font-size:12px;background:var(--green);color:#fff;border-radius:6px;padding:1px 8px;margin-right:6px}
@@ -569,13 +569,13 @@ h3:has(+ .eqmap){margin:32px 0 14px;padding-left:12px;border-left:4px solid var(
 .run-out td,.run-out th{border-bottom:1px solid var(--line);padding:3px 10px;text-align:left}
 .run-btn{border:1px solid var(--accent);background:var(--card);color:var(--accent);border-radius:99px;padding:3px 14px;font:inherit;font-size:14px;cursor:pointer}
 .run-btn:hover{background:var(--accent);color:#fff}
-/* ---- 矩阵热图 ---- */
+/* ---- Matrix heatmap ---- */
 .mview{margin:8px 0;display:inline-block;text-align:center}
 .mview figcaption{font-size:13.5px;color:var(--muted);margin-bottom:4px}
 .mv-num{font-size:10px;font-family:var(--sans)}
 .mv-lab{font-size:9.5px;fill:var(--muted);font-family:var(--sans)}
 .mv-sep{stroke:var(--gold);stroke-width:1.6}
-/* ---- 依赖图 ---- */
+/* ---- Dependency graph ---- */
 .depgraph{padding:14px 16px;width:min(1240px,94vw);position:relative;left:50%;transform:translateX(-50%);box-sizing:border-box}
 .dg-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted);margin-bottom:8px}
 .dg-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
@@ -601,10 +601,10 @@ foreignObject.dim{opacity:.25}
 .dg-p-s{margin-bottom:8px}
 .dg-p-r{margin:4px 0}
 .dg-go{display:inline-block;margin-top:8px}
-/* ---- 学习笔记总表 ---- */
+/* ---- Study notes table ---- */
 .study td{font-size:14px;line-height:1.65}
 .study td:first-child{white-space:nowrap}
-/* ---- 参数账本 ---- */
+/* ---- Parameter ledger ---- */
 .ledger{padding:16px 20px}
 .ledger-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 24px}
 .ledger table{border-collapse:collapse;width:100%;font-size:14.5px;margin-top:10px}
@@ -616,21 +616,21 @@ foreignObject.dim{opacity:.25}
 .ledger .cond.ok{color:var(--green)} .ledger .cond.bad{color:var(--accent)}
 .ledger-verdict{margin-top:10px;padding:10px 14px;border-radius:10px;background:var(--paper);font-size:15px}
 
-/* 深色 Hook / Bridge 中的引用链接 */
+/* Reference links in dark Hook / Bridge */
 .hook .ref,.hook .sref,.bridge .ref,.bridge .sref{color:#f3d48a;border-bottom-color:#f3d48a}
 .study th:nth-child(2),.study td:nth-child(2){min-width:24em}
 .study th:nth-child(4),.study td:nth-child(4){min-width:8em}
-/* 顶栏：书库入口与层级 */
+/* Top bar: library link and hierarchy */
 .tb-lib{text-decoration:none;color:#fff;background:var(--accent);border-radius:99px;padding:5px 14px;font-size:14.5px;white-space:nowrap;box-shadow:var(--shadow)}
 .tb-lib:hover{background:#7d2218}
 .tb-sep{color:var(--muted);margin:0 -6px;font-size:18px}
 .tb-home.tb-cur{box-shadow:none;background:none;padding-left:4px}
-/* 悬浮预览（portal + fixed 定位，见 HoverPop） */
+/* Hover preview (portal + fixed positioning, see HoverPop) */
 .ref-pop.floating{position:fixed;transform:none;bottom:auto;z-index:300;max-width:min(640px,92vw)}
 .sref-pop.floating{max-width:min(560px,92vw)}
 .tb-box{scroll-margin-top:64px}
 
-/* ---------- 选中文字反馈（kit/Feedback.jsx） ---------- */
+/* ---------- Feedback on selected text (kit/Feedback.jsx) ---------- */
 .fb-float{position:fixed;transform:translateX(-50%);z-index:300;border:0;border-radius:99px;padding:5px 14px;font:inherit;font-size:14px;
   background:var(--ink);color:var(--paper);box-shadow:var(--shadow);cursor:pointer;white-space:nowrap}
 .fb-float:hover{background:var(--accent)}
@@ -650,7 +650,7 @@ foreignObject.dim{opacity:.25}
 .fb-note{font-size:12px;color:var(--muted);line-height:1.6}
 @media print{.fb-float,.fb-panel{display:none}}
 
-/* ---------- 论文导读（kit/paper/paper.jsx） ---------- */
+/* ---------- Paper guides (kit/paper/paper.jsx) ---------- */
 .pp{--gap:#9b2c1f;--mot:#b8862b;--sol:#2c4a6e;--res:#3c6b4a;--lim:#7a6a58;--bg:#6b6257;--ed:#5b3f7a}
 .pp-r-gap{--rc:var(--gap)}.pp-r-motivation{--rc:var(--mot)}.pp-r-solution{--rc:var(--sol)}.pp-r-result{--rc:var(--res)}
 .pp-r-limits{--rc:var(--lim)}.pp-r-background{--rc:var(--bg)}.pp-r-editor{--rc:var(--ed)}
@@ -735,7 +735,7 @@ foreignObject.dim{opacity:.25}
 .pp-pipe-wrap .pp-step::after{display:none}
 a.pp-num{text-decoration:none;color:var(--ink)}a.pp-num:hover{outline:2px solid var(--res)}
 
-/* ---------- 按重要性分配面积（kit/paper/weighted.jsx） ---------- */
+/* ---------- Area allocated by importance (kit/paper/weighted.jsx) ---------- */
 .pw-page{--w3:#9b2c1f}
 .pw{margin:10px 0}
 .pw-3{font-size:20px;line-height:1.75;font-weight:600;color:var(--ink);border-left:6px solid var(--w3);background:linear-gradient(90deg,#fbeeea,transparent 70%);padding:10px 16px;border-radius:0 12px 12px 0;margin:18px 0}
@@ -767,32 +767,32 @@ a.pp-num{text-decoration:none;color:var(--ink)}a.pp-num:hover{outline:2px solid 
 .pw-above-h{font-size:13px;letter-spacing:.25em;color:var(--w3);font-weight:700;margin-bottom:8px}
 .pw-above-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start}
 .pw-above-g>*{margin:0!important}
-/* 扫读模式：细节折叠，正文略缩 */
+/* Skim mode: details collapsed, body slightly smaller */
 body.pw-skim .pw-1,body.pw-skim .pw-fold,body.pw-skim .pw-mineq,body.pw-skim .pw-deep{display:none}
 body.pw-skim .pw-page .tb-sec>p,body.pw-skim .pw-2{font-size:15px;color:#4a4238}
-/* 开关 */
+/* Toggle */
 .pw-toggle{position:fixed;left:18px;bottom:18px;z-index:60;display:flex;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
 .pw-toggle button{border:0;background:none;border-radius:99px;padding:6px 16px;font:inherit;font-size:14px;cursor:pointer;color:var(--muted)}
 .pw-toggle button.on{background:var(--ink);color:var(--paper)}
-/* 重要性地图（右边缘竖条） */
+/* Importance map (vertical bar on the right edge) */
 .pw-map{position:fixed;right:6px;top:70px;bottom:20px;width:12px;z-index:55;border-radius:6px;background:rgba(120,90,40,.08)}
 .pw-dot{position:absolute;left:1px;width:10px;height:10px;border-radius:50%;border:0;padding:0;cursor:pointer;transform:translateY(-50%);background:var(--w3)}
 .pw-dot.k-eq{background:var(--blue)}.pw-dot.k-num{background:var(--green)}.pw-dot.k-assume{background:var(--gold)}.pw-dot.k-verdict{background:var(--ink)}
 .pw-dot.on{outline:3px solid rgba(155,44,31,.35)}
 @media(max-width:700px){.pw-map{display:none}.pw-3{font-size:18px}.pw-num>b{font-size:30px}}
-/* 加权页：压缩 hero 的留白，让首屏要点进入第一屏 */
+/* Weighted pages: tighten the hero's whitespace so the key points land on the first screen */
 .pw-page .tb-hero{padding:56px 0 18px;margin-bottom:22px}
 .pw-page .tb-hero .en{margin-bottom:12px}
-/* 扫读模式：页尾参考材料（符号表、关键公式汇总）收起——它们是查阅用的，不是论证 */
+/* Skim mode: collapse end-of-page reference material (symbol table, key equation summary); it's for lookup, not part of the argument */
 body.pw-skim .pw-page #b-notation,body.pw-skim .pw-page #b-keyeq{display:none}
 
-/* ---------- 公式局部高亮（kit/paper/ink.js）：画在公式背后 ---------- */
+/* ---------- Partial equation highlight (kit/paper/ink.js): drawn behind the equation ---------- */
 .ink-layer{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
 .ink-layer>i{position:absolute;display:block;border-radius:7px;background:color-mix(in srgb,var(--rc) 16%,transparent);opacity:0;transition:opacity .12s}
 .ink-layer>i.on{opacity:1}
 .fm-eq .katex-display{position:relative;z-index:1}
 
-/* ---------- 公式树图（kit/paper/fmap.jsx） ---------- */
+/* ---------- Formula tree map (kit/paper/fmap.jsx) ---------- */
 .fm{margin:26px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(60,40,10,.1);padding:14px 18px 12px}
 .fm [data-role=unknown],.fm-cell[data-role=unknown]{--rc:#b4372a}.fm [data-role=known]{--rc:#2c5d8f}.fm [data-role=design]{--rc:#2f7a4a}.fm [data-role=const]{--rc:#9a6b12}.fm [data-role=result]{--rc:#6a3f8f}
 .fm-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--muted)}
@@ -839,10 +839,10 @@ body.pw-skim .pw-page #b-notation,body.pw-skim .pw-page #b-keyeq{display:none}
 @media(prefers-reduced-motion:reduce){.fm-cell,.fm-cell>.fm-head,.fm-cell>.fm-body{transition:none}}
 .fm-body .fm-l.one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* 加权页右边缘是重要性地图，目录让出它的位置 */
+/* The right edge of weighted pages holds the importance map, so the TOC moves out of its way */
 body:has(.pw-map) #toc{right:24px}
 
-/* ---------- 英文界面（book.js 的 lang: "en"）：换用西文字体；两端对齐在英文里容易出现大空隙，改为左对齐 ---------- */
+/* ---------- English UI (lang: "en" in book.js): switch to Latin fonts; justified text leaves large gaps in English, so use left alignment ---------- */
 :root:lang(en){--serif:Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
 :lang(en) body{line-height:1.7}
 :lang(en) .tb p{text-align:left}
