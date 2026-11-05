@@ -1,7 +1,7 @@
 import zh from "./zh.js";
 import en from "./en.js";
 
-// 已支持的界面语言。book.js 的 lang 取这里的键；缺省为 zh。
+// Supported UI languages. book.js sets `lang` to one of these keys; the default is en.
 export const MESSAGES = { zh, en };
-export const DEFAULT_LANG = "zh";
+export const DEFAULT_LANG = "en";
 export const langOf = book => (MESSAGES[book?.lang] ? book.lang : DEFAULT_LANG);

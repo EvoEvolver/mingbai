@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>书库 · 图书讲明白</title>
-<meta name="description" content="把书做成交互式学习站点：人文经典导读、数理教科书、论文讲解。">
+<title>Library · Mingbai</title>
+<meta name="description" content="Books turned into interactive learning sites: guides to the humanities, math and science textbooks, and paper walkthroughs.">
 <style>
 :root{--paper:#f6f1e7;--paper2:#efe6d4;--ink:#1f1b16;--muted:#6b6257;--line:#d9cdb6;--accent:#9b2c1f;--gold:#b8862b;--blue:#2c4a6e;--green:#3c6b4a;--violet:#5b3f7a;
   --card:#fffdf8;--shadow:0 1px 2px rgba(60,40,10,.08),0 8px 24px rgba(60,40,10,.08);
@@ -49,20 +49,34 @@ footer{margin-top:70px;text-align:center;color:var(--muted);font-size:13px}
 <body>
 <main>
   <header>
-    <div class="kicker">图书讲明白 · LIBRARY</div>
-    <h1>书库</h1>
-    <div class="sub">把难读的书做成交互式学习站点：人文经典拆成核心概念、论证主线与互动图解；数理教科书保留完整推导，每个公式可放大、每个符号可点开；论文讲解配证明依赖图与可运行示例。</div>
+    <div class="kicker" data-t="kicker">Mingbai · LIBRARY</div>
+    <h1 data-t="h1">Library</h1>
+    <div class="sub" data-t="sub">Hard books turned into interactive learning sites: the humanities broken into core concepts, lines of argument, and interactive diagrams; textbooks with full derivations, where every equation can be enlarged and every symbol clicked; papers with proof dependency graphs and runnable examples.</div>
     <div class="stats" id="stats"></div>
   </header>
   <div class="tools">
-    <input id="q" placeholder="搜索书名、作者、章节…" autocomplete="off">
+    <input id="q" placeholder="Search titles, authors, chapters…" autocomplete="off">
     <span id="kinds"></span>
   </div>
   <div class="grid" id="grid"></div>
-  <footer>所有页面均为静态文件，可离线保存或部署到任意静态托管（如 GitHub Pages）。</footer>
+  <footer data-t="footer">Every page is a static file you can save offline or deploy to any static host, such as GitHub Pages.</footer>
 </main>
 <script>
-const KIND = { explainer: "人文导读", textbook: "数理教科书", proof: "论文 · 定理证明", paper: "论文导读" };
+// The page's UI language follows the first book in the library; English is the default.
+const I18N = {
+  en: {
+    title: "Library · Mingbai", enter: "Open shelf", map: "Book map", empty: "No matching books", all: "All", books: "books", chapters: "chapters",
+    fail: m => `Couldn't read library.json: ${m}`, kinds: { explainer: "Guides", textbook: "Textbooks", proof: "Papers · proofs", paper: "Paper guides" },
+  },
+  zh: {
+    title: "书库 · 图书讲明白", enter: "进入书架", map: "全书脉络", empty: "没有匹配的书", all: "全部", books: "本书", chapters: "个章节",
+    fail: m => `无法读取 library.json：${m}`, kinds: { explainer: "人文导读", textbook: "数理教科书", proof: "论文 · 定理证明", paper: "论文导读" },
+    placeholder: "搜索书名、作者、章节…", kicker: "图书讲明白 · LIBRARY", h1: "书库",
+    sub: "把难读的书做成交互式学习站点：人文经典拆成核心概念、论证主线与互动图解；数理教科书保留完整推导，每个公式可放大、每个符号可点开；论文讲解配证明依赖图与可运行示例。",
+    footer: "所有页面均为静态文件，可离线保存或部署到任意静态托管（如 GitHub Pages）。",
+  },
+};
+let T = I18N.en, KIND = T.kinds;
 const strip = s => String(s || "").replace(/\$([^$]*)\$/g, "$1").replace(/\\(mathrm|text|rm|operatorname)\{([^}]*)\}/g, "$2").replace(/\\[a-zA-Z]+/g, "").replace(/[{}^_]/g, "");
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 let BOOKS = [], kind = "*";
@@ -81,8 +95,8 @@ function card(b) {
       <div class="chs">${chs}</div>
     </div>
     <div class="b-foot">
-      <a class="btn" href="${esc(b.slug)}/">进入书架</a>
-      ${b.connections ? `<a class="btn ghost" href="${esc(b.slug)}/connections/">全书脉络</a>` : ""}
+      <a class="btn" href="${esc(b.slug)}/">${T.enter}</a>
+      ${b.connections ? `<a class="btn ghost" href="${esc(b.slug)}/connections/">${T.map}</a>` : ""}
     </div>
   </article>`;
 }
@@ -90,21 +104,28 @@ function render() {
   const q = document.getElementById("q").value.trim().toLowerCase();
   const list = BOOKS.filter(b => (kind === "*" || b.kind === kind) &&
     (!q || [b.title, b.title_en, b.author, b.intro, ...b.chapters.map(c => (c.title_zh || "") + " " + (c.title_en || ""))].join(" ").toLowerCase().includes(q)));
-  document.getElementById("grid").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">没有匹配的书</div>`;
+  document.getElementById("grid").innerHTML = list.length ? list.map(card).join("") : `<div class="empty">${T.empty}</div>`;
 }
 fetch("library.json").then(r => r.json()).then(lib => {
   BOOKS = lib.books;
+  const lang = BOOKS[0]?.lang;
+  if (I18N[lang] && lang !== "en") {
+    T = I18N[lang]; KIND = T.kinds;
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : lang; document.title = T.title;
+    document.getElementById("q").placeholder = T.placeholder;
+    document.querySelectorAll("[data-t]").forEach(el => { el.textContent = T[el.dataset.t]; });
+  }
   const ch = BOOKS.reduce((n, b) => n + b.chapters.filter(c => c.ready).length, 0);
   document.getElementById("stats").innerHTML =
-    `<div class="stat"><b>${BOOKS.length}</b><small>本书</small></div><div class="stat"><b>${ch}</b><small>个章节</small></div>` +
+    `<div class="stat"><b>${BOOKS.length}</b><small>${T.books}</small></div><div class="stat"><b>${ch}</b><small>${T.chapters}</small></div>` +
     Object.keys(KIND).filter(k => BOOKS.some(b => b.kind === k)).map(k => `<div class="stat"><b>${BOOKS.filter(b => b.kind === k).length}</b><small>${KIND[k]}</small></div>`).join("");
   const kinds = ["*", ...Object.keys(KIND).filter(k => BOOKS.some(b => b.kind === k))];
   const box = document.getElementById("kinds");
-  box.innerHTML = kinds.map(k => `<button data-k="${k}" class="${k === kind ? "on" : ""}">${k === "*" ? "全部" : KIND[k]}</button>`).join(" ");
+  box.innerHTML = kinds.map(k => `<button data-k="${k}" class="${k === kind ? "on" : ""}">${k === "*" ? T.all : KIND[k]}</button>`).join(" ");
   box.onclick = e => { const k = e.target.dataset?.k; if (!k) return; kind = k; box.querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.k === k)); render(); };
   document.getElementById("q").oninput = render;
   render();
-}).catch(e => { document.getElementById("grid").innerHTML = `<div class="empty">无法读取 library.json：${esc(e.message)}</div>`; });
+}).catch(e => { document.getElementById("grid").innerHTML = `<div class="empty">${esc(T.fail(e.message))}</div>`; });
 </script>
 </body>
 </html>

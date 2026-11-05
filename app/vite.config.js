@@ -118,7 +118,7 @@ const bookJson = (book, data, ids) => ({
   name: "book-json",
   generateBundle() {
     const info = {
-      slug: path.basename(BOOK), kind: book.statements ? "proof" : (book.kind || "explainer"),
+      slug: path.basename(BOOK), lang: langOf(book), kind: book.statements ? "proof" : (book.kind || "explainer"),
       title: book.title, title_en: book.title_en, author: book.author, subtitle: book.subtitle, intro: book.intro,
       parts: book.parts || [],
       chapters: (book.chapters || []).map(c => ({ id: c.id, no: c.no, title_zh: c.title_zh, title_en: c.title_en, part: c.part,
