@@ -28,7 +28,7 @@ const block = c => (typeof c === "string" ? <Tx>{c}</Tx> : Array.isArray(c) ? c.
 // 论文页外壳。meta 除 TextbookPage 的字段外，另有 paper: { title, authors, venue, year, arxiv, doi, code, license }、
 // tldr（一句话说清这篇论文）、gmsr: { gap, motivation, solution, result }（四格速读，各 1–2 句）。
 export function PaperPage({ meta: m, notation = [], groups, concepts, relations, children, keyEquations = true, weighted = false }) {
-  const W = weighted ? Weighted : ({ children }) => children;   // weighted：按重要性分配面积（扫读/精读、要点脊柱、重要性地图）
+  const W = weighted ? Weighted : ({ children }) => children;   // weighted：按重要性分配面积（扫读/精读、重要性地图）
   useEffect(() => { document.title = `${m.title_zh || m.title_en} · ${book.title}`; }, [m]);
   const p = m.paper || book.paper || {};
   return (

@@ -6,10 +6,10 @@ import { Eq, Tx, TxI } from "../math/tex.jsx";
 // 按重要性分配页面面积（见 framework/spec/PAPER.md「重要性加权」）。
 // 思路：带公式的论文里，信息的重要性与所占面积常常倒挂——一条关键式子和三行例行代数一样大，决定结论的假设藏在小字里。
 // 这里给每块内容一个权重 w ∈ {3, 2, 1}：
-//   3 = 必须看到（核心结论、关键公式、决定性数字、关键假设）：放大、加粗、带色条，并登记到「要点脊柱」与「重要性地图」
+//   3 = 必须看到（核心结论、关键公式、决定性数字、关键假设）：放大、加粗、带色条，并登记到「重要性地图」
 //   2 = 正文（默认）
 //   1 = 细节（例行推导、旁支）：缩小、变灰；「扫读」模式下折叠
-// 页面级：<Weighted> 提供扫读/精读开关、右侧要点脊柱与重要性地图（PaperPage 传 weighted 即自动包裹）。
+// 页面级：<Weighted> 提供扫读/精读开关与右边缘的重要性地图（PaperPage 传 weighted 即自动包裹）。
 
 const WCtx = createContext(null);
 const useW = () => useContext(WCtx);
@@ -26,7 +26,7 @@ export function Weighted({ children }) {
     <WCtx.Provider value={{ ...api, items, skim, setSkim }}>
       {children}
       <SkimToggle />
-      <Spine />
+      <ImportanceMap />
     </WCtx.Provider>);
 }
 
@@ -38,7 +38,6 @@ function useKey(label, kind, given) {
   return id;
 }
 
-const KIND_ICON = { claim: "◆", eq: "∑", num: "#", assume: "⚠", verdict: "✔" };
 
 // 段落：w=3 核心论断 / w=2 正文 / w=1 细节
 // deep：正文字号、但只在「精读」模式显示（用于交互图、长表格、旁注框等不宜缩小、扫读时又不必看的块）
@@ -48,7 +47,7 @@ export function P({ w = 2, label, id, deep, children }) {
   return <div className={"pw pw-" + w + (deep ? " pw-deep" : "")}>{body}</div>;
 }
 
-// 把任意已有组件（Claim、KeyIdea、GapMap…）登记为权重 3 条目（进入要点脊柱与重要性地图），外观不变
+// 把任意已有组件（Claim、KeyIdea、GapMap…）登记为权重 3 条目（进入重要性地图），外观不变
 export function Key({ label, kind = "claim", id, children }) {
   const kid = useKey(label, kind, id);
   return <div className="pw-key" id={kid}>{children}</div>;
@@ -133,15 +132,15 @@ function SkimToggle() {
     </div>);
 }
 
-// 要点脊柱 + 重要性地图：右侧列出全部权重 3 条目（当前位置高亮），并在竖条上按其在页面中的位置打点
-function Spine() {
-  const w = useW(); const [pos, setPos] = useState({}); const [cur, setCur] = useState(null); const [open, setOpen] = useState(true);
+// 重要性地图：在右边缘的竖条上，按权重 3 条目在页面中的位置打点（当前位置高亮）
+function ImportanceMap() {
+  const w = useW(); const [pos, setPos] = useState({}); const [cur, setCur] = useState(null);
   useLayoutEffect(() => {
     const measure = () => {
       const H = document.documentElement.scrollHeight, out = {};
       for (const it of w.items) { const el = document.getElementById(it.id); if (el) out[it.id] = (el.getBoundingClientRect().top + scrollY) / H; }
       setPos(out);
-      const mid = scrollY + innerHeight * 0.55; let c = null;   // 0.55：与 go() 的 block:"center" 对齐，点脊柱跳过去后被点的条目即为当前项
+      const mid = scrollY + innerHeight * 0.55; let c = null;   // 0.55：与 go() 的 block:"center" 对齐，点圆点跳过去后被点的条目即为当前项
       for (const it of w.items) { const el = document.getElementById(it.id); if (el && el.getBoundingClientRect().top + scrollY <= mid) c = it.id; }
       setCur(c);
     };
@@ -153,15 +152,8 @@ function Spine() {
   const sorted = [...w.items].filter(it => pos[it.id] != null).sort((a, b) => pos[a.id] - pos[b.id]);
   if (!sorted.length) return null;
   const go = id => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  return (<>
+  return (
     <div className="pw-map" aria-label={t("w.map")}>
       {sorted.map(it => <button key={it.id} className={"pw-dot k-" + it.kind + (cur === it.id ? " on" : "")} style={{ top: `${pos[it.id] * 100}%` }} onClick={() => go(it.id)} title={it.label.replace(/\$/g, "")} />)}
-    </div>
-    <aside className={"pw-spine" + (open ? "" : " closed")}>
-      <button className="pw-spine-h" onClick={() => setOpen(!open)}>{open ? t("w.spineOpen") : t("w.spineClosed")}<small>{sorted.length}</small></button>
-      {open && <ol>{sorted.map(it => (
-        <li key={it.id} className={cur === it.id ? "on" : ""}><a href={"#" + it.id} onClick={e => { e.preventDefault(); go(it.id); }}>
-          <i className={"k-" + it.kind}>{KIND_ICON[it.kind] || "◆"}</i><span><TxI>{it.label}</TxI></span></a></li>))}</ol>}
-    </aside>
-  </>);
+    </div>);
 }

@@ -324,8 +324,6 @@ export default {
   "w.readTitle": "Show everything",
   "w.read": "Read",
   "w.map": "Importance map",
-  "w.spineOpen": "Key points ▾",
-  "w.spineClosed": "Points ▸",
   "lens.role": { unknown: "Unknown to solve for", known: "Measured / known", design: "Your choice", const: "Constant / structure", result: "Result" },
   "lens.note": "Notes",
   "lens.step": "Steps",

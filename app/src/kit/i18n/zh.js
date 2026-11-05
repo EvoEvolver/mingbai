@@ -339,8 +339,6 @@ export default {
   "w.readTitle": "显示全部内容",
   "w.read": "精读",
   "w.map": "重要性地图",
-  "w.spineOpen": "要点脊柱 ▾",
-  "w.spineClosed": "要点 ▸",
   "lens.role": { unknown: "要求的未知量", known: "测得 / 已知", design: "可以自己选的", const: "常数 / 结构", result: "结果" },
   "lens.note": "注释",
   "lens.step": "逐步",

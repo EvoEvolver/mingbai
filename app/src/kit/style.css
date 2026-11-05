@@ -774,21 +774,11 @@ body.pw-skim .pw-page .tb-sec>p,body.pw-skim .pw-2{font-size:15px;color:#4a4238}
 .pw-toggle{position:fixed;left:18px;bottom:18px;z-index:60;display:flex;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
 .pw-toggle button{border:0;background:none;border-radius:99px;padding:6px 16px;font:inherit;font-size:14px;cursor:pointer;color:var(--muted)}
 .pw-toggle button.on{background:var(--ink);color:var(--paper)}
-/* 重要性地图（右边缘竖条）与要点脊柱 */
+/* 重要性地图（右边缘竖条） */
 .pw-map{position:fixed;right:6px;top:70px;bottom:20px;width:12px;z-index:55;border-radius:6px;background:rgba(120,90,40,.08)}
 .pw-dot{position:absolute;left:1px;width:10px;height:10px;border-radius:50%;border:0;padding:0;cursor:pointer;transform:translateY(-50%);background:var(--w3)}
 .pw-dot.k-eq{background:var(--blue)}.pw-dot.k-num{background:var(--green)}.pw-dot.k-assume{background:var(--gold)}.pw-dot.k-verdict{background:var(--ink)}
 .pw-dot.on{outline:3px solid rgba(155,44,31,.35)}
-.pw-spine{position:fixed;right:26px;top:74px;width:250px;max-height:calc(100vh - 110px);overflow:auto;z-index:54;background:rgba(255,253,248,.96);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);font-size:13px}
-.pw-spine.closed{width:auto}
-.pw-spine-h{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;border:0;background:none;font:inherit;font-weight:700;padding:9px 12px;cursor:pointer}
-.pw-spine-h small{background:var(--ink);color:var(--paper);border-radius:99px;padding:0 8px;font-weight:400}
-.pw-spine ol{list-style:none;margin:0;padding:0 8px 10px}
-.pw-spine li a{display:flex;gap:8px;padding:5px 6px;border-radius:8px;color:var(--ink);text-decoration:none;line-height:1.45}
-.pw-spine li.on a{background:#fbeeea}
-.pw-spine i{font-style:normal;flex:none;width:16px;text-align:center;color:var(--w3)}
-.pw-spine i.k-eq{color:var(--blue)}.pw-spine i.k-num{color:var(--green)}.pw-spine i.k-assume{color:var(--gold)}.pw-spine i.k-verdict{color:var(--ink)}
-@media(max-width:1400px){.pw-spine{display:none}}
 @media(max-width:700px){.pw-map{display:none}.pw-3{font-size:18px}.pw-num>b{font-size:30px}}
 /* 加权页：压缩 hero 的留白，让首屏要点进入第一屏 */
 .pw-page .tb-hero{padding:56px 0 18px;margin-bottom:22px}
@@ -891,11 +881,8 @@ body.pw-skim .pw-page #b-notation,body.pw-skim .pw-page #b-keyeq{display:none}
 @media(prefers-reduced-motion:reduce){.fm-cell,.fm-cell>.fm-head,.fm-cell>.fm-body{transition:none}}
 .fm-body .fm-l.one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* 加权页右边缘是重要性地图和要点脊柱，目录改放到左边 */
-body:has(.pw-map) #toc{right:auto;left:10px}
-body:has(.pw-map) .toc-bar{justify-content:flex-start}
-body:has(.pw-map) .toc-panel{right:auto;left:0;transform:translate(-10px,-50%) scale(.98);transform-origin:left center}
-body:has(.pw-map) #toc:hover .toc-panel,body:has(.pw-map) #toc:has(:focus-visible) .toc-panel{transform:translateY(-50%)}
+/* 加权页右边缘是重要性地图，目录让出它的位置 */
+body:has(.pw-map) #toc{right:24px}
 
 /* ---------- 英文界面（book.js 的 lang: "en"）：换用西文字体；两端对齐在英文里容易出现大空隙，改为左对齐 ---------- */
 :root:lang(en){--serif:Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
