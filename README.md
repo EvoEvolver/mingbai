@@ -94,3 +94,7 @@ cd /path/to/library-root
 | [spec/DEPLOY.md](spec/DEPLOY.md) | 路由、构建与部署 |
 
 单章自检（构建 + 截图）用 `spec/check.sh <章节id> <书目录>`，需要先安装截图工具：`npm ci --prefix tools/pw && npx --prefix tools/pw playwright install chromium`。
+
+## 许可证
+
+[MIT](LICENSE)
