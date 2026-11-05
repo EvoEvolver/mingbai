@@ -59,7 +59,20 @@ async function extractData(ids) {
     }
   }
   await server.close();
-  return { book: plain(book), data };
+  return { book: plain(book), data, anchors: anchorMap(book, ids) };
+}
+
+// 拆分章节（如 ch07 / ch07b 同属第 7 章）时，按编号推断章节会出错：扫描各章源码中的 <Eq n> <Figure n> <Sec n> <Sub n>，
+// 记录"实际所在章节 ≠ 按章号推断的章节"的编号，供 chapterOfNum(n, kind) 优先使用。
+function anchorMap(book, ids) {
+  const KIND = { Eq: "eq", Figure: "fig", Sec: "sec", Sub: "sec" }, out = {};
+  const guess = n => { const h = String(n).split(".")[0]; return /^\d+$/.test(h) ? book.chapters.find(c => String(c.no) === h)?.id : book.chapters.find(c => c.id === "app" + h)?.id; };
+  for (const id of ids) {
+    let src = "";
+    try { for (const f of fs.readdirSync(CHAPTERS)) if (f === id + ".jsx" || (f.startsWith(`_${id}_`) && f.endsWith(".jsx"))) src += fs.readFileSync(path.join(CHAPTERS, f), "utf8"); } catch { continue; }
+    for (const m of src.matchAll(/<(Eq|Figure|Sec|Sub)\b[^>]*?\bn="([^"]+)"/g)) if (guess(m[2]) !== id) out[`${KIND[m[1]]}:${m[2]}`] = id;
+  }
+  return out;
 }
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -82,7 +95,7 @@ function bookPlugin(ctx) {
     load(s) {
       if (s === "\0virtual:book") {
         const bookImport = `export { default as book } from ${JSON.stringify(path.join(BOOK, "book.js"))};`;
-        return `${bookImport}\nexport const available = ${JSON.stringify(ctx.ids)};\nexport const data = ${JSON.stringify(ctx.data)};`;
+        return `${bookImport}\nexport const available = ${JSON.stringify(ctx.ids)};\nexport const data = ${JSON.stringify(ctx.data)};\nexport const anchors = ${JSON.stringify(ctx.anchors || {})};`;
       }
       if (s.startsWith("\0virtual:page/")) {
         const id = s.slice("\0virtual:page/".length);
@@ -117,7 +130,7 @@ const bookJson = (book, data, ids) => ({
 
 export default defineConfig(async () => {
   const ids = chapterIds();
-  const { book, data } = await extractData(ids);
+  const { book, data, anchors } = await extractData(ids);
   // 生成各页 HTML（Vite 多页入口）
   fs.rmSync(GEN, { recursive: true, force: true });
   fs.mkdirSync(GEN, { recursive: true });
@@ -135,7 +148,7 @@ export default defineConfig(async () => {
     root: GEN,
     base: "./",
     publicDir: fs.existsSync(path.join(BOOK, "public")) ? path.join(BOOK, "public") : false,   // 书的静态资源（如 figures/）
-    plugins: [react(), bookPlugin({ book, data, ids }), nojekyll(), bookJson(book, data, ids)],
+    plugins: [react(), bookPlugin({ book, data, ids, anchors }), nojekyll(), bookJson(book, data, ids)],
     resolve: { alias },
     server: { fs: { allow: [BOOK, APP] } },
     build: { outDir: process.env.OUT || path.join(BOOK, "dist"), emptyOutDir: true, rollupOptions: { input } },

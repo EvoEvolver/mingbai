@@ -1,4 +1,5 @@
-import { book, available, data } from "virtual:book";
+import { book, available, data, anchors } from "virtual:book";
+export { anchors };
 
 // 全书层面的数据与链接工具（多页静态站点）。
 //

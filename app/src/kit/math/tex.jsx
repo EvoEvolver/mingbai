@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { createPortal } from "react-dom";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { book, modules, pageUrl, assetUrl } from "../book.jsx";
+import { book, modules, pageUrl, assetUrl, anchors } from "../book.jsx";
 import { buildTable, annotate, symKey } from "./sym.js";
 
 // ---------- KaTeX 渲染 ----------
@@ -139,7 +139,7 @@ export function TextbookProvider({ chapterId, notation = [], children }) {
     // 自动 id 由符号生成；不同符号可能生成相同 slug（如 D_+ 与 D_-），重名时追加序号保证唯一
     const taken = new Set();
     const uniq = id => { let u = id, k = 2; while (taken.has(u)) u = id + "_" + k++; taken.add(u); return u; };
-    const push = (ch, list) => (list || []).forEach(e => all.push({ ...e, chapter: ch, id: uniq(e.id ? ch + "-" + e.id : slug(ch, e.sym)) }));
+    const push = (ch, list) => (list || []).filter(Boolean).forEach(e => all.push({ ...e, chapter: ch, id: uniq(e.id ? ch + "-" + e.id : slug(ch, e.sym)) }));
     push(chapterId, notation);
     for (const c of book.chapters) if (c.id !== chapterId) push(c.id, modules[c.id]?.notation);
     const byId = Object.fromEntries(all.map(e => [e.id, e]));
@@ -194,13 +194,16 @@ export function TextbookProvider({ chapterId, notation = [], children }) {
 }
 
 // 编号 → 章节 id（"2.23" → ch02，"A.3" → appA）
-export function chapterOfNum(n) {
+// 拆分章节（ch07 / ch07b）里的编号由构建时扫描得到的 anchors 表决定（kind：eq / fig / sec）
+export function chapterOfNum(n, kind = "eq") {
+  const hit = anchors?.[`${kind}:${n}`];
+  if (hit) return hit;
   const head = String(n).split(".")[0];
   if (/^\d+$/.test(head)) return book.chapters.find(c => String(c.no) === head)?.id;
   return book.chapters.find(c => c.id === "app" + head)?.id;
 }
 const anchor = (kind, n) => `${kind}-${String(n).replace(/[^\w.-]/g, "_")}`;
-const hrefTo = (kind, n, here) => pageUrl(chapterOfNum(n) || here, anchor(kind, n));
+const hrefTo = (kind, n, here) => pageUrl(chapterOfNum(n, kind) || here, anchor(kind, n));
 const chapterName = id => { const c = book.chapters.find(x => x.id === id); return c ? c.label ?? (/^\d+$/.test(String(c.no)) ? `第 ${c.no} 章` : `附录 ${c.no}`) : id; };
 
 // ---------- 符号弹卡 ----------
@@ -306,7 +309,7 @@ function Ref({ kind, n, label, preview }) {
   return (
     <span className="ref-wrap" ref={wrap} onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
       <a className={"ref ref-" + kind} href={href} onClick={e => {
-        const here = chapterOfNum(n) === tb?.chapterId || !chapterOfNum(n);
+        const here = chapterOfNum(n, kind) === tb?.chapterId || !chapterOfNum(n, kind);
         const el = document.getElementById(anchor(kind, n));
         if (here && el) { e.preventDefault(); el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
       }}>{label}</a>
