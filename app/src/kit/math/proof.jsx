@@ -1,6 +1,6 @@
 import { t } from "../i18n/index.js";
 // 定理–证明类文本的组件（源自 ETH 论文书，已通用化）：定理环境、陈述引用、分步证明、证明依赖图、
-// 矩阵热图、勘误/注记框、可运行示例外壳、学习笔记总表。说明见 framework/spec/PROOF.md。
+// 矩阵热图、勘误/注记框、可运行示例外壳、学习笔记总表。说明见 spec/PROOF.md。
 //
 // 数据来源：书的 book.js 提供 `statements`（陈述登记表，全书唯一数据源，跨页悬停预览因此可用）：
 //   statements: { "L2.1": { kind, n, ch, en, zh, page, stmt, deps, role, key, pitfall, status, statusNote, eq? }, … }

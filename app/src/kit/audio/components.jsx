@@ -1,5 +1,5 @@
 import { t, lang } from "../i18n/index.js";
-// 可听、可互动的音乐组件。说明见 framework/spec/AUDIO.md
+// 可听、可互动的音乐组件。说明见 spec/AUDIO.md
 import { useEffect, useMemo, useRef, useState } from "react";
 import { play, sequence, stop, onStop, setSettings, useAudioState } from "./engine.js";
 import { parseNote, parseNotes, parseChord, triadCore, pcName, isBlack, mod12, cycle, cycleCount, intervalName, tonnetzPc, triadName } from "./theory.js";

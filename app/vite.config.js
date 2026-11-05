@@ -9,12 +9,13 @@ import { MESSAGES, langOf } from "./src/kit/i18n/messages.js";
 //   <outDir>/<章节id>/index.html   每章一个真实页面（只加载本章代码；公共依赖自动拆成共享块）
 // 所有链接与资源都用相对路径，可部署在任意子路径（如 user.github.io/repo/）。
 //
-// 环境变量：BOOK=<书目录>（默认 ../../oot）；ONLY=ch03 或 ch01,ch02 只构建这些章；OUT=<输出目录>（默认 <书>/dist）。
+// 环境变量：BOOK=<书目录>（必填）；ONLY=ch03 或 ch01,ch02 只构建这些章；OUT=<输出目录>（默认 <书>/dist）。
 //
 // 跨章数据（各章 meta / notation / concepts / groups / relations / links）在构建时用 SSR 加载章节模块提取，
 // 作为 virtual:book 的 data 注入每个页面——书架、跨章联系、跨章符号、全书脉络页都由它提供，无需加载其他章节代码。
 const APP = import.meta.dirname;
-const BOOK = path.resolve(process.env.BOOK || path.join(APP, "../../oot"));
+if (!process.env.BOOK) throw new Error("请用环境变量 BOOK 指定书目录，例如 BOOK=/path/to/my-book npx vite build");
+const BOOK = path.resolve(process.env.BOOK);
 const ONLY = process.env.ONLY;
 const CHAPTERS = path.join(BOOK, "chapters");
 const GEN = path.join(APP, ".pages", path.basename(BOOK) + (ONLY ? "-" + ONLY.replace(/,/g, "_") : ""));

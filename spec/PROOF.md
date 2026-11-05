@@ -1,6 +1,6 @@
 # 定理–证明类文本组件（论文、数学书）
 
-源自 ETH 论文书（`/home/zijian/books/eth`，完整范例），现已并入框架 `kit/math/proof.jsx`，从 `@kit` 导入。
+源自 ETH 论文书（[完整范例](https://github.com/EvoEvolver/mingbai-notes/blob/main/eth)），现已并入框架 `kit/math/proof.jsx`，从 `@kit` 导入。
 数理通用组件（`TextbookPage / Sec / Sub / Eq / Tx / Box / Derivation / Roadmap / EqMap / Plot / ConceptGrid / Quiz …`）见 `TEXTBOOK.md`，照常使用。
 
 ```jsx
@@ -17,7 +17,7 @@ export default { kind: "textbook", statements: STMTS, /* 可选 */ statementKind
 ```
 
 多 agent 并行写不同章节时，用**每章一份登记表** `chapters/_<章>_stmts.js`（`export const S = {…}`），在 book.js 里合并：
-`import { S as S05 } from "./chapters/_ch05_stmts.js"; … statements: { ...S01, ...S05, … }`（范例：`/home/zijian/books/nakahara/book.js`）。
+`import { S as S05 } from "./chapters/_ch05_stmts.js"; … statements: { ...S01, ...S05, … }`（[范例](https://github.com/EvoEvolver/mingbai-notes/blob/main/nakahara/book.js)）。
 
 ⚠ 登记表用 ``R`…` ``（String.raw）书写时，`${` 会被 JS 当成插值——LaTeX 里不要让 `$` 紧跟 `{`（如 `${}^{-1}` 应写成 `$(\cdot)^{-1}$`）。登记表被 book.js 直接导入，一处语法错误会让整本书都无法构建；`check.sh` 会先做语法检查。
 

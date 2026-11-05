@@ -38,15 +38,15 @@ TextbookPage（自动渲染：标题、one_liner、big_question、why_it_matters
 `Block / Hook / ConceptGrid / ConceptMap / Takeaways / Quiz / Bridge / C` 用法同人文版（见 KIT.md）；概念 `concepts` 的格式与人文版相同（id, name_zh, name_en, icon, group, plain, explain, analogy, book_example{what,point}, misconception），并通过 `TextbookPage` 的 `groups/concepts/relations` 传入。正文中可用 `<C id="…">` 链接概念卡（需在 JSX 中写，Tx 字符串内不支持）。
 
 ## 定理–证明类内容
-论文、数学书等以定义/引理/定理/证明为骨架的文本，另用 `Stmt / SRef / \sref{} / Proof / DepGraph / Erratum / RunCard …`（陈述登记表放在 book.js 的 `statements`），见 `framework/spec/PROOF.md`，完整范例为 ETH 书 `/home/zijian/books/eth`。
+论文、数学书等以定义/引理/定理/证明为骨架的文本，另用 `Stmt / SRef / \sref{} / Proof / DepGraph / Erratum / RunCard …`（陈述登记表放在 book.js 的 `statements`），见 `spec/PROOF.md`，完整范例为 ETH 书 `/home/zijian/books/eth`。
 
 ## 链接
 站内链接用 `pageUrl(id, anchor)`，引用用 `\eqref{}` 等记号；章节导出的 notation/concepts 等必须是纯数据。见 `DEPLOY.md`。
 
 ## 范例
-已完成的试点章：`/home/zijian/books/cosmo/chapters/ch02.jsx` 及 `_ch02_*.jsx`。
+已完成的试点章：[`cosmo/chapters/ch02.jsx`](https://github.com/EvoEvolver/mingbai-notes/blob/main/cosmo/chapters/ch02.jsx) 及同目录的 `_ch02_*.jsx`（在 mingbai-notes 仓库）。
 
-## 材料（以本书 Modern Cosmology 为例，书目录 `/home/zijian/books/cosmo`）
+## 材料（以本书 Modern Cosmology 为例，书目录 `cosmo`）
 - 文字层：`text/<id>.txt`，按 PDF 页分段，每页头部写明对应页面图像路径。**文字层中的数学是损坏的**，只用来读正文和定位公式编号。
 - 页面图像：`src/pages/p-NNN.png`（150 dpi）。**所有公式都必须看页面图像转写**（用 Read 打开 PNG）。
 - 插图：`public/figures/fig-<n>.png`，清单与原书图注在 `public/figures/figures.json`。
@@ -55,7 +55,7 @@ TextbookPage（自动渲染：标题、one_liner、big_question、why_it_matters
 
 ## 文件
 - 写：`<BOOK>/chapters/<id>.jsx`（主文件）+ 按节拆分的 `_<id>_s1.jsx`…、`_<id>_plots.jsx`、`_<id>_overview.jsx`（路线图/概念等）。下划线开头的文件不会被当成章节。
-- **只写自己章节的文件**；不改 `framework/`、`book.js`、其他章节。
+- **只写自己章节的文件**；不改框架、`book.js`、其他章节。
 
 ## 组件（`import { … } from "@kit"`）
 统一 `const R = String.raw;`，所有 LaTeX 用 ``R`...` `` 书写。
@@ -92,7 +92,7 @@ export default function Chapter(){ return <TextbookPage meta={meta} notation={no
 自绘插图用 `<Figure n caption illustration={<MyDiagram/>}>`：直接显示组件，不请求原书图片，保留原有图号和引用锚点。平面结构优先 SVG；需要旋转观察的曲面可在 `useEffect` 中按需加载 Three.js，提供无 WebGL 的替代图，并在卸载时释放资源。
 
 ## 内存纪律（多个 agent 并行时必须遵守）
-构建、Playwright/Chromium 截图等重命令一律经 `/home/zijian/books/framework/tools/heavy.sh <命令…>` 运行（全局锁串行 + 内存检查；`check.sh` 已内置）。不要自行并行起多个构建或浏览器；临时 http 服务与浏览器用完即关；不要再派生子 agent。
+构建、Playwright/Chromium 截图等重命令一律经 `tools/heavy.sh <命令…>` 运行（全局锁串行 + 内存检查；`check.sh` 已内置）。不要自行并行起多个构建或浏览器；临时 http 服务与浏览器用完即关；不要再派生子 agent。
 
 ## 工作流程
 1. 通读本章文字层，列出节结构、公式编号、图、习题；先写**高层理解层**（one_liner、big_question、路线图、推导图、概念）——这会逼你先把本章的逻辑想清楚。
@@ -100,8 +100,8 @@ export default function Chapter(){ return <TextbookPage meta={meta} notation={no
 3. 补推导、物理图像、交互图；习题与解答（查附录 A）。
 4. 自检（必须全部通过）：
    ```bash
-   python3 -I /home/zijian/books/framework/spec/tb_check.py /home/zijian/books/cosmo <id>   # 完整性 + 结构检查 → OK
-   /home/zijian/books/framework/spec/check.sh <id> /home/zijian/books/cosmo                   # errors / texErrors 为空；symMiss 清零（或逐项说明例外）
+   python3 -I spec/tb_check.py <书目录> <id>   # 完整性 + 结构检查 → OK
+   spec/check.sh <id> <书目录>                   # errors / texErrors 为空；symMiss 清零（或逐项说明例外）
    ```
-   用 Read 查看 `/tmp/check-cosmo-<id>/shot.png`；抽查 ≥15 个公式与页面图像逐字符核对；交互图截图并核对数值。
+   用 Read 查看 `/tmp/check-<书目录名>-<id>/shot.png`；抽查 ≥15 个公式与页面图像逐字符核对；交互图截图并核对数值。
 5. 交付报告：文件列表；tb_check 输出；symMiss 剩余项及理由；交互图清单及验证；补充推导；勘误（已改正）与存疑条目。

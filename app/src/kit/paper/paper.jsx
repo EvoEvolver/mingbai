@@ -8,7 +8,7 @@ import { KeyEquations, Notation } from "../math/env.jsx";
 import { Weighted } from "./weighted.jsx";
 
 // 论文导读组件。论文的叙事骨架与教科书不同：缺口（Gap）→ 动机（Motivation）→ 方案（Solution）→ 结果（Result），
-// 再加局限与编者评注。公式、符号词典、交互图沿用 math/ 下的组件（Eq、Plot、Derivation…）。见 framework/spec/PAPER.md。
+// 再加局限与编者评注。公式、符号词典、交互图沿用 math/ 下的组件（Eq、Plot、Derivation…）。见 spec/PAPER.md。
 
 export const ROLES = {
   gap: { zh: "缺口", en: "Gap", icon: "🕳️" },

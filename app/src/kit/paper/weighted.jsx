@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, u
 import { flushSync } from "react-dom";
 import { Eq, Tx, TxI } from "../math/tex.jsx";
 
-// 按重要性分配页面面积（见 framework/spec/PAPER.md「重要性加权」）。
+// 按重要性分配页面面积（见 spec/PAPER.md「重要性加权」）。
 // 思路：带公式的论文里，信息的重要性与所占面积常常倒挂——一条关键式子和三行例行代数一样大，决定结论的假设藏在小字里。
 // 这里给每块内容一个权重 w ∈ {3, 2, 1}：
 //   3 = 必须看到（核心结论、关键公式、决定性数字、关键假设）：放大、加粗、带色条，并登记到「重要性地图」

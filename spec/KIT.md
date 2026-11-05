@@ -1,4 +1,4 @@
-# 图书讲明白 · 章节编写指南（给写章节的 agent）
+# 章节编写指南
 
 ## 目标
 把原著的**一章**写成一个生动、好懂的 React 页面。目标读者：聪明但没读过原著的中文读者。
@@ -14,11 +14,11 @@
 所有面向读者的文字用本书的语言（默认中文，术语保留原文，如 *mathesis*）；英文书见文末「界面语言」。
 
 ## 文件
-- 原文：`/home/zijian/books/oot/text/<文件>.txt`（纯文本，含小节标题；文末注释可忽略）。必须分段读完全文。
-- 你写：`/home/zijian/books/oot/chapters/<id>.jsx`（章节主文件），可加辅助文件 `/home/zijian/books/oot/chapters/_<id>_*.jsx`（下划线开头的文件不会被当成章节）。
-- **只能写你自己章节的文件**。不要改 `framework/`、`book.js` 或其他章节。缺通用组件就在自己的 `_<id>_*.jsx` 里写。
-- **范例（必读，对齐结构与质量）**：`/home/zijian/books/oot/chapters/ch02.jsx` 和 `_ch02_similitudes.jsx`。
-- 组件库源码：`/home/zijian/books/framework/app/src/kit/`（index.js 列出全部导出）。样式变量见 `kit/style.css`（`--paper --ink --muted --line --accent --gold --blue --green --violet --card --shadow --serif --sans`）。
+- 原文：`<书目录>/text/<文件>.txt`（纯文本，含小节标题；文末注释可忽略）。必须分段读完全文。
+- 你写：`<书目录>/chapters/<id>.jsx`（章节主文件），可加辅助文件 `<书目录>/chapters/_<id>_*.jsx`（下划线开头的文件不会被当成章节）。
+- **只能写你自己章节的文件**。不要改框架、`book.js` 或其他章节。缺通用组件就在自己的 `_<id>_*.jsx` 里写。
+- **范例（必读，对齐结构与质量）**：[`oot/chapters/ch02.jsx`](https://github.com/EvoEvolver/mingbai-notes/blob/main/oot/chapters/ch02.jsx) 和 [`_ch02_similitudes.jsx`](https://github.com/EvoEvolver/mingbai-notes/blob/main/oot/chapters/_ch02_similitudes.jsx)（在 mingbai-notes 仓库）。
+- 组件库源码：`app/src/kit/`（index.js 列出全部导出）。样式变量见 `kit/style.css`（`--paper --ink --muted --line --accent --gold --blue --green --violet --card --shadow --serif --sans`）。
 
 ## 章节文件约定
 ```jsx
@@ -66,16 +66,16 @@ export default function Chapter() { return <ChapterPage meta={meta} groups={grou
 ## 链接与路由
 站点是多页静态站点：每章一个页面 `<id>/`，页内锚点用普通 hash（如 `ch02/#eq-2.23`）。站内链接**不要手写 `#/…`**，
 用 `pageUrl(id, anchor)`（from "@kit"；`pageUrl(null)` 为书架）。章节导出的 `meta / concepts / groups / relations / notation / links`
-会在构建时被提取为全书索引，**必须是纯数据**（不要放函数或 JSX）。详见 `framework/spec/DEPLOY.md`。
+会在构建时被提取为全书索引，**必须是纯数据**（不要放函数或 JSX）。详见 `spec/DEPLOY.md`。
 
 ## 自检（必须做）
 ```bash
-/home/zijian/books/framework/spec/check.sh <id>
+spec/check.sh <id> <书目录>
 ```
 它会单独构建你的章节、截图并输出 JSON 报告（区块列表、控制台错误）。要求：
 1. 构建成功、`errors` 为空；
-2. 用 Read 工具查看截图 `/tmp/check-<id>/shot.png`（长图）与 `shot-modal.png`，确认排版正常、专属图解渲染正确。专属图解可单独截图：
-   先 `python3 -m http.server <port> -d /tmp/check-<id>/site &`，再 `PATH=$HOME/.local/node/bin:$PATH node /home/zijian/books/framework/tools/pw/el.mjs "http://localhost:<port>/<id>/" "#b-<blockid>" /tmp/check-<id>/el.png`，用完 kill 掉服务器。
+2. 用 Read 工具查看截图 `/tmp/check-<书目录名>-<id>/shot.png`（长图）与 `shot-modal.png`，确认排版正常、专属图解渲染正确。专属图解可单独截图：
+   先 `python3 -m http.server <port> -d /tmp/check-<书目录名>-<id>/site &`，再 `node tools/pw/el.mjs "http://localhost:<port>/<id>/" "#b-<blockid>" /tmp/check-<书目录名>-<id>/el.png`，用完 kill 掉服务器。
 3. 有问题就改，直到满意。
 
 ## 交付回复（简短）
@@ -89,4 +89,4 @@ export default function Chapter() { return <ChapterPage meta={meta} groups={grou
 
 - **写英文书**：`book.js` 加 `lang: "en"`；标题和名称只写 `title_en` / `name_en`（statements 只写 `en`），不写 `*_zh`。组件优先显示 `*_zh`，没有时显示 `*_en`；两者都有时 `*_en` 作副标题。`quotes` 的 `zh`、`Sec` 的 `zh` 同理可省略。
 - **加新的界面文字**：不要在组件里写死，在 `kit/i18n/zh.js` 和 `en.js` 各加一个键，用 `t("键名")` 取（`from "./i18n/index.js"`，章节文件 `from "@kit"`）。带参数的句子写成函数，如 `"ch.no": n => \`Chapter ${n}\``。默认参数里可以用 `t()`，但不要在模块顶层调用。
-- **加新语言**：照 `kit/i18n/zh.js` 写一份，在 `kit/i18n/messages.js` 登记，缺的键会退回中文。书库首页（`framework/library/index.html`）目前只有中文界面。
+- **加新语言**：照 `kit/i18n/zh.js` 写一份，在 `kit/i18n/messages.js` 登记，缺的键会退回中文。书库首页（`library/index.html`）目前只有中文界面。

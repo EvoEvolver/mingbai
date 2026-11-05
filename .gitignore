@@ -1,0 +1,5 @@
+node_modules
+dist/
+app/.pages/
+__pycache__/
+*.log

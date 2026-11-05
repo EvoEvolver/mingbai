@@ -6,7 +6,7 @@ import { FEEDBACK_EMAIL } from "./site.js";
 
 // 选中文字 → 悬浮"反馈"按钮 → 反馈面板 → mailto: 打开读者的邮件客户端（收件人、标题、正文已填好）。
 // 正文包含：页面地址、页面标题、选中的纯文本、读者的反馈与（可选）联系方式。纯静态，无需后端。
-// 收件地址：kit/site.js 的 FEEDBACK_EMAIL，单本书可在 book.js 用 feedbackEmail 覆盖；为空则不启用。
+// 收件地址：book.js 的 feedbackEmail（缺省取 kit/site.js 的 FEEDBACK_EMAIL）；为空则不启用。
 const MAX_SEL = 600;   // mailto 链接过长时部分邮件客户端会截断，选中内容只带前 600 字
 
 function selectionInfo() {

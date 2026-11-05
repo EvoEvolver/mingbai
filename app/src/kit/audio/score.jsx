@@ -2,7 +2,7 @@ import { t } from "../i18n/index.js";
 // 谱例：ABC 记谱 → 两种视图一键切换（全站共享偏好）：
 //   五线谱（abcjs 渲染）⇄ 卷帘 Piano Roll（像 Logic Pro：横轴时间、纵轴音高、左侧键盘，音符是长条）。
 // 声音走本站引擎（engine.js），播放时音符同步高亮、卷帘有播放头；点任意音符/音条单独试听。
-// abcjs 只在浏览器里按需加载（构建期 SSR 提取数据时不会触碰它）。说明见 framework/spec/AUDIO.md
+// abcjs 只在浏览器里按需加载（构建期 SSR 提取数据时不会触碰它）。说明见 spec/AUDIO.md
 import { useEffect, useRef, useState } from "react";
 import { play, stop, later, onStop, setSettings, useAudioState } from "./engine.js";
 import { voiceChord, parseChord, pcName, isBlack, mod12 } from "./theory.js";
